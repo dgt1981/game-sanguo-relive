@@ -1,0 +1,6 @@
+{
+  "name": "公元184年，你出生了 · 汉末人生录",
+  "description": "“公元184年，你出生了，然后让时间自己向前走。”体验出生在洛阳、颍川、徐州、幽州、并州、冀州、凉州或交州等十四州的真实民间人生。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
