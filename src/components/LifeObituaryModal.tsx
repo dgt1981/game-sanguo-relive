@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { RealisticEnding, Attributes, YearLogEntry } from '../types/game';
-import { PersonProfile } from '../services/lifeSimulator';
+import React, { useState, useMemo } from 'react';
+import { RealisticEnding, Attributes, SeasonLogEntry, SeasonIndex } from '../types/game';
+import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
+import { FunTitleInfo } from '../services/titleGenerator';
+import { matchHistoricalFigures, MatchedHistoricalFigure } from '../services/historicalFigures';
 import { sound } from '../services/sound';
-import { Scroll, RotateCcw, Share2, Check, BookOpen, UserCheck } from 'lucide-react';
+import { Scroll, RotateCcw, Share2, Check, BookOpen, Sparkles, Compass, UserCheck } from 'lucide-react';
 
 interface LifeObituaryModalProps {
   ending: RealisticEnding;
@@ -10,8 +12,11 @@ interface LifeObituaryModalProps {
   finalStats: Attributes;
   deathAge: number;
   deathYear: number;
-  yearLogs: YearLogEntry[];
+  deathSeason: SeasonIndex;
+  seasonLogs: SeasonLogEntry[];
   deathReason?: string;
+  funTitles: FunTitleInfo;
+  matchedFigures?: MatchedHistoricalFigure[];
   onRestart: () => void;
 }
 
@@ -21,22 +26,49 @@ export const LifeObituaryModal: React.FC<LifeObituaryModalProps> = ({
   finalStats,
   deathAge,
   deathYear,
-  yearLogs,
+  deathSeason,
+  seasonLogs,
   deathReason,
+  funTitles,
+  matchedFigures: propMatchedFigures,
   onRestart,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [selectedFigureIndex, setSelectedFigureIndex] = useState(0);
+  const seasonCfg = SEASONS_CONFIG[deathSeason] || SEASONS_CONFIG[0];
+
+  // Calculate or use matched figures
+  const matchedFigures = useMemo(() => {
+    if (propMatchedFigures && propMatchedFigures.length > 0) {
+      return propMatchedFigures;
+    }
+    return matchHistoricalFigures(
+      profile,
+      finalStats,
+      deathAge,
+      deathYear,
+      deathReason,
+      ending.tier
+    );
+  }, [propMatchedFigures, profile, finalStats, deathAge, deathYear, deathReason, ending.tier]);
+
+  const currentFigure = matchedFigures[selectedFigureIndex] || matchedFigures[0];
 
   const handleCopy = () => {
     const text = `【汉末草民实录 · 八十亿分之一人生】
-传主：${profile.name}（${profile.gender === 'MALE' ? '男' : '女'}）
-生卒：公元184年 — 公元${deathYear}年（享年${deathAge}岁）
+传主：${profile.name}（字${profile.courtesyName} · ${profile.gender === 'MALE' ? '男丁' : '女秀'}）
+生卒：公元184年孟春 — 公元${deathYear}年${seasonCfg.name}季（享年${deathAge}岁）
 籍贯：${profile.commandery} · ${profile.county}
 身前身份：${profile.occupation}
-结局：${ending.title}
-铭文：${ending.epitaphTitle}
+结局称号：${ending.title}
+趣味称号：${funTitles.primaryTitle}（${funTitles.folkNickname}）
+趣味标签：${funTitles.badges.join(' / ')}
+幽默评注：${funTitles.humorousQuote}
 
-【生平小传】
+【宿命映照历史人物】：${currentFigure ? `${currentFigure.name}（字${currentFigure.courtesyName} · 契合度 ${currentFigure.similarityScore}% · ${currentFigure.titleTag}）` : '无'}
+【宿命同道评述】：${currentFigure ? currentFigure.resonanceReason : ''}
+
+【平生总叙】
 ${ending.summary}
 
 【史家注脚】
@@ -61,12 +93,40 @@ ${ending.historianNote}
             {ending.title}
           </h1>
 
-          <div className="text-xs text-[#a29280] mt-2 flex flex-wrap items-center justify-center gap-2 font-classical">
-            <span>{profile.name}</span>
+          {/* Fun Titles Banner */}
+          <div className="mt-3 bg-[#241c16] border border-[#483726] rounded-lg p-3 max-w-lg mx-auto space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <span className="font-calligraphy text-lg sm:text-xl text-[#f59e0b] tracking-wider">
+                {funTitles.primaryTitle}
+              </span>
+              <span className="text-xs text-[#a29280] font-classical">
+                ({funTitles.folkNickname})
+              </span>
+            </div>
+
+            {/* Badges pills */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {funTitles.badges.map((b, idx) => (
+                <span
+                  key={idx}
+                  className="text-[11px] px-2 py-0.5 rounded bg-[#17120e] text-[#d4af37] border border-[#3e3023] font-classical"
+                >
+                  #{b}
+                </span>
+              ))}
+            </div>
+
+            <p className="text-xs text-[#b8a794] italic font-classical pt-1">
+              {funTitles.humorousQuote}
+            </p>
+          </div>
+
+          <div className="text-xs text-[#a29280] mt-3 flex flex-wrap items-center justify-center gap-2 font-classical">
+            <span>{profile.name}（字{profile.courtesyName}）</span>
             <span>·</span>
-            <span>生于公元184年</span>
+            <span>生于公元184年春</span>
             <span>·</span>
-            <span>殁于公元{deathYear}年 (享年{deathAge}岁)</span>
+            <span>殁于公元{deathYear}年{seasonCfg.name}季 (享年{deathAge}岁)</span>
           </div>
 
           {deathReason && (
@@ -130,6 +190,102 @@ ${ending.historianNote}
               </div>
             </div>
           </div>
+
+          {/* 宿命映照 · 三国历史同道 (NEW) */}
+          {currentFigure && (
+            <div className="bg-[#201812] border-2 border-[#8b6528]/80 rounded-xl p-4 sm:p-5 shadow-2xl space-y-3.5 relative overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3e2e1f] pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#e5c158]" />
+                  <span className="font-calligraphy text-base sm:text-lg text-[#faece0] tracking-wider">
+                    宿命映照 · 三国历史同道
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-[#9c8b7a] font-classical">天命契合指数：</span>
+                  <span className="font-mono font-bold text-sm sm:text-base text-[#f59e0b] px-2 py-0.5 rounded bg-[#2b2016] border border-[#5a422a]">
+                    {currentFigure.similarityScore}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Selector tabs if multiple matched figures */}
+              {matchedFigures.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                  <span className="text-[#8e7e6e] text-[11px] shrink-0 font-classical">神思相契人物：</span>
+                  {matchedFigures.map((fig, idx) => (
+                    <button
+                      key={fig.id}
+                      type="button"
+                      onClick={() => {
+                        sound.playPluck(520 + idx * 80);
+                        setSelectedFigureIndex(idx);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        selectedFigureIndex === idx
+                          ? 'bg-[#d4af37] text-[#1a1106] font-bold shadow-md'
+                          : 'bg-[#291f17] text-[#a49583] hover:text-[#faece0] border border-[#3e2e20]'
+                      }`}
+                    >
+                      <UserCheck className="w-3 h-3" />
+                      <span>{fig.name}</span>
+                      <span className="text-[10px] opacity-80">{fig.similarityScore}%</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Hero Card of the selected historical figure */}
+              <div className="bg-[#17110c] rounded-lg p-3.5 border border-[#3d2e1f] space-y-3">
+                {/* Name, Camp & Lifespan */}
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-calligraphy text-xl sm:text-2xl text-[#f3ece2] tracking-wider">
+                      {currentFigure.name}
+                    </span>
+                    <span className="text-xs text-[#a39482] font-classical">字 {currentFigure.courtesyName}</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-[#2c1d13] text-[#e5c158] border border-[#523b26] font-classical">
+                      {currentFigure.campLabel}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#8c7b69] font-classical">
+                    {currentFigure.historicLifespan} · {currentFigure.birthplace}
+                  </div>
+                </div>
+
+                {/* Title tag and resonance title */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-xs text-[#d4af37] font-classical">
+                    {currentFigure.titleTag}
+                  </span>
+                  <span className="text-xs text-[#f59e0b] bg-[#2a1d12] px-2 py-0.5 rounded border border-[#4a3420] font-classical">
+                    {currentFigure.resonanceTitle}
+                  </span>
+                </div>
+
+                {/* Resonance Reason */}
+                <p className="text-xs text-[#dcd1c2] leading-relaxed font-classical indent-5">
+                  {currentFigure.resonanceReason}
+                </p>
+
+                {/* 3 Key Parallels */}
+                <div className="bg-[#120d09] p-2.5 rounded border border-[#2e2115] space-y-1.5 text-xs text-[#b8a794] font-classical">
+                  {currentFigure.keyParallels.map((parallel, pIdx) => (
+                    <div key={pIdx} className="flex items-start gap-1.5 leading-snug">
+                      <span className="text-[#d4af37] text-xs">◆</span>
+                      <span>{parallel}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Historical Quote */}
+                <div className="text-[11px] text-[#8e7e6e] italic font-classical pt-1 border-t border-[#2d2015] flex items-center gap-1.5">
+                  <span className="text-[#a49583] not-italic font-semibold shrink-0">【史传名言】：</span>
+                  <span>{currentFigure.historicQuote}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
@@ -141,12 +297,12 @@ ${ending.historianNote}
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-[#4ade80]" />
-                <span>生平小传已复制</span>
+                <span>生平、称号与历史同道已复制</span>
               </>
             ) : (
               <>
                 <Share2 className="w-4 h-4 text-[#d4af37]" />
-                <span>复制 / 分享本生小传</span>
+                <span>复制 / 分享本生小传与历史同道</span>
               </>
             )}
           </button>
@@ -166,3 +322,4 @@ ${ending.historianNote}
     </div>
   );
 };
+

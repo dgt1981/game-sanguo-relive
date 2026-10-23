@@ -1,6 +1,6 @@
 import React from 'react';
-import { YearlyEvent, LifeChoice, Attributes } from '../types/game';
-import { PersonProfile } from '../services/lifeSimulator';
+import { SeasonalEvent, LifeChoice, Attributes, SeasonIndex } from '../types/game';
+import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
 import { sound } from '../services/sound';
 import {
   Flame,
@@ -12,10 +12,11 @@ import {
   AlertCircle,
   Clock,
   Zap,
+  Calendar,
 } from 'lucide-react';
 
 interface LifeYearCardProps {
-  currentEvent: YearlyEvent;
+  currentEvent: SeasonalEvent;
   profile: PersonProfile;
   stats: Attributes;
   isAutoRunning: boolean;
@@ -23,7 +24,7 @@ interface LifeYearCardProps {
   wasAutoPausedForChoice: boolean;
   onToggleAutoRun: () => void;
   onChangeSpeed: (speed: 1 | 2 | 4 | 8) => void;
-  onManualNextYear: () => void;
+  onManualNextSeason: () => void;
   onSelectChoice: (choice: LifeChoice) => void;
   isProcessing: boolean;
 }
@@ -37,19 +38,31 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
   wasAutoPausedForChoice,
   onToggleAutoRun,
   onChangeSpeed,
-  onManualNextYear,
+  onManualNextSeason,
   onSelectChoice,
   isProcessing,
 }) => {
   const hasChoice = Boolean(currentEvent.choice);
+  const seasonCfg = SEASONS_CONFIG[currentEvent.season];
 
   return (
     <div className="bg-[#1b1612] border border-[#3e3023] rounded-xl overflow-hidden shadow-2xl space-y-0">
-      {/* 1. Header bar of the current year & location */}
+      {/* 1. Header bar of the current season & location */}
       <div className="bg-[#231b15] border-b border-[#3b2b1d] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
           <span className="font-mono font-bold text-sm text-[#f59e0b]">
             公元 {currentEvent.year} 年
+          </span>
+          <span className="text-[#847565]">·</span>
+          <span
+            className="font-semibold font-classical px-2 py-0.5 rounded text-xs"
+            style={{
+              color: seasonCfg.color,
+              backgroundColor: `${seasonCfg.color}15`,
+              border: `1px solid ${seasonCfg.color}40`,
+            }}
+          >
+            {seasonCfg.name}季 ({currentEvent.seasonMonths})
           </span>
           <span className="text-[#847565]">·</span>
           <span className="text-[#a89987] font-classical">{currentEvent.lunarYear}</span>
@@ -90,16 +103,16 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
             ) : (
               <>
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>自动流逝</span>
+                <span>自动流转</span>
               </>
             )}
           </button>
 
-          {/* Manual Step Button */}
+          {/* Manual Step Button: +1季 */}
           <button
             onClick={() => {
               sound.playPluck(523);
-              onManualNextYear();
+              onManualNextSeason();
             }}
             disabled={hasChoice || isAutoRunning || isProcessing}
             className={`px-2.5 py-1.5 rounded-md text-xs font-classical flex items-center gap-1 transition-colors border ${
@@ -107,10 +120,10 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
                 ? 'bg-[#1a1410] border-[#291e15] text-[#5e5142] cursor-not-allowed'
                 : 'bg-[#251d16] border-[#443324] text-[#dcd1c2] hover:text-[#faece0] hover:bg-[#32261d] cursor-pointer'
             }`}
-            title="手动单步推进一年"
+            title="手动单步推进一步（一季）"
           >
             <StepForward className="w-3.5 h-3.5" />
-            <span>+1岁</span>
+            <span>+1季</span>
           </button>
         </div>
 
@@ -147,12 +160,12 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
           {hasChoice ? (
             <span className="text-[#f59e0b] flex items-center gap-1 bg-[#2b1f14] px-2 py-0.5 rounded border border-[#523c26]">
               <AlertCircle className="w-3.5 h-3.5" />
-              <span>逢要冲已暂停 · 抉择后将以 {playbackSpeed}× 自动流逝</span>
+              <span>逢要冲已暂停 · 抉择后将以 {playbackSpeed}× 自动流转</span>
             </span>
           ) : isAutoRunning ? (
             <span className="text-[#4ade80] flex items-center gap-1">
               <Zap className="w-3.5 h-3.5 text-[#22c55e] animate-pulse" />
-              <span>岁月流逝中 · {playbackSpeed}× 倍速</span>
+              <span>四季流逝中 · {playbackSpeed}× 速</span>
             </span>
           ) : (
             <span className="text-[#8c7b69] flex items-center gap-1">
@@ -164,12 +177,17 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
       </div>
 
       {/* 3. Main Narrative Area */}
-      <div className="p-4 sm:p-6 md:p-8 space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 space-y-5">
         {/* Macro History (天下大势) */}
         <div className="bg-[#181310] border-l-2 border-[#d4af37] p-3.5 sm:p-4 rounded-r text-xs sm:text-sm text-[#ded3c5] leading-relaxed">
-          <div className="flex items-center gap-1.5 font-semibold text-[#d4af37] mb-1 font-classical">
-            <Flame className="w-3.5 h-3.5 text-[#f59e0b]" />
-            <span>【天下大势】</span>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1.5 font-semibold text-[#d4af37] font-classical">
+              <Flame className="w-3.5 h-3.5 text-[#f59e0b]" />
+              <span>【天下大势 · {seasonCfg.name}季】</span>
+            </div>
+            <span className="text-[11px] text-[#7a6a59] font-classical">
+              {seasonCfg.solarTerm}
+            </span>
           </div>
           <p className="text-[#cfc3b4]">{currentEvent.macroHistory}</p>
         </div>
@@ -185,15 +203,15 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
         {/* Personal Story (平生纪事) */}
         <div className="bg-[#241c16] border border-[#443324] p-4 sm:p-5 rounded-lg text-sm sm:text-base text-[#f5eee4] leading-relaxed font-classical shadow-inner">
           <div className="font-semibold text-[#faece0] mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
-            <span>【平生纪事】</span>
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: seasonCfg.color }} />
+            <span>【平生纪事 · {seasonCfg.name}令】</span>
           </div>
           <p className="indent-8 text-justify tracking-wide leading-relaxed">
             {currentEvent.personalStory}
           </p>
         </div>
 
-        {/* Branching Choice (if any this year) */}
+        {/* Branching Choice (if any this season) */}
         {hasChoice && currentEvent.choice && (
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
@@ -202,7 +220,7 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
                 <span>{currentEvent.choice.prompt}</span>
               </h3>
               <span className="text-xs text-[#9d8d7b]">
-                {wasAutoPausedForChoice ? '抉择后按原倍速继续流逝' : '请做出抉择'}
+                {wasAutoPausedForChoice ? '抉择后按原倍速继续流转' : '请做出抉择'}
               </span>
             </div>
 

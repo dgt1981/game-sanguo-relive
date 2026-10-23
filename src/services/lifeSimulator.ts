@@ -2,14 +2,18 @@ import {
   ProvinceId,
   SocialClass,
   Attributes,
-  YearlyEvent,
+  SeasonalEvent,
   RealisticEnding,
   LifeChoice,
+  SeasonIndex,
 } from '../types/game';
 import { PROVINCES } from '../data/regions';
 
 export interface PersonProfile {
   name: string;
+  surname: string;
+  givenName: string;
+  courtesyName: string;
   gender: 'MALE' | 'FEMALE';
   birthProvince: ProvinceId;
   currentProvince: ProvinceId;
@@ -26,6 +30,19 @@ export interface PersonProfile {
   childrenCount: number;
 }
 
+export const SEASONS_CONFIG: {
+  name: string;
+  fullName: string;
+  months: string;
+  solarTerm: string;
+  color: string;
+}[] = [
+  { name: '春', fullName: '春季', months: '孟春·正月至季春·三月', solarTerm: '立春 · 雨水 · 惊蛰 · 清明', color: '#4ade80' },
+  { name: '夏', fullName: '夏季', months: '孟夏·四月至季夏·六月', solarTerm: '立夏 · 小满 · 芒种 · 夏至', color: '#f87171' },
+  { name: '秋', fullName: '秋季', months: '孟秋·七月至季秋·九月', solarTerm: '立秋 · 处暑 · 白露 · 霜降', color: '#fbbf24' },
+  { name: '冬', fullName: '冬季', months: '孟冬·十月至季冬·十二月', solarTerm: '立冬 · 小雪 · 大雪 · 岁除', color: '#38bdf8' },
+];
+
 export function generateRandomBirth(): PersonProfile {
   const surnames = [
     '王', '李', '张', '刘', '陈', '杨', '赵', '黄', '周', '吴',
@@ -35,19 +52,23 @@ export function generateRandomBirth(): PersonProfile {
   ];
   const givenNamesMale = ['安', '顺', '福', '保', '生', '牛', '广', '平', '富', '康', '寿', '松', '山', '林', '义', '良', '定', '延', '崇', '道'];
   const givenNamesFemale = ['娣', '娘', '花', '秀', '英', '兰', '凤', '巧', '姑', '春', '梅', '月', '环', '青', '贞', '慧'];
+  const courtesyRoots = ['子', '叔', '伯', '季', '文', '元', '公', '玄'];
+  const courtesyEnds = ['明', '华', '德', '远', '安', '道', '休', '博', '达', '和', '修', '度', '正', '若'];
 
-  const isMale = Math.random() > 0.4;
+  const isMale = Math.random() > 0.35;
   const surname = surnames[Math.floor(Math.random() * surnames.length)];
   const givenName = isMale
     ? givenNamesMale[Math.floor(Math.random() * givenNamesMale.length)]
     : givenNamesFemale[Math.floor(Math.random() * givenNamesFemale.length)];
 
-  // Province distribution: weighted towards historical major population zones
+  const courtesy = `${courtesyRoots[Math.floor(Math.random() * courtesyRoots.length)]}${
+    courtesyEnds[Math.floor(Math.random() * courtesyEnds.length)]
+  }`;
+
   const provincePick = PROVINCES[Math.floor(Math.random() * PROVINCES.length)];
   const commanderyPick = provincePick.commanderies[Math.floor(Math.random() * provincePick.commanderies.length)];
   const countyPick = provincePick.counties[Math.floor(Math.random() * provincePick.counties.length)];
 
-  // Social class distribution (vast majority are poor peasants and town folk)
   const classRoll = Math.random();
   let socialClass: SocialClass = 'PEASANT';
   if (classRoll < 0.45) {
@@ -63,20 +84,21 @@ export function generateRandomBirth(): PersonProfile {
   } else if (classRoll < 0.985) {
     socialClass = 'MERCHANT';
   } else {
-    socialClass = 'NOBLE_GENTRY'; // ~1.5% rare birth
+    socialClass = 'NOBLE_GENTRY';
   }
-
-  const initialOccupation = '襁褓幼童';
 
   return {
     name: `${surname}${givenName}`,
+    surname,
+    givenName,
+    courtesyName: courtesy,
     gender: isMale ? 'MALE' : 'FEMALE',
     birthProvince: provincePick.id,
     currentProvince: provincePick.id,
     commandery: commanderyPick,
     county: countyPick,
     socialClass,
-    occupation: initialOccupation,
+    occupation: '襁褓幼童',
     fatherName: `${surname}大郎`,
     fatherAlive: true,
     motherName: '陈氏',
@@ -87,7 +109,6 @@ export function generateRandomBirth(): PersonProfile {
 }
 
 export function generateInitialAttributes(socialClass: SocialClass): Attributes {
-  // Base attributes (1-100 scale, with baseline around 30-60 for ordinary folk)
   const base: Attributes = {
     health: 50 + Math.floor(Math.random() * 20) - 10,
     intellect: 40 + Math.floor(Math.random() * 20) - 10,
@@ -136,7 +157,6 @@ export function generateInitialAttributes(socialClass: SocialClass): Attributes 
       break;
   }
 
-  // Clamping
   Object.keys(base).forEach((k) => {
     const key = k as keyof Attributes;
     base[key] = Math.max(10, Math.min(95, base[key]));
@@ -145,18 +165,7 @@ export function generateInitialAttributes(socialClass: SocialClass): Attributes 
   return base;
 }
 
-/**
- * Generates the event narrative and choice (if applicable) for a specific year and age
- */
-export function getYearlyEvent(
-  year: number,
-  age: number,
-  profile: PersonProfile,
-  stats: Attributes
-): YearlyEvent {
-  const province = PROVINCES.find((p) => p.id === profile.currentProvince) || PROVINCES[0];
-
-  // 1. Lunar calendar mapping
+export function getLunarYearName(year: number): string {
   const lunarMap: Record<number, string> = {
     184: '中平元年 · 甲子',
     185: '中平二年 · 乙丑',
@@ -202,327 +211,444 @@ export function getYearlyEvent(
     234: '建兴十二年 / 青龙二年 · 甲寅',
     249: '正始十年 / 嘉平元年 · 己巳',
   };
+  return lunarMap[year] || `公元${year}年`;
+}
 
-  const lunarYear = lunarMap[year] || `公元${year}年`;
+/**
+ * Seasonal Macro Three Kingdoms Historical Database
+ */
+const SEASONAL_MACRO_EVENTS: Record<string, string> = {
+  // 184 Yellow Turban Rebellion
+  '184-0': '巨鹿张角传道十载，门徒唐周洛阳首告，大将军何进搜捕马元义斩于洛阳。张角星夜飞敕三十六方提前反汉，三十余万众同日举事，海内震动。',
+  '184-1': '四月皇甫嵩、朱儁兵发颍川讨黄巾，波才败朱儁并围皇甫嵩于长社。五月长社大风，皇甫嵩夜半纵火，曹操引飞骑夹击，大破黄巾贼数万。',
+  '184-2': '北中郎将卢植围张角于广宗。中常侍左丰索贿未遂诬奏卢植，槛车征卢植下狱。朝廷改派董卓代领，董卓兵败。八月张角病殁于广宗。',
+  '184-3': '皇甫嵩接掌北军，十月夜袭广宗斩张梁，十一月斩张宝于曲阳，筑京观于城西。主力略平，然黑山、白波诸盗四起，天下凋敝。',
 
-  // Macro Historical Chronicle for that year
-  const macroEvents: Record<number, string> = {
-    184: '巨鹿张角自称“大贤良师”，三十六方同日俱起，黄巾之乱爆发，海内震裂。朝廷大赦党人，发天下精兵剿捕。',
-    185: '黑山贼张燕聚众百万劫掠冀州并州；凉州边章、韩遂引羌兵破金城，边疆糜烂。',
-    186: '江夏赵慈反叛，六州大水，汉廷鬻官卖爵，四海流民塞道。',
-    187: '前中山相张纯与乌桓丘力居叛乱，略蓟中，杀护乌桓校尉。天下兵乱无宁日。',
-    188: '汉灵帝改刺史为州牧，重臣分据一方。朝廷于洛阳平乐观设西园八校尉，曹操为典军校尉。',
-    189: '四月灵帝驾崩，大将军何进召西凉刺史董卓带兵入洛。宦官诛何进，袁绍尽杀宦官。董卓引铁骑进京，废少帝，立陈留王为汉献帝。',
-    190: '曹操发矫诏，关东十八路诸侯歃血起兵讨董卓。董卓纵火焚烧洛阳两百里宫室，驱数百万百姓迁都长安，死者盈沟。',
-    191: '关东诸侯各怀异心，自相并吞。孙坚破洛阳得传国玉玺，旋即中流矢死于岘山；袁绍袭取冀州。',
-    192: '司徒王允与吕布诛杀董卓于未央宫。董卓部将李傕、郭汜引凉州兵反攻长安，屠杀百官，关中大饥，民相食。',
-    193: '曹操父曹嵩于徐州遭戕，曹操借故大举东征徐州，拔十余城，坑杀男女数十万于泗水，泗水为之断流。',
-    194: '兖州大蝗灾，食尽草木，人相食，白骨蔽野。吕布袭取兖州，曹操仅余甄城、范县、东阿三城。',
-    195: '李傕郭汜在长安互相攻杀，汉献帝东归洛阳，沿途荆棘载途，百官冻馁，粮尽食草根。',
-    196: '曹操迎汉献帝迁都许县，奉天子以令诸侯；定屯田之制以赡军民。',
-    197: '袁术于寿春僭号称帝，建号仲家。天下共讨之。淮南大饥，民食草木螺蚌。',
-    198: '曹操水淹下邳，生擒吕布缢杀于白门楼。张辽降曹，徐州悉平。',
-    199: '袁绍消灭公孙瓒，尽并幽、并、青、冀四州，带甲数十万，准备南下与曹操争夺天下。',
-    200: '官渡之战爆发。曹操兵少粮尽，相持数月，夜袭乌巢焚尽袁绍万车粮草，袁绍全军土崩瓦解。',
-    207: '曹操北征乌桓，白狼山阵斩蹋顿，统一北方。刘备于新野三顾茅庐，得诸葛孔明。',
-    208: '秋，曹操引大军南下荆州，刘表卒，刘琮降。冬，孙刘联军火烧赤壁，曹操败走华容，天下三分之形奠定。',
-    211: '曹操西征马超、韩遂，大战潼关。刘备应刘璋之邀引兵入益州。',
-    214: '刘备围成都，刘璋开城出降。刘备据有益州天府之国。',
-    217: '建安二十二年，中原大疫流行，家家有僵尸之痛，室室有号泣之哀。建安七子中徐干、陈琳、应玚、刘桢同卒于疫。',
-    219: '关羽水淹七军威震华夏，曹操几欲迁都。吕蒙白衣渡江袭取荆州，关羽走麦城身亡。刘备自立为汉中王。',
-    220: '正月魏王曹操卒于洛阳。冬十月，汉献帝禅位于曹丕，改国号魏，东汉四百余年国祚告终。',
-    221: '刘备于成都即皇帝位，国号汉，改元章武。誓师伐吴，为关羽张飞雪恨。',
-    222: '夷陵之战，陆逊火烧蜀军连营七百里，刘备兵败退保永安白帝城。',
-    223: '四月刘备病逝于白帝城永安宫，托孤于诸葛亮。后主刘禅即位。',
-    228: '诸葛亮上《出师表》首次北伐，街亭失守，斩马谡，引军还汉中。',
-    234: '诸葛亮第五次北伐，与司马懿相持于五丈原百余日。秋八月，星落五丈原，孔明病逝，享年五十四。',
-    249: '司马懿趁大将军曹爽陪帝谒高平陵，发动政变诛杀曹爽三族，魏室大权尽归司马氏。',
-  };
+  // 189 Dong Zhuo Enter Capital
+  '189-0': '汉灵帝病笃于洛阳南宫嘉德殿。蹇硕欲谋杀何进未果，大将军何进掌握禁军，两宫宿卫甲兵森严。',
+  '189-1': '四月灵帝驾崩，皇子辩即位为少帝。何进与袁绍密谋诛灭中官，何太后不许，何进阴召西凉刺史董卓引兵逼京。',
+  '189-2': '八月何进伏诛于长乐宫，袁绍袁术引禁军尽杀宦官二千人，宫室大火。董卓率三千西凉飞熊铁骑趁夜入洛阳，并吞何进部曲。',
+  '189-3': '董卓专权，废少帝封弘农王，立九岁陈留王为汉献帝。夜宿龙床，鸩杀何太后，毒杀弘农王，西凉兵劫掠洛阳士庶。',
 
-  const macroText = macroEvents[year] || '天下烽烟未熄，诸侯兵戈征伐，黎民辗转沟壑，各自求全。';
+  // 190 Coalition against Dong
+  '190-0': '关东州郡起兵讨董，袁绍为盟主，曹操、孙坚等十八路诸侯歃血结盟，分屯酸枣、河内。董卓部将华雄迎战诸侯。',
+  '190-1': '二月董卓惧关东兵锋，纵火焚烧洛阳两百里宫阙陵墓，悉发数百万百姓西迁长安，老弱相践踏于道，号泣震天。',
+  '190-2': '诸侯进军迟疑，唯曹操引兵西追，于荥阳汴水遇董卓大将徐荣伏击，兵败中箭，为曹洪让马救脱。酸枣大营日日高会置酒，貌合神离。',
+  '190-3': '孙坚率江东孤军破梁县斩华雄，率先收复洛阳废墟，扫除汉家宗庙，于建章殿残井中得传国玉玺。',
 
-  // Regional impact based on province
-  let regionalText = '';
-  if (province.id === 'JIZHOU' && year <= 186) {
-    regionalText = `巨鹿一带村村戴黄巾，你所在的【${profile.county}】常有持九节杖的太平道徒走村穿巷，官兵与贼寇拉锯拉扯，田亩荒废。`;
-  } else if (province.id === 'XUZHOU' && (year === 193 || year === 194)) {
-    regionalText = `曹操大军由东莞南下，所过拔取屠戮。【${profile.county}】城外泗水漂满浮尸，哭号震天，四野鸡犬不闻。`;
-  } else if (province.id === 'YANZHOU' && (year === 194 || year === 195)) {
-    regionalText = `飞蝗蔽天自东来，草木叶甚至树皮全被啃尽。郡内斗米值五十万钱，人相食，乡邻为争一口野菜打得头破血流。`;
-  } else if (province.id === 'LUOYANG' && (year === 189 || year === 190)) {
-    regionalText = `董卓西凉兵横行坊市，白昼杀人掠货。洛阳九龙门火光冲天，官道上被驱赶西行的百姓哭声数月不绝。`;
-  } else if (province.id === 'JIAOZHOU') {
-    regionalText = `交州在士使君治下安静若世外桃源，番舶停泊番禺海岸，市集上尽是胡椒、翡翠与沉香，不知中原兵马战阵。`;
-  } else if (province.id === 'JINGZHOU' && year >= 190 && year <= 207) {
-    regionalText = `刘表招徕流移，立学官抚万民。襄阳与江陵一带稻米丰足，北来名士高冠博带，四野常闻弦歌读书之声。`;
-  } else if (province.id === 'LIANGZHOU') {
-    regionalText = `塞外长风卷黄沙，韩遂马腾兵马与西凉羌骑常在关隘集结，边民皆腰佩短刀，夜里巡更防范偷营。`;
-  } else {
-    regionalText = `【${profile.county}】差役催课甚急，官仓常闭，街市粮价日日攀升，偶有从北方逃难来的蓬头垢面流民沿路乞讨。`;
+  // 192 Lu Bu kills Dong Zhuo & Chang'an Chaos
+  '192-0': '孙坚跨江攻刘表，于岘山被黄祖部将流矢射杀。袁术与袁绍兄弟反目，天下诸侯各起兵吞并。',
+  '192-1': '四月司徒王允与吕布设连环计，在未央宫斩杀董卓，弃尸于市，万民点灯相庆。贾诩献策于李傕郭汜，凉州大军反扑长安。',
+  '192-2': '六月李傕郭汜破长安，杀王允，吕布东奔。凉州乱兵纵火劫掠公卿百官，关中大饥，死者数十万，白骨蔽野，人相食。',
+  '192-3': '曹操在兖州收编青州百万黄巾余部，择其精锐号为“青州兵”，威镇中原。',
+
+  // 193-194 Cao Cao conquest of Xuzhou & Yan famine
+  '193-2': '曹操因父曹嵩遇害于徐州，引大军大举东征陶谦，攻拔十余城，坑杀男女数十万人于泗水，泗水为之断流，鸡犬亦尽。',
+  '194-1': '陈宫、张邈反曹操，迎吕布袭据兖州，曹操仅余甄城、范县、东阿三县。夏秋飞蝗蔽天，食草木叶俱尽，中原人相食。',
+  '194-3': '陶谦病笃，临终三让徐州于平原相刘备，刘备领徐州牧。',
+
+  // 196 Emperor to Xuchang
+  '196-2': '汉献帝历尽千辛万苦自长安乱军中东归洛阳，宫室尽毁，百官食野草。曹操依荀彧“奉天子以从民望”之计，亲引大军迎驾迁都许县。',
+  '196-3': '曹操颁布“屯田令”，召集流民耕种许昌荒田，农官分岁收，数年中公私丰足，中原军民免于饥馑。',
+
+  // 198 Fall of Lu Bu
+  '198-3': '曹操围吕布于下邳，决泗水、沂水灌城月余。部将宋宪魏续缚陈宫降曹，吕布白门楼受缢。张辽降曹，徐州底定。',
+
+  // 200 Battle of Guandu
+  '200-0': '董承等衣带诏事泄被族诛。曹操亲征刘备，刘备奔邺城投袁绍，关羽下邳被围，为保二嫂暂降曹操。',
+  '200-1': '白马之战，关羽策赤兔马冲阵，斩颜良于万众之中；延津之战曹操以诱饵计阵斩文丑。关羽挂印封金，千里走单骑寻刘备。',
+  '200-2': '八月袁绍进逼官渡，筑土楼俯射曹营，曹军造发石霹雳车摧毁敌楼。两军堑壕相持，曹军粮少兵疲，危在旦夕。',
+  '200-3': '十月袁绍谋士许攸叛降，曹操跣足相迎。曹操亲引五千精骑夜袭乌巢，放火焚尽万车军粮。袁军十万土崩瓦解，河北霸业尽付尘土。',
+
+  // 208 Red Cliffs
+  '208-2': '秋七月曹操引兵大举南征荆州，八月刘表卒，九月刘琮降曹。刘备携十万襄樊百姓南渡汉水，赵云当阳单骑救幼主，张飞断后当阳桥。',
+  '208-3': '冬十一月孙刘联军定苦肉计、借东风。黄盖引二十艘蒙冲火船突撞曹军水寨，长江烈焰八百里，曹操溃败华容道，天下三分之势成型。',
+
+  // 214 Liu Bei enters Chengdu
+  '214-1': '庞统落凤坡阵亡，诸葛亮、张飞、赵云溯江西进。刘备大军合围成都数十日，刘璋开门降汉，刘备自此据有益州天府之国。',
+
+  // 217 Jian'an Great Epidemic
+  '217-3': '建安二十二年冬，中原伤寒大疫暴发，家家有僵尸之痛，室室有号泣之哀。建安七子中徐干、陈琳、应玚、刘桢同卒于疫。',
+
+  // 219 Guan Yu flood & Fall of Jingzhou
+  '219-2': '秋八月霖雨暴溢，关羽水淹于禁七军，擒于禁，斩庞德，降卒三万，威震华夏，曹操欲迁都避其锋芒。',
+  '219-3': '冬十月孙权使吕蒙身着白衣伪装商船偷袭荆州，糜芳傅士仁降吴。关羽回师被断，败走麦城突围中伏遇害。',
+
+  // 220 Han Dynasty Ends
+  '220-0': '正月魏王曹操卒于洛阳，享年六十六岁。曹丕嗣位为魏王丞相。',
+  '220-3': '冬十月汉献帝于繁阳受禅台禅位，曹丕即位皇帝，改国号为魏，黄初改元。四百年大汉天下正式告终。',
+
+  // 222 Battle of Yiling
+  '222-1': '章武二年盛夏，刘备伐吴连营七百里。吴大都督陆逊坚壁清野，夜半顺风纵火，蜀汉大军瓦解，先主败退白帝城。',
+
+  // 223 Liu Bei passes at Baidi
+  '223-0': '夏四月汉昭烈帝刘备病笃于永安宫，召丞相诸葛亮托孤：“君才十倍曹丕，必能安国，若嗣子可辅，辅之；如其不才，君可自取。”',
+
+  // 228 Zhuge Liang Northern Expedition
+  '228-0': '建兴六年春，诸葛亮上一出师表率军出祁山，天水姜维归汉。张郃拔街亭，马谡违节失道，孔明拔西县民还汉中，挥泪斩马谡。',
+
+  // 234 Wuzhang Plains
+  '234-2': '秋八月，诸葛亮第五次北伐相持于五丈原百余日，积劳成疾。陨星如斗坠于蜀营，武乡侯病殁五丈原，蜀军从容退回汉中。',
+
+  // 249 Gaoping Tomb Incident
+  '249-0': '正月初六，魏少帝曹芳谒高平陵，大将军曹爽兄弟皆从。太傅司马懿称病发难，闭洛阳城门指洛水为誓，旋即夷曹爽三族，魏柄尽归司马。',
+};
+
+export function getSeasonalEvent(
+  year: number,
+  season: SeasonIndex,
+  age: number,
+  profile: PersonProfile,
+  stats: Attributes
+): SeasonalEvent {
+  const province = PROVINCES.find((p) => p.id === profile.currentProvince) || PROVINCES[0];
+  const seasonCfg = SEASONS_CONFIG[season];
+  const lunarYear = getLunarYearName(year);
+
+  // 1. Macro History lookup or procedural fallback
+  const macroKey = `${year}-${season}`;
+  let macroText = SEASONAL_MACRO_EVENTS[macroKey];
+  if (!macroText) {
+    const genericSeasonalMacros: Record<SeasonIndex, string[]> = {
+      0: [
+        '初春雪融，各州郡春耕发种，诸侯安民葺甲，烽火暂敛。',
+        '春回大地，官府行春令催办户籍农课，草莽盗贼稍歇。',
+        '孟春之岁，朝廷大射祈谷，天下饥民盼得一载丰润。',
+      ],
+      1: [
+        '盛夏烈日焦土，江南江北汛水偶涨，四方军马休养士卒于阴凉营寨。',
+        '夏日多暴雨溽热，郡县防洪筑堤，市集丝布盐酪交易繁密。',
+        '溽暑炎炎，各方斥候飞骑于官道往来探查敌情，边境关卡盘查严密。',
+      ],
+      2: [
+        '金风肃杀，秋麦割尽归仓，各路诸侯征粮充实府库，常闻边塞战马长嘶。',
+        '秋高气爽，塞外胡马草肥，幽并凉州防边甚急，中原军民忙于秋收纳赋。',
+        '霜降木落，四野萧疏，郡县兵马调发演阵，兵戈之气渐浓。',
+      ],
+      3: [
+        '朔风凛冽，大雪纷飞，四野冰封。军马收营过冬，百姓闭门围炉烤火。',
+        '岁暮严寒，各家宰牲除祟备迎元旦，天寒流民乞求片瓦藏身。',
+        '冬日河封，南北漕运暂停，乡民合族分粮祭祖，共度严冬残岁。',
+      ],
+    };
+    const arr = genericSeasonalMacros[season];
+    macroText = arr[(year + season) % arr.length];
   }
 
-  // Personal story & choices based on age
+  // 2. Regional Impact
+  let regionalText = '';
+  if (province.id === 'JIZHOU' && year <= 185) {
+    regionalText = `${seasonCfg.name}日里，巨鹿四野皆是裹黄头巾之人，官军与道徒攻杀不停，【${profile.county}】城门白昼紧闭。`;
+  } else if (province.id === 'XUZHOU' && (year === 193 || year === 194) && season >= 2) {
+    regionalText = `曹公东征徐州，拔数十城，【${profile.county}】城外泗水漂浮死尸，鸡犬不鸣，四境凄风惨雨。`;
+  } else if (province.id === 'YANZHOU' && year === 194 && season === 1) {
+    regionalText = `夏日飞蝗自东狂卷而来，树皮草根食尽，郡内大饥，人相食，乡邻为争一捧草籽拔刀相向。`;
+  } else if (province.id === 'LUOYANG' && year === 190 && season === 1) {
+    regionalText = `洛阳宫阙火势连绵两百里，烟焰蔽日，董卓驱赶数百万老弱西行，哭声盈野，家园毁于一旦。`;
+  } else if (province.id === 'JIAOZHOU') {
+    regionalText = `${seasonCfg.name}节的交州海风习习，士使君保境安民，番禺港舶船带来南洋象牙与胡椒，百姓不知北国兵燹。`;
+  } else if (province.id === 'JINGZHOU' && year >= 191 && year <= 207) {
+    regionalText = `荆襄九郡土地膏腴，刘使君抚循流民，【${profile.county}】水稻桑麻丰茂，避乱名士在溪桥书声琅琅。`;
+  } else if (province.id === 'LIANGZHOU') {
+    regionalText = `边关${seasonCfg.name}风卷寒沙，韩遂马腾骑队巡掠要隘，郡中民户皆带弓箭自卫，不敢轻出长城。`;
+  } else {
+    regionalText = `【${profile.county}】这一${seasonCfg.name}季物价稍有起伏，县吏差徭按期征发，乡老在村头槐树下议论天下战事。`;
+  }
+
+  // 3. Personal Story & Life Choices
   let personalStory = '';
   let choice: { prompt: string; options: LifeChoice[] } | undefined = undefined;
 
+  // Age 0: Birth season & infant survival
   if (age === 0) {
-    personalStory = `公元184年（中平元年），你在【${province.provinceName}·${profile.commandery}·${profile.county}】降生。接生婆用热水洗净你身上的血污，父亲${profile.fatherName}在堂前焚了一束草香祈祷。母亲${profile.motherName}脸色苍白地将你抱入怀中。这一年，你只是浩荡乱世里微不足道的一个婴儿。`;
-  } else if (age === 1) {
-    personalStory = `刚满一岁，天寒大雪，家中柴炭不足，母亲整夜把你裹在胸口温热的旧絮棉袍里。你因水土不服腹泻数日，险些未能撑过中平二年的严冬。`;
-  } else if (age === 3) {
-    personalStory = `你在泥地里学会了小跑。父亲在后园挖野草根，母亲在檐下纺粗麻。偶尔有官府的飞马使者从村前官道疾驰而过，马蹄扬起半天黄尘。`;
-  } else if (age === 5) {
-    personalStory = `五岁这年，你跟着邻家小孩去捉蛐蛐。在村口枯树下，你看见一队佩刀带弓的败军经过，其中一人将咬了一半的干硬麦饼扔在地上，几个饥民扑上去撕咬。`;
-  } else if (age === 7) {
-    // Choice 1: Boyhood path
-    personalStory = `你年满七岁，按汉家规矩已到辨识是非之年。家里商量你的出路。`;
+    if (season === 0) {
+      personalStory = `公元184年孟春正月，你在【${province.provinceName}·${profile.commandery}·${profile.county}】一间破瓦草屋中呱呱坠地。父亲${profile.fatherName}在门首插了一根柳枝驱邪，母亲${profile.motherName}虚弱地给你喂了一口温米汤。外头春寒未散，冰凌滴水，你来到这个人世间了。`;
+    } else if (season === 1) {
+      personalStory = `四月入夏，天气转热。母亲${profile.motherName}抱着你坐在槐树荫下纳凉赶蚊。隔壁村子传来黄巾贼打劫大户的喧闹声，父亲把门板用粗木死死顶住。`;
+    } else if (season === 2) {
+      personalStory = `秋风初起，高粱熟了。村里被官府抽走两人去广宗前线推车，母亲把你背在后背上在麦场拾麦穗，你睁着大眼睛咿呀学语。`;
+    } else {
+      personalStory = `冬雪纷飞，你度过了人生的第一个年关。天寒地冻，柴炭稀缺，父亲在土灶里烧野草给你烘热襁褓，全家人紧挨在一起取暖。`;
+    }
+  } else if (age === 3 && season === 0) {
+    personalStory = `三岁春，你迈着小短腿跟在姐姐身后在田埂上捉泥鳅。泥水溅了一身，母亲笑着拿粗布替你擦洗小花脸。体魄+2。`;
+  } else if (age === 5 && season === 2) {
+    personalStory = `五岁秋，洛阳大乱的消息传到乡间。一队疲惫不堪的败兵穿过村子，抢走了邻居家的两只老母鸡。你躲在柴垛后屏住呼吸，第一次见到了明晃晃的环首刀。`;
+  } else if (age === 7 && season === 0) {
+    // Choice: 7yo path
+    personalStory = `七岁春，汉家有“七岁学书数”之制。家里商量你的出路。`;
     choice = {
-      prompt: '七岁这一年，面对飘摇的家境，你更愿意把心思放在何处？',
+      prompt: '七岁阳春，面对艰辛的家境，你打算如何打发童年岁月？',
       options: [
         {
-          id: 'c_age7_farm',
-          label: '帮家里放牛割草，扛起农活与生计',
-          description: '做个懂事的苦力孩子，分担父母艰辛，强筋健骨。',
-          statChanges: { health: 8, martial: 4, virtue: 4 },
-          outcomeText: '你晒得黝黑壮实，手脚麻利，村里长辈都夸你是个孝顺肯吃苦的好后生。',
+          id: 'c_age7_cattle',
+          label: '在山坡田头替大户放牛割草，补贴家用',
+          description: '做个踏实懂事的苦力孩子，强筋健骨，分担父母重担。',
+          statChanges: { health: 6, martial: 4, virtue: 4 },
+          outcomeText: '你在日光下晒得黝黑壮实，熟知山野草木，村中老少都夸你是个本分孝顺的好孩子。',
         },
         {
-          id: 'c_age7_read',
-          label: '在乡里私塾窗下偷听老先生讲《孝经》与识字',
-          description: '借树枝在泥地上画字，即便买不起简牍，也渴望明白道理。',
+          id: 'c_age7_study',
+          label: '站在乡里私塾窗外偷听老秀才讲授《孝经》与《千字文》',
+          description: '用枯树枝在地上划土练字，渴望明晓是非经义。',
           requirements: { intellect: 35 },
           statChanges: { intellect: 10, virtue: 6, wealth: -2 },
-          outcomeText: '私塾老先生见你心诚，破例免你修脯，教你辨识了两百个常用篆隶汉字。',
+          outcomeText: '塾师见你心诚，收了你两斤干红薯作修脯，教你辨认了三百个隶书汉字。',
         },
         {
-          id: 'c_age7_play_fight',
-          label: '召集村里野小子玩“官军捉贼”，练习削木刀木弓',
-          description: '天生好勇斗狠，爱听行脚商人讲名将勇冠三军的传奇故事。',
+          id: 'c_age7_brawl',
+          label: '领着村里顽童削木刀演练“官军捉贼”，争当孩子王',
+          description: '生性胆壮，喜好听客商讲述吕布、关张万人敌的英雄故事。',
           statChanges: { martial: 8, health: 6, virtue: -2 },
-          outcomeText: '你成了村里十几个野小子的孩子王，爬树掷石百发百中，胆气渐长。',
+          outcomeText: '你成了四乡八邻顽童的领头，上树摸鸟、下水摸鱼，胆魄过人。',
         },
       ],
     };
-  } else if (age === 10) {
-    personalStory = `十岁这年，天下大乱日深，十室九空。母亲患了咳喘之疾，家中拿不出两百钱买草药。你在县城药铺门口徘徊。`;
+  } else if (age === 10 && season === 2) {
+    // Choice: 10yo Autumn crisis
+    personalStory = `十岁金秋，母亲染上了咳喘虚热之疾，日渐消瘦。县城药铺掌柜索银六百钱，家中断无积蓄。`;
     choice = {
-      prompt: '母亲久病不愈，药铺掌柜不肯赊账，你将如何应对？',
+      prompt: '母亲久病咳血，家中无银购药，面对危局你作何打算？',
       options: [
         {
-          id: 'c_age10_gather_herbs',
-          label: '上荒山峭壁，照着图样亲自去寻采野生桔梗与柴胡',
-          description: '冒着滑落山崖与野兽的危险，为母亲采药。',
-          statChanges: { health: -4, virtue: 12, intellect: 4, fortune: 5 },
-          outcomeText: '你的鞋底磨穿了，满手荆棘血痕，终于采得两株老草药煎汤，母亲喝下后热退神清，抱你痛哭。',
+          id: 'c_age10_herb',
+          label: '腰缚草绳攀爬荒山绝壁，亲自搜寻野生桔梗与柴胡',
+          description: '冒跌落悬崖与猛兽毒蛇之险，全凭一片赤诚孝心。',
+          statChanges: { health: -4, virtue: 12, intellect: 4, fortune: 6 },
+          outcomeText: '手脚划出道道血口，终于采得数株陈年紫草与金银花，煎汤服下后母亲热退神清，抱你垂泪。',
         },
         {
           id: 'c_age10_apprentice',
-          label: '在药铺跪下给掌柜磕头，自愿充当三年杂役挑水切药',
-          description: '以童工之身换取药资，顺便偷学切药煎汤的本事。',
-          statChanges: { intellect: 8, wealth: 4, virtue: 4, health: 2 },
-          outcomeText: '掌柜叹了口气，给了你一副柴胡汤，自此你在药坊里做了三年药童，辨识了百余味本草。',
+          label: '跪在城内济世药铺门前，求掌柜收为三年杂役挑水切药换药材',
+          description: '以三年童工之身换取汤药，顺便偷学药理本草。',
+          statChanges: { intellect: 8, wealth: 4, virtue: 6 },
+          outcomeText: '掌柜感你仁孝，赠了三副柴胡汤，并在药坊传授你辨认川贝、当归与黄芪的本草之术。',
         },
         {
-          id: 'c_age10_beg',
-          label: '向邻近的大户豪强门前哀告叩头乞求施舍',
-          description: '放下尊严乞讨，只求救活至亲。',
-          statChanges: { virtue: 4, wealth: 2, fortune: -2 },
-          outcomeText: '大户门丁扔出几个铜钱将你轰走，虽解了燃眉之急，但豪强家奴的冷眼让你刻骨铭心。',
+          id: 'c_age10_borrow',
+          label: '向乡里放高利贷的豪强大户立下借券借粮换药',
+          description: '先救至亲性命，哪怕日后加倍做牛做马偿还。',
+          statChanges: { wealth: -8, virtue: 4, fortune: -2 },
+          outcomeText: '解了燃眉之急，但也欠下大户沉重债务，从此每年秋后都须去豪强田庄无偿做苦工。',
         },
       ],
     };
-  } else if (age === 14) {
-    personalStory = `十四岁成丁前夕，官府清查户籍簿。北方曹公行屯田，徐扬割据自守，到处需要青壮劳力与戍卒。`;
+  } else if (age === 14 && season === 1) {
+    // Choice: 14yo Adult path
+    personalStory = `十四岁夏，行将成丁束发。官府查验户籍簿，各方诸侯四处征收力役。`;
     choice = {
-      prompt: '行将弱冠之年，面对乱世茫茫前路，你打算迈出哪一步？',
+      prompt: '成丁立身之际，你打算以何等行当开始养家糊口？',
       options: [
         {
           id: 'c_age14_blacksmith',
-          label: '去县里铁匠铺打杂，学习锻造刀矛与农具',
-          description: '乱世之中，铁匠最受各方尊重，既能修犁锄，也能打刀甲。',
+          label: '在县城铁匠铺拜师，学习锻造环首长刀与农耕犁头',
+          description: '乱世铁匠吃香，既能打造农具，亦能修造兵甲。',
           statChanges: { martial: 8, health: 8, wealth: 6 },
-          outcomeText: '你在铁炉旁挥锤三年，膀臂练得粗壮如铁，打造的环首短刀锋利耐磨，渐有名声。',
+          outcomeText: '炉火映红了你的脸膛，三年抡锤练得浑身精肉，打造的短刀削铁如泥，备受好评。',
         },
         {
-          id: 'c_age14_caravan',
-          label: '跟随同乡行商的骡队，走水路往南方贩运土产',
-          description: '走南闯北，多见世面，虽有匪患水贼之险，但利市丰厚。',
+          id: 'c_age14_boatman',
+          label: '投效江河船帮，随运粮商船南下江东贩卖土特',
+          description: '走南闯北，多长见识，江河虽有风浪，但利钱颇丰。',
           statChanges: { wealth: 14, intellect: 8, health: -4, fortune: 4 },
-          outcomeText: '你顺江而下见识了荆襄的繁华与江东的水网，学会了与市吏差役周旋，兜里有了几块碎银。',
+          outcomeText: '你随船历经长江与汉水，熟悉了水流暗礁，还学会了与水贼及关税差役打交道。',
         },
         {
-          id: 'c_age14_clerk',
-          label: '投效县衙户曹，帮老书吏抄写户籍与钱粮账目',
-          description: '吃公家一口杂粮粥，结交县里三老与亭长。',
+          id: 'c_age14_scribe',
+          label: '在县衙户曹当一名书办抄手，登记粮库流水账目',
+          description: '吃官家一口薄粥，结交里正亭长，明晓律令规矩。',
           requirements: { intellect: 45 },
           statChanges: { intellect: 12, wealth: 6, virtue: 4 },
-          outcomeText: '你写得一手端正汉隶，算盘粮账毫厘不差，连县丞都记住了你的名字。',
+          outcomeText: '你写得一手整饬的汉隶，账目明晰，县丞夸你是个可用之才。',
         },
       ],
     };
-  } else if (age === 18) {
-    // Conscription or Refuge crisis
-    personalStory = `十八岁这年，诸侯征兵檄文下达，每个村落必须出丁二人随大军运粮。或者，你也可以选择逃荒远离兵戈。`;
+  } else if (age === 18 && season === 2) {
+    // Choice: 18yo Conscription
+    personalStory = `十八岁秋，战火逼近。县里铜锣敲响，长官按籍点卯，一村之中必须抽丁两人随军出征。`;
     choice = {
-      prompt: '征兵鼓声在村头敲响，县吏带着刀手按籍捉人，你作何决断？',
+      prompt: '点兵鼓声震天，差役腰悬皮鞭按名拿人，你作何决断？',
       options: [
         {
-          id: 'c_age18_serve_soldier',
-          label: '慨然应征入伍，扛起长矛做一名行伍步卒',
-          description: '好男儿去战阵上博个前程，哪怕马革裹尸，也比饿死强！',
-          statChanges: { martial: 12, health: 4, wealth: 4, fortune: -4 },
-          outcomeText: '你披上粗布号衣，手持丈二白蜡杆长矛，排着队列踏出城门。母亲追了三里地，往你怀里塞了两个粗面馒头。',
+          id: 'c_age18_frontline',
+          label: '扛起丈二长矛应征入伍，做一名冲锋陷阵的行伍步卒',
+          description: '男儿横刀走战阵，博个军功光宗耀祖，总胜过饿死沟壑！',
+          statChanges: { martial: 14, health: 4, wealth: 4, fortune: -4 },
+          outcomeText: '穿上破旧皮甲，端起长枪开拔出营。母亲追着队列送了十里，将一包故乡热土塞入你怀里。',
           fatalCheck: (st) => {
             if (st.health < 25 && st.martial < 35) {
-              return { isFatal: true, deathReason: '入伍第一年随军远征，因霍乱暴病阵亡于军中。' };
+              return { isFatal: true, deathReason: '从军第一年随大军远征，因暴发水土不服霍乱，殁于荒野大营。' };
             }
             return null;
           },
         },
         {
-          id: 'c_age18_serve_logistics',
-          label: '主动申请充当后方运粮夫，推独轮小车转运军粮',
-          description: '运粮虽苦虽累，但不直面敌阵刀枪，存活机会稍大。',
+          id: 'c_age18_logistics',
+          label: '主动申请充当后方运粮夫，推独轮小车跋涉山川运米',
+          description: '运粮虽苦不堪言，但无需首当其冲面对敌军刀矛箭雨。',
           statChanges: { health: 6, virtue: 6, wealth: 2 },
-          outcomeText: '你推着吱呀作响的独轮车，日行五十里运送麦米，脚板起满老茧，在后勤营地结识了各州民夫。',
+          outcomeText: '车轮吱呀响彻古道，你脚磨起无数血泡，在后营运粮数月，结识了各方豪爽民夫。',
         },
         {
           id: 'c_age18_flee_south',
-          label: '变卖家当，连夜携全家老小南逃荆襄避难',
-          description: '不掺和中原诸侯厮杀，南渡汉水投奔刘表治下的襄阳。',
+          label: '典当破房薄田，连夜护持全家老少南逃荆襄避乱',
+          description: '避开诸侯混战泥潭，前往刘景升治下的安宁乐土。',
           statChanges: { wealth: -10, virtue: 8, fortune: 8, health: -4 },
-          outcomeText: '历经两千里艰难跋涉，你终于带全家逃到了襄阳城外。虽丢了故土田宅，但全家人得以在草亭下安顿下来。',
+          outcomeText: '跋山涉水两千里，终于安然抵达襄阳。一家人在水边搭起茅屋，免去兵戈杀戮之苦。',
         },
       ],
     };
-  } else if (age === 24) {
-    // Marriage / Family Life
-    personalStory = `二十四岁。乱世人命苦短，乡邻见你勤恳踏实，有老翁上门为你提亲。女家是邻村的刘氏女，勤俭温柔。`;
+  } else if (age === 24 && season === 0) {
+    // Choice: 24yo Marriage
+    personalStory = `二十四岁阳春。乡邻见你为人诚笃勤奋，有村老主动为你做媒，说合邻庄勤谨温厚的刘氏女子。`;
     choice = {
-      prompt: '面对媒妁提亲，你是否成家？',
+      prompt: '草民成家之机，你是否应允这门亲事？',
       options: [
         {
           id: 'c_age24_marry',
-          label: '欣然应允，拿出积攒多年的两千钱与布匹下聘成婚',
-          description: '成家立业，在这风雨飘摇的乱世里寻一个温暖的归宿。',
+          label: '拿出多年积攒的二千铜钱与四匹粗布，下聘迎娶刘氏为妻',
+          description: '在这风雨飘摇的人间，为自己寻一个相濡以沫的温存港湾。',
           statChanges: { virtue: 10, health: 6, wealth: -12 },
-          outcomeText: '青芦草席，两杯浊酒。红烛下你与刘氏结为夫妻，次年为你生下一个白胖的儿子，茅屋中有了欢声笑语。',
+          outcomeText: '两盏浊酒，红烛摇曳。你与刘氏结发为夫妻，茅屋之中从此有了炊烟笑语。次年为你添了麟儿。',
         },
         {
-          id: 'c_age24_postpone',
-          label: '天下未定身家飘摇，婉拒婚事，专注积蓄钱粮防荒',
-          description: '深知兵祸无常，养活自己尚且艰难，不敢轻易拖累妇孺。',
-          statChanges: { wealth: 14, intellect: 6, virtue: -2 },
-          outcomeText: '你将钱财换购了数石麦米与十斤干腊肉藏于地窖中，一心防备未来的荒年。',
+          id: 'c_age24_hoard_grain',
+          label: '婉言谢绝媒人，专心置办地窖藏购干粮肉干以防荒乱',
+          description: '世道险恶战乱无常，不敢轻易拖累妻儿妇孺。',
+          statChanges: { wealth: 16, intellect: 6, virtue: -2 },
+          outcomeText: '你将积蓄换成了数十石高粱大麦深埋地窖，在这乱世为自己攒下了一道保命屏障。',
         },
       ],
     };
-  } else if (age === 33) {
-    // Epidemic or Historical Encounter
-    personalStory = `三十三岁（建安年间）。中原流行大疫（伤寒病），十户之中九户发热，邻近数村哭声相闻，连朝廷名流都未能幸免。`;
+  } else if (age === 33 && season === 3) {
+    // Choice: 33yo Great Epidemic (Winter)
+    personalStory = `三十三岁严冬（建安年间）。中原大疫暴发，家家户户高烧不退，棺木售空，哭声连夜不绝。你与家人也浑身酸痛发热。`;
     choice = {
-      prompt: '瘟疫在县内蔓延，你与家人也隐隐感到发热体虚，该如何自救？',
+      prompt: '伤寒恶疾袭来，全家高热战栗，你该如何救全家人性命？',
       options: [
         {
-          id: 'c_age33_zhang_remedy',
-          label: '按南阳张仲景流传的“当归生姜羊肉汤/麻黄汤”古方煎熬草药',
-          description: '相信名医方剂，不信巫鬼符水，采买生姜干葱重汤发汗。',
+          id: 'c_age33_soup',
+          label: '遵南阳张仲景医书所传“当归生姜羊肉汤 / 麻黄汤”熬煮浓汁痛饮',
+          description: '信名医方剂，重姜葱发汗退热，不事巫鬼。',
           requirements: { intellect: 40 },
           statChanges: { health: 12, intellect: 8, wealth: -6 },
-          outcomeText: '一碗热汤灌下，大汗淋漓！次日烧退神清，你还用此法救治了隔壁三户邻里，乡里尊你为长者。',
+          outcomeText: '一碗浓汤灌下，通体大汗淋漓！次日热退骨安，你还将此法传授给隔壁邻舍，活人无数。',
         },
         {
-          id: 'c_age33_seal_doors',
-          label: '闭门锁户，杜绝走访，在门外泼洒石灰与艾草烟熏',
-          description: '采取最严格的防避隔离之策，耐心等待瘟疫平息。',
+          id: 'c_age33_quarantine',
+          label: '闭门绝客，庭院遍洒生石灰，燃艾草熏蒸屋角',
+          description: '坚决执行严苛隔离之策，耐心挨过冬寒疫期。',
           statChanges: { health: 8, wealth: -4 },
-          outcomeText: '虽然家中存粮耗尽大半，但全家老小无一人染上恶疾，平安渡过了这场建安大劫。',
+          outcomeText: '虽然家中存粮耗损大半，但一家老小无一人病殁，安然熬过了这场建安大劫。',
         },
         {
           id: 'c_age33_pray',
-          label: '前往道观求取符水与神符焚化吞服',
-          description: '随大流求神拜佛，祈祷上苍保佑。',
+          label: '随众去道观求取黄纸符水焚化吞服祈福',
+          description: '求神问卜，听天由命。',
           statChanges: { health: -14, fortune: -4 },
-          outcomeText: '符水无用，你发热卧床整整两个月，形销骨立，险些一命呜呼，大病初愈后落下了气喘的毛病。',
+          outcomeText: '符水无济于事，你连烧了二十日，险些一命呜呼，病愈后落下了肺经喘咳之疾。',
           fatalCheck: (st) => {
             if (st.health < 28) {
-              return { isFatal: true, deathReason: '建安年间伤寒暴发，病重无药，高热抽搐而终。' };
+              return { isFatal: true, deathReason: '建安伤寒大疫蔓延，高热抽搐无药可医，殁于榻上。' };
             }
             return null;
           },
         },
       ],
     };
-  } else if (age === 45) {
-    // Midlife milestone
-    personalStory = `四十五岁。大汉已亡，魏蜀吴三分天下。你的鬓角渐渐花白，儿女渐渐长大。村里的年轻人都来向你请教当年黄巾董卓旧事。`;
+  } else if (age === 45 && season === 2) {
+    // Choice: 45yo Mature Autumn
+    personalStory = `四十五岁秋。大汉已终，魏蜀吴各自立国。你的双鬓渐染秋霜，儿女业已成人，乡邻遇事常来听取你的主见。`;
     choice = {
-      prompt: '步入知命之年，你打算如何安度余生？',
+      prompt: '步入知命之年，你打算如何安顿往后春秋？',
       options: [
         {
-          id: 'c_age45_village_elder',
-          label: '出任乡里三老，主持乡饮酒礼与调解田宅争端',
-          description: '为人公允，积德行善，成为地方上德高望重的老前辈。',
+          id: 'c_age45_elder',
+          label: '出任乡党三老，秉公主持乡饮与调息邻里争端',
+          description: '立德行仁，成为地方受人敬重的大长辈。',
           statChanges: { virtue: 14, intellect: 6, wealth: 4 },
-          outcomeText: '县令每逢巡乡都要下轿向你揖礼问政，邻里有纷争只要你一句话便能和息，威望极高。',
+          outcomeText: '县长巡行过村亦下车揖手相问，邻里田宅口角只要你一言便冰释前嫌，威望日隆。',
         },
         {
-          id: 'c_age45_trade_farm',
-          label: '扩建屋舍田垄，督促子孙勤恳耕织屯粮',
-          description: '置办了二十亩水浇地与一间榨油坊，为子孙打下踏实家底。',
+          id: 'c_age45_farm_expand',
+          label: '督导子孙辛勤整修水田，建起榨油碾米水磨坊',
+          description: '为子孙打下扎实家私产业，家道殷实。',
           statChanges: { wealth: 18, health: 4 },
-          outcomeText: '家道殷实，仓有余粮，鸡犬相闻。在历经百年离乱的土地上，你创造了一片安稳的小天地。',
+          outcomeText: '家中谷满仓、猪羊满圈。在数十载离乱沧桑之后，你守护住了一大家子的安稳烟火。',
         },
         {
-          id: 'c_age45_woodcarve',
-          label: '闲暇时用桑木雕刻玩具与乐器，教村童唱汉末民谣',
-          description: '笑看人间几多英雄梦，都付浊酒笑谈中。',
+          id: 'c_age45_music',
+          label: '手刻竹笛短箫，常在老槐树下为村童吹奏汉末民谣',
+          description: '浮名利禄皆浮云，寄情山水乐道知命。',
           statChanges: { virtue: 10, health: 8, fortune: 6 },
-          outcomeText: '村头老槐树下，你手抚短笛，夕阳将你的影子拉得很长很长。孩子们围着你拍手唱跳。',
+          outcomeText: '夕阳斜照，箫声悠扬穿过田野，孩子们拍手欢唱，你心中一片宁静淡泊。',
         },
       ],
     };
-  } else if (age >= 60) {
-    // Old age
-    personalStory = `六十有余。三国末期，故人多半雕零。你坐在屋前藤椅上晒着温暖的冬阳，膝下已有孙儿绕膝奔跑。你亲眼目睹了东汉王朝的崩塌、三国的角逐与历史的风云变幻。`;
+  } else if (age >= 60 && season === 3) {
+    // Choice: 60yo Winter retrospective
+    personalStory = `年逾花甲，寒冬初雪。三国的枭雄老将皆已作古，你坐在柴火盆旁烤红薯，膝下孙儿拉着你的衣襟，问起当年赤壁与官渡的烽火。`;
     if (age === 60) {
       choice = {
-        prompt: '花甲之年，孙儿好奇地问起当年赤壁与官渡的大战，你叹息着说道：',
+        prompt: '孙儿仰着稚嫩的小脸问：“爷爷，当年那些大英雄大人物到底争的是什么呀？”',
         options: [
           {
-            id: 'c_age60_peace',
-            label: '“什么霸业雄图，都不如家家烟囱有米饭香。”',
-            description: '看透了征伐的虚妄，唯愿后代永不再经兵燹之苦。',
+            id: 'c_age60_ordinary',
+            label: '“什么开疆拓土，都比不上一锅热饭、一家齐整。”',
+            description: '看透了霸业功名背后的森森白骨，深知平淡之珍贵。',
             statChanges: { virtue: 12, intellect: 8 },
-            outcomeText: '孙儿似懂非懂地点了点头。那一晚，你睡得格外安详香甜。',
+            outcomeText: '孙儿似懂非懂地咬着红薯重重点头。那一晚，你睡得格外平静香甜。',
           },
           {
-            id: 'c_age60_chronicle',
-            label: '拿出一卷泛黄的羊皮残卷，将自己一生的亲历写成《家训》留给后世',
-            description: '以普通人的双眼，记录这六十年的真实血泪与坚持。',
+            id: 'c_age60_record',
+            label: '取出珍藏多年的粗麻纸，就着油灯把六十年真实见闻口述记为家谱',
+            description: '以一个平凡生灵的双眼，留存这大乱甲子最真实的血泪印记。',
             statChanges: { intellect: 14, virtue: 8 },
-            outcomeText: '这卷写在粗麻纸上的文字，后来被收录进《后汉草民别录》中，成为后代史官了解民间最珍贵的一手文献。',
+            outcomeText: '这卷写在粗纸上的草民笔记，后来成为后世史官考求汉末民间世相最弥足珍贵的文献。',
           },
         ],
       };
+    } else {
+      personalStory = `岁末严寒，子孙绕膝端茶添炭。你见证了大汉的倾覆与群雄的凋零，在这动荡乱世中安度晚年，实乃天之大幸。仁厚+2，体魄-1。`;
     }
   } else {
-    // Normal year progression
-    const normalPhrases = [
-      `这一年风调雨顺，你与家人抢收了秋麦，交完官租后，地窖里还有两缸麦子。体魄+2，家资+1。`,
-      `这一年夏大旱，县里水渠干涸，你通宵在田头守水车车水浇禾，虽然疲惫，但禾苗保住了。体魄+1，家资+2。`,
-      `县里新来了一任刺史，加征了绢帛税。你帮着邻舍修理了破败的屋顶，邻舍送了你半篓干鱼。仁厚+2。`,
-      `这一年春寒料峭，你偶感风寒，卧床半月，喝了村口姜老汉的红糖葱白汤才渐渐好转。体魄-1。`,
-      `远处又在打仗，官府征发民夫的差役在邻村抓人，好在你所在的地方因修河堤得以缓役。家资+1。`,
-      `你起早贪黑在集市上卖掉了几捆编织的竹篾筐，换得了三斤盐和半斤生铁。家资+2，识见+1。`,
-      `秋夜微凉，你坐在门槛上听过路的走方郎中闲聊，听说魏王曹丕称帝，蜀主刘备也登基了。识见+2。`,
-      `这一年安宁无事，冬日大雪封门，一家人围着炭火盆烤红薯，听老人讲当年光武皇帝中兴的旧话。仁厚+2，体魄+2。`,
-    ];
-    personalStory = normalPhrases[age % normalPhrases.length];
+    // Normal seasonal civilian experiences
+    const seasonalLifePhrases: Record<SeasonIndex, string[]> = {
+      0: [
+        `初春细雨润麦苗，你扛着农具在晨雾中除草培土，双手布满老茧，但麦穗长势喜人。体魄+1，家资+1。`,
+        `春风吹开漫山野花，你与邻家伙伴在溪边采得鲜嫩荠菜与春笋，煮了一锅热腾腾的野菜汤。仁厚+1。`,
+        `县城开春集市，你随车去卖了几篓竹编器具，换得一升粗盐与半匹土布。家资+1，识见+1。`,
+        `春寒料峭，偶染小恙，母亲煎了姜汤葱白，发了一场大汗便好了。体魄+1。`,
+      ],
+      1: [
+        `入夏雷雨连绵，山溪暴涨，你与乡邻连夜挑土加固堤坝，护住了全村百亩秧田。体魄+1，仁厚+1。`,
+        `盛夏酷暑难耐，你在树荫下编制蒲草凉席，偶有南来客商在井边讨水喝，送了你几个北方干枣。识见+1。`,
+        `梅雨季节屋顶漏雨，你冒雨爬上屋顶换上新茅草，虽然衣衫湿透，但屋内安然无恙。体魄+1。`,
+        `夏日田头捕得几条大鲤鱼，全家人大快朵颐，晚风吹拂稻香四溢。家资+1。`,
+      ],
+      2: [
+        `金秋霜降，黄澄澄的谷子割倒了一片又一片，连枷声声响彻晒谷场，全家抢收归仓。体魄+1，家资+2。`,
+        `秋风萧瑟，官府差役进村征收算赋，幸得家中余粮充足，顺利交齐租赋。家资-1，名望+1。`,
+        `重阳佳节，你与亲友登上北山采茱萸，饮了一杯自酿的菊花浊酒，遥望远方烽燧长烟。仁厚+1，识见+1。`,
+        `秋高气爽，收割完毕后你在麦茬地里放牧牛羊，望着大雁往南飞去。心境怡然，体魄+1。`,
+      ],
+      3: [
+        `初雪覆瓦，檐下垂冰。全家人围在火盆前烤干苞谷，听祖辈讲述当年光武皇帝昆阳大战的传奇。仁厚+1。`,
+        `岁末腊月，乡中合杀了一头年猪，家家分得两斤肥肉，腌制腊肉以备新年。家资+1。`,
+        `大雪封路数日，你在草棚中修补耕犁与板车，静待来年开春。识见+1。`,
+        `除夕之夜，村中燃起爆竹驱除山魈恶鬼，全家围坐饮椒柏酒，祈愿来年风调雨顺、少有兵火。体魄+1，气数+1。`,
+      ],
+    };
+
+    const phrases = seasonalLifePhrases[season];
+    personalStory = phrases[(year * 4 + season) % phrases.length];
   }
 
   return {
     year,
+    season,
+    seasonName: seasonCfg.fullName,
+    seasonMonths: seasonCfg.months,
     lunarYear,
     age,
     macroHistory: macroText,
@@ -532,9 +658,6 @@ export function getYearlyEvent(
   };
 }
 
-/**
- * Generates the authentic, moving realistic ending for a completed life
- */
 export function generateRealisticEnding(
   profile: PersonProfile,
   stats: Attributes,
@@ -544,13 +667,12 @@ export function generateRealisticEnding(
 ): RealisticEnding {
   const province = PROVINCES.find((p) => p.id === profile.currentProvince) || PROVINCES[0];
 
-  // Tragic early death
   if (deathAge <= 3) {
     return {
       title: `${profile.county}殇子 · 享年${deathAge}岁`,
       epitaphTitle: '中平襁褓孤魂',
-      summary: `生于公元184年汉末大乱之始，殁于公元${deathYear}年。因${deathReason || '寒冬恶疾'}夭折于襁褓。母亲陈氏将其葬于村后老榆树下，岁岁清明以野花为祭。`,
-      historianNote: '汉季大乱，天下户口减耗十之八九。襁褓之殇，不绝于道，斯民之苦，何其极也！',
+      summary: `生于公元184年汉季大乱之始，殁于公元${deathYear}年。因${deathReason || '寒冬恶疾'}夭折于襁褓。母亲将其葬于村后老榆树下，岁岁清明以野花为祭。`,
+      historianNote: '汉季大乱，户口减耗十之八九。襁褓之殇，不绝于道，斯民之苦，何其极也！',
       tier: 'TRAGIC',
     };
   }
@@ -559,7 +681,7 @@ export function generateRealisticEnding(
     return {
       title: `${profile.county}随军戍卒 · 享年${deathAge}岁`,
       epitaphTitle: '乱世白骨生还无期',
-      summary: `被征召入伍十余载，转战中原数千里，殁于公元${deathYear}年战阵之中。死时怀中尚揣着一包未寄出的故乡泥土与母亲缝制的旧布鞋底。`,
+      summary: `应征入伍十数载，转战中原数千里，殁于公元${deathYear}年战阵之中。死时怀中尚揣着一包未寄出的故乡泥土与母亲缝制的旧布鞋底。`,
       historianNote: '可怜无定河边骨，犹是春闺梦里人。横槊之雄今安在，枯骨荒草伴残阳。',
       tier: 'TRAGIC',
     };
@@ -569,19 +691,18 @@ export function generateRealisticEnding(
     return {
       title: `${profile.county}短折良民 · 享年${deathAge}岁`,
       epitaphTitle: '荒岁悲歌',
-      summary: `勤劳朴实，孝悌著于里闾。然而天命难测，于公元${deathYear}年因${deathReason || '疫病饥寒'}离世。乡邻皆为之挥泪，合力将其殡葬。`,
+      summary: `勤劳朴实，孝悌著于里闾。然兵灾疫病无常，于公元${deathYear}年因${deathReason || '疫病饥寒'}离世。乡邻合力将其殡葬。`,
       historianNote: '天地不仁，以万物为刍狗。在东汉建安的巨浪之下，一个普通生灵的陨落，悄无声息。',
       tier: 'COMMON',
     };
   }
 
-  // Surviving into middle or old age (A true heroic feat in Eastern Han!)
   if (deathAge >= 60) {
     return {
       title: `${profile.county}寿考耆宿 · 享年${deathAge}岁`,
       epitaphTitle: '乱世人瑞 · 乡党长者',
-      summary: `生于公元184年黄巾初起之时，历经董卓乱政、曹袁官渡、火烧赤壁与天下鼎分。一介布衣，凭勤勉谨慎与仁厚之德保全一家老小。殁于公元${deathYear}年，子孙满堂，寿终正寝。`,
-      historianNote: '大乱之世，公以匹夫之身，全生保家，寿越花甲，见三国盛衰，其坚韧胜过万乘之尊！',
+      summary: `生于公元184年黄巾初起之时，历经董卓乱政、官渡赤壁与天下鼎分。一介布衣，凭勤勉谨慎与仁德保全一家老小。殁于公元${deathYear}年，子孙满堂，寿终正寝。`,
+      historianNote: '大乱之世，公以匹夫之身全生保家，寿越花甲，见三国盛衰，其坚韧胜过万乘之尊！',
       tier: 'RESILIENT',
     };
   }
@@ -596,11 +717,10 @@ export function generateRealisticEnding(
     };
   }
 
-  // Standard ordinary civilian ending
   return {
     title: `${profile.county}田舍耕夫 · 享年${deathAge}岁`,
     epitaphTitle: '汉末平凡春秋',
-    summary: `生于汉季，耕于乡野。一辈子没有见过天子与曹刘名将，只识春耕夏耘、秋收冬藏。在战火波及的缝隙里，他顽强地活过了${deathAge}个春秋，给后代留下了一片熟田与三间瓦舍。`,
+    summary: `生于汉季，耕于乡野。一辈子没有见过天子与曹刘名将，只识春耕夏耘、秋收冬藏。在战火波及的缝隙里，顽强地活过了${deathAge}个春秋，给后代留下了熟田瓦舍。`,
     historianNote: '太史公书多记将相王侯，然支撑这万里山河与四百年汉家天下的，正是无数如他这般默默耕耘的无名草木。',
     tier: 'COMMON',
   };

@@ -1,6 +1,7 @@
 /**
  * Data structures for the realistic Three Kingdoms Life Simulator
  * "公元184年，你出生了。然后让时间自己向前走。"
+ * 支持自定义姓氏、名字、表字，以及按季/月流转的丰富历史与民间演义大事。
  */
 
 export type ProvinceId =
@@ -45,11 +46,15 @@ export interface Attributes {
   fortune: number;    // 气数 (Destiny, luck in crises)
 }
 
-export interface FamilyMember {
-  relation: string; // 父亲、母亲、长兄、幼妹、妻子、长子等
-  name: string;
-  alive: boolean;
-  age: number;
+export type SeasonIndex = 0 | 1 | 2 | 3; // 0: 春, 1: 夏, 2: 秋, 3: 冬
+
+export interface SeasonInfo {
+  index: SeasonIndex;
+  name: string;        // '春' | '夏' | '秋' | '冬'
+  fullName: string;    // '春季 · 岁首农发'
+  months: string;      // '正月至三月'
+  solarTerm: string;   // '立春·惊蛰·清明' 等
+  themeColor: string;
 }
 
 export interface LifeChoice {
@@ -63,21 +68,26 @@ export interface LifeChoice {
   fatalCheck?: (stats: Attributes) => { isFatal: boolean; deathReason: string } | null;
 }
 
-export interface YearlyEvent {
+export interface SeasonalEvent {
   year: number;          // e.g. 184
+  season: SeasonIndex;   // 0: 春, 1: 夏, 2: 秋, 3: 冬
+  seasonName: string;    // '春季' | '夏季' | '秋季' | '冬季'
+  seasonMonths: string;  // e.g. '正月至三月'
   lunarYear: string;     // e.g. "中平元年 · 甲子"
   age: number;           // 0, 1, 2...
-  macroHistory: string;  // 天下大事 (e.g. "黄巾贼起，三十六方同日反...")
-  regionalImpact: string;// 本地风物 (What happened in the player's province)
-  personalStory: string; // 个人生计 (What happened in the player's family/village)
+  macroHistory: string;  // 天下大事 (Detailed historical events of this season)
+  regionalImpact: string;// 本地风物 (What happened in the player's province/county)
+  personalStory: string; // 个人生计 (What happened in the player's family/village this season)
   choice?: {
     prompt: string;
     options: LifeChoice[];
   };
 }
 
-export interface YearLogEntry {
+export interface SeasonLogEntry {
   year: number;
+  season: SeasonIndex;
+  seasonName: string;
   age: number;
   lunarYear: string;
   macroHistory: string;
@@ -99,14 +109,20 @@ export interface RealisticEnding {
 export interface CompletedLifeRecord {
   id: string;
   name: string;
+  courtesyName: string;
+  gender: 'MALE' | 'FEMALE';
   birthYear: number;
   deathYear: number;
+  deathSeason: string;
   deathAge: number;
   birthplace: string;
   socialClass: string;
   finalOccupation: string;
   ending: RealisticEnding;
   finalStats: Attributes;
-  yearLogsCount: number;
+  seasonLogsCount: number;
   completedAt: string;
+  matchedFigureName?: string;
+  matchedFigureSimilarity?: number;
+  matchedFigureTitle?: string;
 }

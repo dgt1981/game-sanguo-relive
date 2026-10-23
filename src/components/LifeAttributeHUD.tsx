@@ -1,12 +1,13 @@
 import React from 'react';
-import { Attributes } from '../types/game';
-import { PersonProfile } from '../services/lifeSimulator';
+import { Attributes, SeasonIndex } from '../types/game';
+import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
 import { Heart, BookOpen, Sword, Users, Coins, Sparkles, MapPin } from 'lucide-react';
 
 interface LifeAttributeHUDProps {
   stats: Attributes;
   profile: PersonProfile;
   year: number;
+  season: SeasonIndex;
   age: number;
   lunarYear: string;
 }
@@ -15,9 +16,12 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   stats,
   profile,
   year,
+  season,
   age,
   lunarYear,
 }) => {
+  const seasonCfg = SEASONS_CONFIG[season];
+
   const statConfig: { key: keyof Attributes; label: string; icon: React.ReactNode; color: string }[] = [
     { key: 'health', label: '体魄', icon: <Heart className="w-3.5 h-3.5" />, color: stats.health < 30 ? '#ef4444' : '#10b981' },
     { key: 'intellect', label: '识见', icon: <BookOpen className="w-3.5 h-3.5" />, color: '#0284c7' },
@@ -32,7 +36,7 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
       {/* Top Identity Row */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#2e261e]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded bg-[#2b221a] border border-[#524131] flex items-center justify-center font-calligraphy text-xl text-[#d4af37]">
+          <div className="w-10 h-10 rounded bg-[#2b221a] border border-[#524131] flex items-center justify-center font-calligraphy text-2xl text-[#d4af37]">
             {profile.name.slice(0, 1)}
           </div>
           <div>
@@ -40,23 +44,36 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
               <span className="font-calligraphy text-lg md:text-xl text-[#f3ece2]">
                 {profile.name}
               </span>
-              <span className="text-xs text-[#a39482]">
+              <span className="text-xs text-[#a39482]">字 {profile.courtesyName}</span>
+              <span className="text-xs text-[#7d7162]">
                 ({profile.gender === 'MALE' ? '男丁' : '女秀'} · {profile.occupation})
               </span>
             </div>
-            <div className="text-xs text-[#8c7b69] flex items-center gap-1 font-classical">
+            <div className="text-xs text-[#8c7b69] flex items-center gap-1 font-classical mt-0.5">
               <MapPin className="w-3 h-3 text-[#d4af37]" />
               <span>生于【{profile.commandery} · {profile.county}】</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs font-mono tabular-nums text-[#dcd1c2]">
+        {/* Date and Age */}
+        <div className="flex items-center gap-2.5 text-xs font-mono tabular-nums text-[#dcd1c2] flex-wrap">
           <div className="flex items-center gap-1.5 bg-[#251f1a] px-2.5 py-1 rounded border border-[#3f3428]">
             <span className="text-[#a89985]">纪元</span>
             <span className="text-[#f59e0b] font-semibold">公元 {year} 年</span>
+            <span
+              className="px-1.5 py-0.2 rounded font-classical text-xs"
+              style={{
+                color: seasonCfg.color,
+                backgroundColor: `${seasonCfg.color}15`,
+                border: `1px solid ${seasonCfg.color}40`,
+              }}
+            >
+              {seasonCfg.name}季
+            </span>
             <span className="text-[#877868]">({lunarYear})</span>
           </div>
+
           <div className="flex items-center gap-1.5 bg-[#251f1a] px-2.5 py-1 rounded border border-[#3f3428]">
             <span className="text-[#a89985]">享年</span>
             <span className="text-[#38bdf8] font-semibold">{age} 岁</span>
