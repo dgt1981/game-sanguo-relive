@@ -132,6 +132,21 @@ const INITIAL_COMMUNITY_SOULS: CommunityLifeItem[] = [
   },
 ];
 
+/**
+ * 动态获取 PHP 接口的相对路径
+ * 默认使用 './backend/api.php'（相对路径），确保网页被部署在任何网站二级目录
+ * （例如 https://example.com/sub/ 或 https://example.com/games/sanguo/）时均能正确寻址，
+ * 也支持通过 window.__PHP_API_URL__ 自定义指定完整或其它相对路径。
+ */
+export function getPhpApiUrl(action: string, extraParams: Record<string, string> = {}): string {
+  let baseUrl = './backend/api.php';
+  if (typeof window !== 'undefined' && (window as any).__PHP_API_URL__) {
+    baseUrl = (window as any).__PHP_API_URL__;
+  }
+  const params = new URLSearchParams({ action, ...extraParams });
+  return `${baseUrl}?${params.toString()}`;
+}
+
 class StorageService {
   // Get or create unique user token
   public getUserToken(): string {
@@ -153,9 +168,9 @@ class StorageService {
       };
       localStorage.setItem(LOCAL_STORAGE_SAVE_KEY, JSON.stringify(fullSave));
 
-      // Optional remote PHP call if hosted
+      // Optional remote PHP call if hosted (relative path './backend/api.php')
       if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
-        fetch('/backend/api.php?action=save_progress', {
+        fetch(getPhpApiUrl('save_progress'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fullSave),
@@ -182,7 +197,7 @@ class StorageService {
     try {
       localStorage.removeItem(LOCAL_STORAGE_SAVE_KEY);
       if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
-        fetch(`/backend/api.php?action=clear_progress&userToken=${this.getUserToken()}`, {
+        fetch(getPhpApiUrl('clear_progress', { userToken: this.getUserToken() }), {
           method: 'POST',
         }).catch(() => {});
       }
@@ -209,9 +224,9 @@ class StorageService {
       const updated = [item, ...existing.filter((x) => x.id !== item.id)];
       localStorage.setItem(LOCAL_STORAGE_COMMUNITY_KEY, JSON.stringify(updated));
 
-      // 2. Optional remote PHP call
+      // 2. Optional remote PHP call (relative path './backend/api.php')
       if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
-        fetch('/backend/api.php?action=save_life', {
+        fetch(getPhpApiUrl('save_life'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -260,14 +275,52 @@ class StorageService {
     });
     localStorage.setItem(LOCAL_STORAGE_COMMUNITY_KEY, JSON.stringify(updated));
 
-    // Optional remote call
-    fetch('/backend/api.php?action=like_life', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    }).catch(() => {});
+    // Optional remote call (relative path './backend/api.php')
+    if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+      fetch(getPhpApiUrl('like_life'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      }).catch(() => {});
+    }
 
     return newLikes;
+  }
+
+  // 7. 同步远程万民谱 (从 PHP/MySQL 获取天下玩家的真实生平)
+  public async syncCommunityLivesFromRemote(): Promise<CommunityLifeItem[]> {
+    try {
+      if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+        const res = await fetch(getPhpApiUrl('get_community_lives', { limit: '50' }));
+        const json = await res.json();
+        if (json.code === 200 && Array.isArray(json.data?.list) && json.data.list.length > 0) {
+          const remoteList: CommunityLifeItem[] = json.data.list.map((r: any) => ({
+            ...r,
+            likesCount: r.likes_count || r.likesCount || 0,
+            primaryFunTitle: r.primary_fun_title || r.primaryFunTitle || '',
+            folkNickname: r.folk_nickname || r.folkNickname || '',
+            humorousQuote: r.humorous_quote || r.humorousQuote || '',
+            badges: r.badges || [],
+            finalStats: r.stats || r.finalStats || { health: 50, intellect: 50, martial: 50, virtue: 50, wealth: 50, fortune: 50 },
+            ending: {
+              title: r.ending_title || r.ending?.title || '汉末草民',
+              epitaphTitle: r.epitaph_title || r.ending?.epitaphTitle || '草民实录',
+              summary: r.summary || r.ending?.summary || '',
+              historianNote: r.historian_note || r.ending?.historianNote || '',
+              tier: r.ending?.tier || 'RESILIENT',
+            },
+          }));
+          const localItems = this.getCommunityLives();
+          const map = new Map<string, CommunityLifeItem>();
+          localItems.forEach((item) => map.set(item.id, item));
+          remoteList.forEach((item) => map.set(item.id, item));
+          const merged = Array.from(map.values());
+          localStorage.setItem(LOCAL_STORAGE_COMMUNITY_KEY, JSON.stringify(merged));
+          return merged;
+        }
+      }
+    } catch {}
+    return this.getCommunityLives();
   }
 }
 

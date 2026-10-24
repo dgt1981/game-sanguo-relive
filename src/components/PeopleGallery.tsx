@@ -39,6 +39,11 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
 
   useEffect(() => {
     setCommunityLives(storage.getCommunityLives());
+    storage.syncCommunityLivesFromRemote().then((lives) => {
+      if (lives && lives.length > 0) {
+        setCommunityLives(lives);
+      }
+    });
   }, [records]);
 
   const handleLike = (e: React.MouseEvent, id: string) => {
