@@ -250,9 +250,16 @@ if ($action === 'save_life') {
                         </div>
                       )}
 
-                      <div className="text-xs text-[#8c7b69] flex items-center gap-1 mb-2">
-                        <MapPin className="w-3 h-3 text-[#d4af37]" />
-                        <span>{item.birthplace} · 享年 {item.deathAge} 岁</span>
+                      <div className="text-xs text-[#8c7b69] flex items-center justify-between gap-1 mb-2">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-[#d4af37]" />
+                          <span>{item.birthplace} · 享年 {item.deathAge} 岁</span>
+                        </span>
+                        {item.militaryCamp && item.militaryCamp !== '乡野布衣' && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#2e1d13] text-[#f59e0b] border border-[#523820]">
+                            {item.militaryCamp}
+                          </span>
+                        )}
                       </div>
 
                       {/* Historical Parallel Badge if present */}

@@ -6,8 +6,13 @@ import {
   RealisticEnding,
   LifeChoice,
   SeasonIndex,
+  PhysiologicalStage,
+  HistoricalFigureBond,
+  MilitaryAffiliation,
+  HistoricalDialogue,
 } from '../types/game';
 import { PROVINCES } from '../data/regions';
+import { querySeasonalEventFromTable } from './eventEngine';
 
 export interface PersonProfile {
   name: string;
@@ -28,6 +33,9 @@ export interface PersonProfile {
   siblingCount: number;
   spouseName?: string;
   childrenCount: number;
+  knownFigures: HistoricalFigureBond[];
+  militaryAffiliation?: MilitaryAffiliation;
+  eventFlags: Record<string, boolean | number | string>;
 }
 
 export const SEASONS_CONFIG: {
@@ -105,64 +113,338 @@ export function generateRandomBirth(): PersonProfile {
     motherAlive: true,
     siblingCount: Math.floor(Math.random() * 4),
     childrenCount: 0,
+    knownFigures: [],
+    eventFlags: {},
   };
 }
 
+/**
+ * 依据真实生理婴儿起点，生成公元184年刚出生的婴儿初始属性
+ * 刚降生的婴儿：
+ * - 体魄娇弱（约16~22，受家庭抚育条件影响）；
+ * - 识见微萌（约3~6，仅识双亲与啼哭感知）；
+ * - 勇略近无（约1~3，肢体柔软无法直立行走）；
+ * - 仁厚源自天性与门风家训（约12~18）；
+ * - 家财为父母初始裹儿资粮（约6~35）；
+ * - 气数来自天命造化（约45~65）。
+ */
 export function generateInitialAttributes(socialClass: SocialClass): Attributes {
   const base: Attributes = {
-    health: 50 + Math.floor(Math.random() * 20) - 10,
-    intellect: 40 + Math.floor(Math.random() * 20) - 10,
-    martial: 35 + Math.floor(Math.random() * 20) - 10,
-    virtue: 50 + Math.floor(Math.random() * 15),
-    wealth: 25 + Math.floor(Math.random() * 15),
-    fortune: 45 + Math.floor(Math.random() * 20),
+    health: 18 + Math.floor(Math.random() * 5) - 2, // 16 ~ 21
+    intellect: 4 + Math.floor(Math.random() * 3),   // 4 ~ 6
+    martial: 2 + Math.floor(Math.random() * 2),     // 2 ~ 3
+    virtue: 14 + Math.floor(Math.random() * 5),    // 14 ~ 18
+    wealth: 12 + Math.floor(Math.random() * 6),    // 12 ~ 17
+    fortune: 50 + Math.floor(Math.random() * 15) - 7, // 43 ~ 57
   };
 
   switch (socialClass) {
     case 'PEASANT':
-      base.health += 8;
-      base.wealth -= 10;
-      base.martial += 4;
+      base.health += 1; // 农家耐苦
+      base.wealth = Math.max(5, base.wealth - 5);
       break;
     case 'TOWN_ARTISAN':
-      base.wealth += 5;
-      base.intellect += 6;
+      base.wealth += 3;
+      base.intellect += 1;
       break;
     case 'FISHER_BOATMAN':
-      base.health += 10;
-      base.martial += 6;
-      base.wealth -= 5;
+      base.health += 2;
+      base.wealth -= 2;
       break;
     case 'FRONTIER_ARMY':
-      base.martial += 15;
-      base.health += 8;
-      base.wealth -= 5;
+      base.health += 3;
+      base.martial += 1;
       break;
     case 'SCHOLAR_CLERK':
-      base.intellect += 20;
-      base.virtue += 12;
-      base.health -= 5;
-      base.wealth += 10;
+      base.intellect += 3;
+      base.virtue += 4;
+      base.wealth += 6;
       break;
     case 'MERCHANT':
-      base.wealth += 25;
-      base.intellect += 10;
-      base.virtue -= 5;
+      base.wealth += 14;
+      base.intellect += 2;
       break;
     case 'NOBLE_GENTRY':
-      base.wealth += 45;
-      base.intellect += 22;
-      base.virtue += 15;
-      base.fortune += 15;
+      base.wealth += 32;
+      base.intellect += 3;
+      base.virtue += 5;
+      base.health += 4;
+      base.fortune += 8;
       break;
   }
 
-  Object.keys(base).forEach((k) => {
-    const key = k as keyof Attributes;
-    base[key] = Math.max(10, Math.min(95, base[key]));
-  });
+  // Ensure reasonable realistic bounds for a newborn
+  base.health = Math.max(12, Math.min(26, base.health));
+  base.intellect = Math.max(2, Math.min(12, base.intellect));
+  base.martial = Math.max(1, Math.min(6, base.martial));
+  base.virtue = Math.max(10, Math.min(30, base.virtue));
+  base.wealth = Math.max(5, Math.min(85, base.wealth));
+  base.fortune = Math.max(35, Math.min(80, base.fortune));
 
   return base;
+}
+
+/**
+ * 获取当前年龄对应的生理成长与衰老阶段
+ */
+export function getPhysiologicalStage(age: number): PhysiologicalStage {
+  if (age <= 2) {
+    return {
+      stageKey: 'INFANT',
+      stageName: '襁褓幼婴',
+      tag: '骨软神萌',
+      description: '初临乱世，襁褓骨弱，易染风热，全赖母乳温汤悉心护持。',
+      ageRange: '0~2岁',
+      growthTrend: { health: 'GROWING_FAST', intellect: 'GROWING', martial: 'DORMANT' },
+    };
+  }
+  if (age <= 6) {
+    return {
+      stageKey: 'CHILD',
+      stageName: '龆龀幼童',
+      tag: '戏耍发蒙',
+      description: '学步奔走，在田垄水洼捉虫嬉戏，识人辨物，筋骨日健。',
+      ageRange: '3~6岁',
+      growthTrend: { health: 'GROWING_FAST', intellect: 'GROWING_FAST', martial: 'GROWING' },
+    };
+  }
+  if (age <= 13) {
+    return {
+      stageKey: 'YOUTH',
+      stageName: '总角成童',
+      tag: '拔节抽条',
+      description: '少年长成，拔节拔高，帮衬家计放牛拾柴，初晓是非大义。',
+      ageRange: '7~13岁',
+      growthTrend: { health: 'GROWING_FAST', intellect: 'GROWING_FAST', martial: 'GROWING_FAST' },
+    };
+  }
+  if (age <= 19) {
+    return {
+      stageKey: 'ADULT',
+      stageName: '及冠成丁',
+      tag: '气力大成',
+      description: '束发成丁，编入官府丁册。能荷重犁挽硬弓，自立生计以养家。',
+      ageRange: '14~19岁',
+      growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING_FAST' },
+    };
+  }
+  if (age <= 35) {
+    return {
+      stageKey: 'PRIME',
+      stageName: '弱冠壮盛',
+      tag: '鼎盛春秋',
+      description: '气血方刚，体力武略正值人生峰顶。生儿育女，奋力拼搏安家。',
+      ageRange: '20~35岁',
+      growthTrend: { health: 'PEAK', intellect: 'GROWING', martial: 'PEAK' },
+    };
+  }
+  if (age <= 50) {
+    return {
+      stageKey: 'MIDDLE',
+      stageName: '不惑知命',
+      tag: '沉潜厚重',
+      description: '筋骨渐定，世事洞明。处事老练持重，受后生敬仰，家资沉淀。',
+      ageRange: '36~50岁',
+      growthTrend: { health: 'PEAK', intellect: 'PEAK', martial: 'DECLINING' },
+    };
+  }
+  if (age <= 65) {
+    return {
+      stageKey: 'ELDER',
+      stageName: '花甲耳顺',
+      tag: '气血渐衰',
+      description: '两鬓苍苍，自然衰老。气力难挽强弓，而德厚名重，尊为乡老。',
+      ageRange: '51~65岁',
+      growthTrend: { health: 'DECLINING', intellect: 'STABLE', martial: 'DECLINING_FAST' },
+    };
+  }
+  return {
+    stageKey: 'VENERABLE',
+    stageName: '古稀耄耋',
+    tag: '桑榆暮年',
+    description: '见汉家四百年倾覆与天下三分，寿考人瑞。听天安命，子孙绕膝。',
+    ageRange: '66岁以上',
+    growthTrend: { health: 'DECLINING_FAST', intellect: 'STABLE', martial: 'DECLINING_FAST' },
+  };
+}
+
+export interface NaturalChangeResult {
+  delta: Partial<Record<keyof Attributes, number>>;
+  stage: PhysiologicalStage;
+  naturalNote?: string;
+}
+
+/**
+ * 随生理年龄与四季自然更迭的生理成长与衰老动力学系统
+ * 先行计算身体自然规律的变化，而后再叠加事件和玩家抉择的二次冲击
+ */
+export function calculateNaturalPhysiologicalChange(
+  age: number,
+  season: SeasonIndex,
+  currentStats: Attributes
+): NaturalChangeResult {
+  const stage = getPhysiologicalStage(age);
+  const delta: Partial<Record<keyof Attributes, number>> = {};
+  let naturalNote: string | undefined = undefined;
+
+  // 1. 襁褓期 (0~2岁) - 婴儿自然成长
+  if (stage.stageKey === 'INFANT') {
+    if (season === 0) {
+      delta.health = 2;
+      delta.intellect = 1;
+      naturalNote = '【生理生发】孟春和风，幼体舒展，骨肉日丰。体魄+2，识见+1。';
+    } else if (season === 1) {
+      delta.health = 1;
+      naturalNote = '【生理调护】度过苦夏热暑，咿呀学语。体魄+1。';
+    } else if (season === 2) {
+      delta.health = 1;
+      delta.virtue = 1;
+      naturalNote = '【生理拔节】认得双亲慈容，啼笑自如。体魄+1，仁厚+1。';
+    } else if (season === 3) {
+      if (currentStats.wealth < 8) {
+        delta.health = -1;
+        naturalNote = '【生理风寒】岁暮苦寒屋漏，受了些许风霜。体魄-1。';
+      } else {
+        delta.health = 1;
+        naturalNote = '【生理避寒】炭火暖卧，安度严冬。体魄+1。';
+      }
+    }
+  }
+  // 2. 幼童期 (3~6岁) - 奔跑跳跃、心智初开
+  else if (stage.stageKey === 'CHILD') {
+    if (season === 0) {
+      delta.health = 2;
+      delta.martial = 1;
+      naturalNote = '【自然拔节】春日田埂奔跑戏蝶，小腿结实有力。体魄+2，勇略+1。';
+    } else if (season === 1) {
+      delta.intellect = 2;
+      delta.health = 1;
+      naturalNote = '【心智发蒙】学认山川禽畜，言语清晰。体魄+1，识见+2。';
+    } else if (season === 2) {
+      delta.martial = 1;
+      delta.virtue = 1;
+      naturalNote = '【童心纯良】帮父母递水拾穗，深得邻舍夸赞。勇略+1，仁厚+1。';
+    } else if (season === 3) {
+      delta.intellect = 1;
+      naturalNote = '【冬夜听古】围炉听长辈讲述古时兵祸故事。识见+1。';
+    }
+  }
+  // 3. 成童总角期 (7~13岁) - 少年抽条拔节快速成长！
+  else if (stage.stageKey === 'YOUTH') {
+    if (season === 0) {
+      delta.health = 3;
+      delta.martial = 2;
+      naturalNote = '【骨骼抽条】春耕放牛割草，身形窜高半尺，气力大长。体魄+3，勇略+2。';
+    } else if (season === 1) {
+      delta.martial = 2;
+      delta.intellect = 1;
+      naturalNote = '【筋骨锻炼】下河泅水摸鱼，烈日下晒得黝黑健硕。勇略+2，识见+1。';
+    } else if (season === 2) {
+      delta.health = 2;
+      delta.intellect = 2;
+      delta.wealth = 1;
+      naturalNote = '【勤劳助耕】分担秋收力气活，熟知稼穑勤苦。体魄+2，识见+2，家资+1。';
+    } else if (season === 3) {
+      delta.virtue = 1;
+      delta.intellect = 1;
+      naturalNote = '【知晓孝悌】冬日孝敬父母，修治粗简农具。识见+1，仁厚+1。';
+    }
+  }
+  // 4. 及冠成丁期 (14~19岁) - 筋骨定型自立养家！
+  else if (stage.stageKey === 'ADULT') {
+    if (season === 0) {
+      delta.health = 2;
+      delta.martial = 3;
+      naturalNote = '【成丁强健】束发立丁，筋骨强劲，能负重致远。体魄+2，勇略+3。';
+    } else if (season === 1) {
+      delta.martial = 2;
+      delta.wealth = 1;
+      naturalNote = '【出力谋生】自食其力受雇做工，体魄如铁。勇略+2，家资+1。';
+    } else if (season === 2) {
+      delta.intellect = 2;
+      delta.wealth = 2;
+      naturalNote = '【秋获立业】秋粮到手，在乡里已有自立声名。识见+2，家资+2。';
+    } else if (season === 3) {
+      delta.virtue = 1;
+      delta.health = 1;
+      naturalNote = '【气盛御寒】青年气血充盈，无惧朔风大雪。体魄+1，仁厚+1。';
+    }
+  }
+  // 5. 弱冠壮盛期 (20~35岁) - 人生鼎盛黄金巅峰！
+  else if (stage.stageKey === 'PRIME') {
+    if (season === 0) {
+      if (currentStats.health < 85) delta.health = 1;
+      if (currentStats.martial < 85) delta.martial = 1;
+    } else if (season === 2) {
+      delta.wealth = 2;
+      delta.intellect = 1;
+      naturalNote = '【壮年经营】精力正旺，田亩产出充裕，家道稳固。家资+2，识见+1。';
+    } else if (season === 3) {
+      delta.virtue = 1;
+    }
+  }
+  // 6. 不惑知命期 (36~50岁) - 识见登峰，体力平稳微沉！
+  else if (stage.stageKey === 'MIDDLE') {
+    if (season === 0) {
+      delta.intellect = 2;
+      delta.virtue = 1;
+      naturalNote = '【老成睿智】历尽世事沧桑，见识深邃洞彻。识见+2，仁厚+1。';
+    } else if (season === 1) {
+      if (currentStats.martial > 65) {
+        delta.martial = -1;
+        naturalNote = '【体力微损】旧疾偶现，气力略不如二十岁年轻之时。勇略-1。';
+      }
+    } else if (season === 2) {
+      delta.wealth = 2;
+      delta.virtue = 1;
+      naturalNote = '【德隆望重】处事稳健公允，受全村敬服。仁厚+1，家资+2。';
+    } else if (season === 3) {
+      if (currentStats.health > 75) {
+        delta.health = -1;
+      }
+    }
+  }
+  // 7. 花甲耳顺期 (51~65岁) - 自然衰老降临！
+  else if (stage.stageKey === 'ELDER') {
+    if (season === 0) {
+      delta.virtue = 2;
+      delta.intellect = 1;
+      naturalNote = '【乡党尊长】年逾花甲，晚辈遇事皆来拜见请益。仁厚+2，识见+1。';
+    } else if (season === 1) {
+      delta.health = -1;
+      delta.martial = -1;
+      naturalNote = '【气血渐虚】苦夏溽热，食欲不振，筋骨渐疲。体魄-1，勇略-1。';
+    } else if (season === 2) {
+      delta.martial = -2;
+      naturalNote = '【筋骨发僵】秋风萧瑟，步履渐缓，难持重兵。勇略-2。';
+    } else if (season === 3) {
+      delta.health = -2;
+      delta.wealth = -1;
+      naturalNote = '【老骨畏寒】隆冬大雪天寒地冻，围炉耗柴吃药。体魄-2，家资-1。';
+    }
+  }
+  // 8. 古稀耄耋期 (66岁以上) - 暮景祥瑞，听天由命！
+  else {
+    if (season === 0) {
+      delta.virtue = 3;
+      delta.fortune = 1;
+      naturalNote = '【乱世人瑞】历遍甲子大乱而得享高寿，里邻奉为神明福星。仁厚+3，气数+1。';
+    } else if (season === 1) {
+      delta.health = -2;
+      delta.martial = -2;
+      naturalNote = '【老迈虚喘】溽热难耐，卧榻休养。体魄-2，勇略-2。';
+    } else if (season === 2) {
+      delta.health = -2;
+      delta.martial = -2;
+      naturalNote = '【秋风催老】秋风落叶，耳目渐昏，气力所剩无几。体魄-2，勇略-2。';
+    } else if (season === 3) {
+      delta.health = -3;
+      delta.wealth = -2;
+      naturalNote = '【岁暮严寒】天寒地冻彻骨，子孙床前侍奉汤药。体魄-3，家资-2。';
+    }
+  }
+
+  return { delta, stage, naturalNote };
 }
 
 export function getLunarYearName(year: number): string {
@@ -301,361 +583,13 @@ export function getSeasonalEvent(
   profile: PersonProfile,
   stats: Attributes
 ): SeasonalEvent {
-  const province = PROVINCES.find((p) => p.id === profile.currentProvince) || PROVINCES[0];
-  const seasonCfg = SEASONS_CONFIG[season];
-  const lunarYear = getLunarYearName(year);
-
-  // 1. Macro History lookup or procedural fallback
-  const macroKey = `${year}-${season}`;
-  let macroText = SEASONAL_MACRO_EVENTS[macroKey];
-  if (!macroText) {
-    const genericSeasonalMacros: Record<SeasonIndex, string[]> = {
-      0: [
-        '初春雪融，各州郡春耕发种，诸侯安民葺甲，烽火暂敛。',
-        '春回大地，官府行春令催办户籍农课，草莽盗贼稍歇。',
-        '孟春之岁，朝廷大射祈谷，天下饥民盼得一载丰润。',
-      ],
-      1: [
-        '盛夏烈日焦土，江南江北汛水偶涨，四方军马休养士卒于阴凉营寨。',
-        '夏日多暴雨溽热，郡县防洪筑堤，市集丝布盐酪交易繁密。',
-        '溽暑炎炎，各方斥候飞骑于官道往来探查敌情，边境关卡盘查严密。',
-      ],
-      2: [
-        '金风肃杀，秋麦割尽归仓，各路诸侯征粮充实府库，常闻边塞战马长嘶。',
-        '秋高气爽，塞外胡马草肥，幽并凉州防边甚急，中原军民忙于秋收纳赋。',
-        '霜降木落，四野萧疏，郡县兵马调发演阵，兵戈之气渐浓。',
-      ],
-      3: [
-        '朔风凛冽，大雪纷飞，四野冰封。军马收营过冬，百姓闭门围炉烤火。',
-        '岁暮严寒，各家宰牲除祟备迎元旦，天寒流民乞求片瓦藏身。',
-        '冬日河封，南北漕运暂停，乡民合族分粮祭祖，共度严冬残岁。',
-      ],
-    };
-    const arr = genericSeasonalMacros[season];
-    macroText = arr[(year + season) % arr.length];
-  }
-
-  // 2. Regional Impact
-  let regionalText = '';
-  if (province.id === 'JIZHOU' && year <= 185) {
-    regionalText = `${seasonCfg.name}日里，巨鹿四野皆是裹黄头巾之人，官军与道徒攻杀不停，【${profile.county}】城门白昼紧闭。`;
-  } else if (province.id === 'XUZHOU' && (year === 193 || year === 194) && season >= 2) {
-    regionalText = `曹公东征徐州，拔数十城，【${profile.county}】城外泗水漂浮死尸，鸡犬不鸣，四境凄风惨雨。`;
-  } else if (province.id === 'YANZHOU' && year === 194 && season === 1) {
-    regionalText = `夏日飞蝗自东狂卷而来，树皮草根食尽，郡内大饥，人相食，乡邻为争一捧草籽拔刀相向。`;
-  } else if (province.id === 'LUOYANG' && year === 190 && season === 1) {
-    regionalText = `洛阳宫阙火势连绵两百里，烟焰蔽日，董卓驱赶数百万老弱西行，哭声盈野，家园毁于一旦。`;
-  } else if (province.id === 'JIAOZHOU') {
-    regionalText = `${seasonCfg.name}节的交州海风习习，士使君保境安民，番禺港舶船带来南洋象牙与胡椒，百姓不知北国兵燹。`;
-  } else if (province.id === 'JINGZHOU' && year >= 191 && year <= 207) {
-    regionalText = `荆襄九郡土地膏腴，刘使君抚循流民，【${profile.county}】水稻桑麻丰茂，避乱名士在溪桥书声琅琅。`;
-  } else if (province.id === 'LIANGZHOU') {
-    regionalText = `边关${seasonCfg.name}风卷寒沙，韩遂马腾骑队巡掠要隘，郡中民户皆带弓箭自卫，不敢轻出长城。`;
-  } else {
-    regionalText = `【${profile.county}】这一${seasonCfg.name}季物价稍有起伏，县吏差徭按期征发，乡老在村头槐树下议论天下战事。`;
-  }
-
-  // 3. Personal Story & Life Choices
-  let personalStory = '';
-  let choice: { prompt: string; options: LifeChoice[] } | undefined = undefined;
-
-  // Age 0: Birth season & infant survival
-  if (age === 0) {
-    if (season === 0) {
-      personalStory = `公元184年孟春正月，你在【${province.provinceName}·${profile.commandery}·${profile.county}】一间破瓦草屋中呱呱坠地。父亲${profile.fatherName}在门首插了一根柳枝驱邪，母亲${profile.motherName}虚弱地给你喂了一口温米汤。外头春寒未散，冰凌滴水，你来到这个人世间了。`;
-    } else if (season === 1) {
-      personalStory = `四月入夏，天气转热。母亲${profile.motherName}抱着你坐在槐树荫下纳凉赶蚊。隔壁村子传来黄巾贼打劫大户的喧闹声，父亲把门板用粗木死死顶住。`;
-    } else if (season === 2) {
-      personalStory = `秋风初起，高粱熟了。村里被官府抽走两人去广宗前线推车，母亲把你背在后背上在麦场拾麦穗，你睁着大眼睛咿呀学语。`;
-    } else {
-      personalStory = `冬雪纷飞，你度过了人生的第一个年关。天寒地冻，柴炭稀缺，父亲在土灶里烧野草给你烘热襁褓，全家人紧挨在一起取暖。`;
-    }
-  } else if (age === 3 && season === 0) {
-    personalStory = `三岁春，你迈着小短腿跟在姐姐身后在田埂上捉泥鳅。泥水溅了一身，母亲笑着拿粗布替你擦洗小花脸。体魄+2。`;
-  } else if (age === 5 && season === 2) {
-    personalStory = `五岁秋，洛阳大乱的消息传到乡间。一队疲惫不堪的败兵穿过村子，抢走了邻居家的两只老母鸡。你躲在柴垛后屏住呼吸，第一次见到了明晃晃的环首刀。`;
-  } else if (age === 7 && season === 0) {
-    // Choice: 7yo path
-    personalStory = `七岁春，汉家有“七岁学书数”之制。家里商量你的出路。`;
-    choice = {
-      prompt: '七岁阳春，面对艰辛的家境，你打算如何打发童年岁月？',
-      options: [
-        {
-          id: 'c_age7_cattle',
-          label: '在山坡田头替大户放牛割草，补贴家用',
-          description: '做个踏实懂事的苦力孩子，强筋健骨，分担父母重担。',
-          statChanges: { health: 6, martial: 4, virtue: 4 },
-          outcomeText: '你在日光下晒得黝黑壮实，熟知山野草木，村中老少都夸你是个本分孝顺的好孩子。',
-        },
-        {
-          id: 'c_age7_study',
-          label: '站在乡里私塾窗外偷听老秀才讲授《孝经》与《千字文》',
-          description: '用枯树枝在地上划土练字，渴望明晓是非经义。',
-          requirements: { intellect: 35 },
-          statChanges: { intellect: 10, virtue: 6, wealth: -2 },
-          outcomeText: '塾师见你心诚，收了你两斤干红薯作修脯，教你辨认了三百个隶书汉字。',
-        },
-        {
-          id: 'c_age7_brawl',
-          label: '领着村里顽童削木刀演练“官军捉贼”，争当孩子王',
-          description: '生性胆壮，喜好听客商讲述吕布、关张万人敌的英雄故事。',
-          statChanges: { martial: 8, health: 6, virtue: -2 },
-          outcomeText: '你成了四乡八邻顽童的领头，上树摸鸟、下水摸鱼，胆魄过人。',
-        },
-      ],
-    };
-  } else if (age === 10 && season === 2) {
-    // Choice: 10yo Autumn crisis
-    personalStory = `十岁金秋，母亲染上了咳喘虚热之疾，日渐消瘦。县城药铺掌柜索银六百钱，家中断无积蓄。`;
-    choice = {
-      prompt: '母亲久病咳血，家中无银购药，面对危局你作何打算？',
-      options: [
-        {
-          id: 'c_age10_herb',
-          label: '腰缚草绳攀爬荒山绝壁，亲自搜寻野生桔梗与柴胡',
-          description: '冒跌落悬崖与猛兽毒蛇之险，全凭一片赤诚孝心。',
-          statChanges: { health: -4, virtue: 12, intellect: 4, fortune: 6 },
-          outcomeText: '手脚划出道道血口，终于采得数株陈年紫草与金银花，煎汤服下后母亲热退神清，抱你垂泪。',
-        },
-        {
-          id: 'c_age10_apprentice',
-          label: '跪在城内济世药铺门前，求掌柜收为三年杂役挑水切药换药材',
-          description: '以三年童工之身换取汤药，顺便偷学药理本草。',
-          statChanges: { intellect: 8, wealth: 4, virtue: 6 },
-          outcomeText: '掌柜感你仁孝，赠了三副柴胡汤，并在药坊传授你辨认川贝、当归与黄芪的本草之术。',
-        },
-        {
-          id: 'c_age10_borrow',
-          label: '向乡里放高利贷的豪强大户立下借券借粮换药',
-          description: '先救至亲性命，哪怕日后加倍做牛做马偿还。',
-          statChanges: { wealth: -8, virtue: 4, fortune: -2 },
-          outcomeText: '解了燃眉之急，但也欠下大户沉重债务，从此每年秋后都须去豪强田庄无偿做苦工。',
-        },
-      ],
-    };
-  } else if (age === 14 && season === 1) {
-    // Choice: 14yo Adult path
-    personalStory = `十四岁夏，行将成丁束发。官府查验户籍簿，各方诸侯四处征收力役。`;
-    choice = {
-      prompt: '成丁立身之际，你打算以何等行当开始养家糊口？',
-      options: [
-        {
-          id: 'c_age14_blacksmith',
-          label: '在县城铁匠铺拜师，学习锻造环首长刀与农耕犁头',
-          description: '乱世铁匠吃香，既能打造农具，亦能修造兵甲。',
-          statChanges: { martial: 8, health: 8, wealth: 6 },
-          outcomeText: '炉火映红了你的脸膛，三年抡锤练得浑身精肉，打造的短刀削铁如泥，备受好评。',
-        },
-        {
-          id: 'c_age14_boatman',
-          label: '投效江河船帮，随运粮商船南下江东贩卖土特',
-          description: '走南闯北，多长见识，江河虽有风浪，但利钱颇丰。',
-          statChanges: { wealth: 14, intellect: 8, health: -4, fortune: 4 },
-          outcomeText: '你随船历经长江与汉水，熟悉了水流暗礁，还学会了与水贼及关税差役打交道。',
-        },
-        {
-          id: 'c_age14_scribe',
-          label: '在县衙户曹当一名书办抄手，登记粮库流水账目',
-          description: '吃官家一口薄粥，结交里正亭长，明晓律令规矩。',
-          requirements: { intellect: 45 },
-          statChanges: { intellect: 12, wealth: 6, virtue: 4 },
-          outcomeText: '你写得一手整饬的汉隶，账目明晰，县丞夸你是个可用之才。',
-        },
-      ],
-    };
-  } else if (age === 18 && season === 2) {
-    // Choice: 18yo Conscription
-    personalStory = `十八岁秋，战火逼近。县里铜锣敲响，长官按籍点卯，一村之中必须抽丁两人随军出征。`;
-    choice = {
-      prompt: '点兵鼓声震天，差役腰悬皮鞭按名拿人，你作何决断？',
-      options: [
-        {
-          id: 'c_age18_frontline',
-          label: '扛起丈二长矛应征入伍，做一名冲锋陷阵的行伍步卒',
-          description: '男儿横刀走战阵，博个军功光宗耀祖，总胜过饿死沟壑！',
-          statChanges: { martial: 14, health: 4, wealth: 4, fortune: -4 },
-          outcomeText: '穿上破旧皮甲，端起长枪开拔出营。母亲追着队列送了十里，将一包故乡热土塞入你怀里。',
-          fatalCheck: (st) => {
-            if (st.health < 25 && st.martial < 35) {
-              return { isFatal: true, deathReason: '从军第一年随大军远征，因暴发水土不服霍乱，殁于荒野大营。' };
-            }
-            return null;
-          },
-        },
-        {
-          id: 'c_age18_logistics',
-          label: '主动申请充当后方运粮夫，推独轮小车跋涉山川运米',
-          description: '运粮虽苦不堪言，但无需首当其冲面对敌军刀矛箭雨。',
-          statChanges: { health: 6, virtue: 6, wealth: 2 },
-          outcomeText: '车轮吱呀响彻古道，你脚磨起无数血泡，在后营运粮数月，结识了各方豪爽民夫。',
-        },
-        {
-          id: 'c_age18_flee_south',
-          label: '典当破房薄田，连夜护持全家老少南逃荆襄避乱',
-          description: '避开诸侯混战泥潭，前往刘景升治下的安宁乐土。',
-          statChanges: { wealth: -10, virtue: 8, fortune: 8, health: -4 },
-          outcomeText: '跋山涉水两千里，终于安然抵达襄阳。一家人在水边搭起茅屋，免去兵戈杀戮之苦。',
-        },
-      ],
-    };
-  } else if (age === 24 && season === 0) {
-    // Choice: 24yo Marriage
-    personalStory = `二十四岁阳春。乡邻见你为人诚笃勤奋，有村老主动为你做媒，说合邻庄勤谨温厚的刘氏女子。`;
-    choice = {
-      prompt: '草民成家之机，你是否应允这门亲事？',
-      options: [
-        {
-          id: 'c_age24_marry',
-          label: '拿出多年积攒的二千铜钱与四匹粗布，下聘迎娶刘氏为妻',
-          description: '在这风雨飘摇的人间，为自己寻一个相濡以沫的温存港湾。',
-          statChanges: { virtue: 10, health: 6, wealth: -12 },
-          outcomeText: '两盏浊酒，红烛摇曳。你与刘氏结发为夫妻，茅屋之中从此有了炊烟笑语。次年为你添了麟儿。',
-        },
-        {
-          id: 'c_age24_hoard_grain',
-          label: '婉言谢绝媒人，专心置办地窖藏购干粮肉干以防荒乱',
-          description: '世道险恶战乱无常，不敢轻易拖累妻儿妇孺。',
-          statChanges: { wealth: 16, intellect: 6, virtue: -2 },
-          outcomeText: '你将积蓄换成了数十石高粱大麦深埋地窖，在这乱世为自己攒下了一道保命屏障。',
-        },
-      ],
-    };
-  } else if (age === 33 && season === 3) {
-    // Choice: 33yo Great Epidemic (Winter)
-    personalStory = `三十三岁严冬（建安年间）。中原大疫暴发，家家户户高烧不退，棺木售空，哭声连夜不绝。你与家人也浑身酸痛发热。`;
-    choice = {
-      prompt: '伤寒恶疾袭来，全家高热战栗，你该如何救全家人性命？',
-      options: [
-        {
-          id: 'c_age33_soup',
-          label: '遵南阳张仲景医书所传“当归生姜羊肉汤 / 麻黄汤”熬煮浓汁痛饮',
-          description: '信名医方剂，重姜葱发汗退热，不事巫鬼。',
-          requirements: { intellect: 40 },
-          statChanges: { health: 12, intellect: 8, wealth: -6 },
-          outcomeText: '一碗浓汤灌下，通体大汗淋漓！次日热退骨安，你还将此法传授给隔壁邻舍，活人无数。',
-        },
-        {
-          id: 'c_age33_quarantine',
-          label: '闭门绝客，庭院遍洒生石灰，燃艾草熏蒸屋角',
-          description: '坚决执行严苛隔离之策，耐心挨过冬寒疫期。',
-          statChanges: { health: 8, wealth: -4 },
-          outcomeText: '虽然家中存粮耗损大半，但一家老小无一人病殁，安然熬过了这场建安大劫。',
-        },
-        {
-          id: 'c_age33_pray',
-          label: '随众去道观求取黄纸符水焚化吞服祈福',
-          description: '求神问卜，听天由命。',
-          statChanges: { health: -14, fortune: -4 },
-          outcomeText: '符水无济于事，你连烧了二十日，险些一命呜呼，病愈后落下了肺经喘咳之疾。',
-          fatalCheck: (st) => {
-            if (st.health < 28) {
-              return { isFatal: true, deathReason: '建安伤寒大疫蔓延，高热抽搐无药可医，殁于榻上。' };
-            }
-            return null;
-          },
-        },
-      ],
-    };
-  } else if (age === 45 && season === 2) {
-    // Choice: 45yo Mature Autumn
-    personalStory = `四十五岁秋。大汉已终，魏蜀吴各自立国。你的双鬓渐染秋霜，儿女业已成人，乡邻遇事常来听取你的主见。`;
-    choice = {
-      prompt: '步入知命之年，你打算如何安顿往后春秋？',
-      options: [
-        {
-          id: 'c_age45_elder',
-          label: '出任乡党三老，秉公主持乡饮与调息邻里争端',
-          description: '立德行仁，成为地方受人敬重的大长辈。',
-          statChanges: { virtue: 14, intellect: 6, wealth: 4 },
-          outcomeText: '县长巡行过村亦下车揖手相问，邻里田宅口角只要你一言便冰释前嫌，威望日隆。',
-        },
-        {
-          id: 'c_age45_farm_expand',
-          label: '督导子孙辛勤整修水田，建起榨油碾米水磨坊',
-          description: '为子孙打下扎实家私产业，家道殷实。',
-          statChanges: { wealth: 18, health: 4 },
-          outcomeText: '家中谷满仓、猪羊满圈。在数十载离乱沧桑之后，你守护住了一大家子的安稳烟火。',
-        },
-        {
-          id: 'c_age45_music',
-          label: '手刻竹笛短箫，常在老槐树下为村童吹奏汉末民谣',
-          description: '浮名利禄皆浮云，寄情山水乐道知命。',
-          statChanges: { virtue: 10, health: 8, fortune: 6 },
-          outcomeText: '夕阳斜照，箫声悠扬穿过田野，孩子们拍手欢唱，你心中一片宁静淡泊。',
-        },
-      ],
-    };
-  } else if (age >= 60 && season === 3) {
-    // Choice: 60yo Winter retrospective
-    personalStory = `年逾花甲，寒冬初雪。三国的枭雄老将皆已作古，你坐在柴火盆旁烤红薯，膝下孙儿拉着你的衣襟，问起当年赤壁与官渡的烽火。`;
-    if (age === 60) {
-      choice = {
-        prompt: '孙儿仰着稚嫩的小脸问：“爷爷，当年那些大英雄大人物到底争的是什么呀？”',
-        options: [
-          {
-            id: 'c_age60_ordinary',
-            label: '“什么开疆拓土，都比不上一锅热饭、一家齐整。”',
-            description: '看透了霸业功名背后的森森白骨，深知平淡之珍贵。',
-            statChanges: { virtue: 12, intellect: 8 },
-            outcomeText: '孙儿似懂非懂地咬着红薯重重点头。那一晚，你睡得格外平静香甜。',
-          },
-          {
-            id: 'c_age60_record',
-            label: '取出珍藏多年的粗麻纸，就着油灯把六十年真实见闻口述记为家谱',
-            description: '以一个平凡生灵的双眼，留存这大乱甲子最真实的血泪印记。',
-            statChanges: { intellect: 14, virtue: 8 },
-            outcomeText: '这卷写在粗纸上的草民笔记，后来成为后世史官考求汉末民间世相最弥足珍贵的文献。',
-          },
-        ],
-      };
-    } else {
-      personalStory = `岁末严寒，子孙绕膝端茶添炭。你见证了大汉的倾覆与群雄的凋零，在这动荡乱世中安度晚年，实乃天之大幸。仁厚+2，体魄-1。`;
-    }
-  } else {
-    // Normal seasonal civilian experiences
-    const seasonalLifePhrases: Record<SeasonIndex, string[]> = {
-      0: [
-        `初春细雨润麦苗，你扛着农具在晨雾中除草培土，双手布满老茧，但麦穗长势喜人。体魄+1，家资+1。`,
-        `春风吹开漫山野花，你与邻家伙伴在溪边采得鲜嫩荠菜与春笋，煮了一锅热腾腾的野菜汤。仁厚+1。`,
-        `县城开春集市，你随车去卖了几篓竹编器具，换得一升粗盐与半匹土布。家资+1，识见+1。`,
-        `春寒料峭，偶染小恙，母亲煎了姜汤葱白，发了一场大汗便好了。体魄+1。`,
-      ],
-      1: [
-        `入夏雷雨连绵，山溪暴涨，你与乡邻连夜挑土加固堤坝，护住了全村百亩秧田。体魄+1，仁厚+1。`,
-        `盛夏酷暑难耐，你在树荫下编制蒲草凉席，偶有南来客商在井边讨水喝，送了你几个北方干枣。识见+1。`,
-        `梅雨季节屋顶漏雨，你冒雨爬上屋顶换上新茅草，虽然衣衫湿透，但屋内安然无恙。体魄+1。`,
-        `夏日田头捕得几条大鲤鱼，全家人大快朵颐，晚风吹拂稻香四溢。家资+1。`,
-      ],
-      2: [
-        `金秋霜降，黄澄澄的谷子割倒了一片又一片，连枷声声响彻晒谷场，全家抢收归仓。体魄+1，家资+2。`,
-        `秋风萧瑟，官府差役进村征收算赋，幸得家中余粮充足，顺利交齐租赋。家资-1，名望+1。`,
-        `重阳佳节，你与亲友登上北山采茱萸，饮了一杯自酿的菊花浊酒，遥望远方烽燧长烟。仁厚+1，识见+1。`,
-        `秋高气爽，收割完毕后你在麦茬地里放牧牛羊，望着大雁往南飞去。心境怡然，体魄+1。`,
-      ],
-      3: [
-        `初雪覆瓦，檐下垂冰。全家人围在火盆前烤干苞谷，听祖辈讲述当年光武皇帝昆阳大战的传奇。仁厚+1。`,
-        `岁末腊月，乡中合杀了一头年猪，家家分得两斤肥肉，腌制腊肉以备新年。家资+1。`,
-        `大雪封路数日，你在草棚中修补耕犁与板车，静待来年开春。识见+1。`,
-        `除夕之夜，村中燃起爆竹驱除山魈恶鬼，全家围坐饮椒柏酒，祈愿来年风调雨顺、少有兵火。体魄+1，气数+1。`,
-      ],
-    };
-
-    const phrases = seasonalLifePhrases[season];
-    personalStory = phrases[(year * 4 + season) % phrases.length];
-  }
-
-  return {
+  return querySeasonalEventFromTable({
     year,
     season,
-    seasonName: seasonCfg.fullName,
-    seasonMonths: seasonCfg.months,
-    lunarYear,
     age,
-    macroHistory: macroText,
-    regionalImpact: regionalText,
-    personalStory,
-    choice,
-  };
+    profile,
+    stats,
+  });
 }
 
 export function generateRealisticEnding(

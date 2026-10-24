@@ -322,6 +322,24 @@ class StorageService {
     } catch {}
     return this.getCommunityLives();
   }
+
+  // 4. 从后端 MySQL 数据表中动态读取预存扩展事件
+  public async fetchCatalogEventsFromBackend(category?: string, year?: number): Promise<any[]> {
+    try {
+      const extra: Record<string, string> = {};
+      if (category) extra.category = category;
+      if (year) extra.year = String(year);
+      const url = getPhpApiUrl('get_events_catalog', extra);
+      const resp = await fetch(url);
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.code === 200 && Array.isArray(json.data?.events)) {
+          return json.data.events;
+        }
+      }
+    } catch {}
+    return [];
+  }
 }
 
 export const storage = new StorageService();

@@ -57,14 +57,65 @@ export interface SeasonInfo {
   themeColor: string;
 }
 
+export interface HistoricalFigureBond {
+  id: string;              // e.g. 'zhao_yun'
+  name: string;            // e.g. '赵云'
+  courtesyName: string;    // e.g. '子龙'
+  title: string;           // e.g. '常山真定名将'
+  camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+  campLabel: string;       // e.g. '蜀汉顺平侯'
+  relation: string;        // e.g. '生死之交', '同道知己', '提携主将', '杏林良师'
+  bondLevel: number;       // 1: 初识, 2: 相熟, 3: 莫逆, 4: 生死托付
+  lastSpoken: string;      // Latest famous quote or conversational line
+  metYear: number;
+}
+
+export interface MilitaryAffiliation {
+  camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL' | 'NONE';
+  commanderName: string;   // e.g. '赵云' | '曹操' | '诸葛亮' | '周瑜' | '关羽' | '刘备'
+  roleTitle: string;       // e.g. '常山义从亲骑', '典农司马督粮官', '白毦亲军校尉', '江东水师牙门将'
+  enlistYear: number;
+  campaigns: string[];     // e.g. ['虎牢关会盟', '官渡劫粮', '长坂坡护民', '赤壁火攻', '汉中鏖战', '出祁山']
+}
+
+export interface HistoricalDialogue {
+  figureId: string;
+  speaker: string;         // e.g. '赵云'
+  courtesyName?: string;   // e.g. '子龙'
+  title: string;           // e.g. '常山真定壮士'
+  camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+  avatarChar: string;      // e.g. '云'
+  quote: string;           // Character dialogue line
+  replyPrompt?: string;    // Contextual explanation of the encounter
+}
+
 export interface LifeChoice {
   id: string;
   label: string;
   description: string;
   requirements?: Partial<Attributes>;
+  requirementHint?: string; // Subtle atmospheric hint, e.g. "需识见通达" or "需勇力绝伦"
+  approachTag?: string;     // e.g. "【勇者当先】", "【韬光养晦】", "【仁德恤民】", "【投效名将】"
   statChanges: Partial<Record<keyof Attributes, number>>;
   outcomeText: string;
   customEffect?: string;
+  figureBond?: {
+    figureId: string;
+    figureName: string;
+    courtesyName: string;
+    title: string;
+    camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+    campLabel: string;
+    relation: string;
+    dialogue: string;
+  };
+  campaignUnlock?: {
+    campaignName: string;
+    camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+    commander: string;
+    roleTitle: string;
+  };
+  eventFlagToSet?: string;
   fatalCheck?: (stats: Attributes) => { isFatal: boolean; deathReason: string } | null;
 }
 
@@ -78,9 +129,26 @@ export interface SeasonalEvent {
   macroHistory: string;  // 天下大事 (Detailed historical events of this season)
   regionalImpact: string;// 本地风物 (What happened in the player's province/county)
   personalStory: string; // 个人生计 (What happened in the player's family/village this season)
+  figureDialogue?: HistoricalDialogue; // Historical figure dialogue
+  campaignName?: string; // Campaign title if participating
+  isCampaignEvent?: boolean;
+  eventFlagTriggered?: string;
   choice?: {
     prompt: string;
     options: LifeChoice[];
+  };
+}
+
+export interface PhysiologicalStage {
+  stageKey: 'INFANT' | 'CHILD' | 'YOUTH' | 'ADULT' | 'PRIME' | 'MIDDLE' | 'ELDER' | 'VENERABLE';
+  stageName: string;       // e.g. "襁褓幼婴"
+  tag: string;             // e.g. "骨软神萌"
+  description: string;     // e.g. "初临乱世，襁褓骨弱，极易受风寒侵袭，全赖父母温汤护持。"
+  ageRange: string;        // e.g. "0~2岁"
+  growthTrend: {
+    health: 'GROWING_FAST' | 'GROWING' | 'PEAK' | 'DECLINING' | 'DECLINING_FAST';
+    intellect: 'GROWING_FAST' | 'GROWING' | 'PEAK' | 'STABLE';
+    martial: 'DORMANT' | 'GROWING_FAST' | 'GROWING' | 'PEAK' | 'DECLINING' | 'DECLINING_FAST';
   };
 }
 
@@ -94,6 +162,9 @@ export interface SeasonLogEntry {
   storySummary: string;
   choiceMade?: string;
   statChanges?: Partial<Record<keyof Attributes, number>>;
+  naturalChanges?: Partial<Record<keyof Attributes, number>>;
+  naturalChangeNote?: string;
+  physiologicalStageName?: string;
   location: string;
   occupation: string;
 }
@@ -125,4 +196,7 @@ export interface CompletedLifeRecord {
   matchedFigureName?: string;
   matchedFigureSimilarity?: number;
   matchedFigureTitle?: string;
+  knownFiguresList?: string[];
+  militaryCamp?: string;
+  campaignsList?: string[];
 }

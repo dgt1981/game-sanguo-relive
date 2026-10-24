@@ -324,6 +324,123 @@ switch ($action) {
         jsonResponse(200, '存档已清空');
         break;
 
+    // 7. 从数据库预存数据表中读取历史与人生事件库 (用于前台事件引擎扩展与动态载入)
+    case 'get_events_catalog':
+        $category = $_GET['category'] ?? '';
+        $year = isset($_GET['year']) ? (int)$_GET['year'] : 0;
+        
+        $sql = "SELECT * FROM `tb_three_kingdoms_events_catalog` WHERE `is_enabled` = 1";
+        $params = [];
+
+        if (!empty($category)) {
+            $sql .= " AND `category` = :category";
+            $params[':category'] = $category;
+        }
+        if ($year > 0) {
+            $sql .= " AND (`min_year` IS NULL OR `min_year` <= :yr1) AND (`max_year` IS NULL OR `max_year` >= :yr2)";
+            $params[':yr1'] = $year;
+            $params[':yr2'] = $year;
+        }
+
+        $sql .= " ORDER BY `priority` DESC, `id` ASC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        // 格式化解析 JSON 字段
+        $formatted = array_map(function($r) {
+            return [
+                'id' => $r['id'],
+                'category' => $r['category'],
+                'priority' => (int)$r['priority'],
+                'campaignName' => $r['campaign_name'],
+                'minYear' => $r['min_year'] !== null ? (int)$r['min_year'] : null,
+                'maxYear' => $r['max_year'] !== null ? (int)$r['max_year'] : null,
+                'seasons' => $r['seasons_json'] ? json_decode($r['seasons_json'], true) : null,
+                'minAge' => $r['min_age'] !== null ? (int)$r['min_age'] : null,
+                'maxAge' => $r['max_age'] !== null ? (int)$r['max_age'] : null,
+                'requiredCamp' => $r['required_camp'],
+                'requiredProvinces' => $r['required_provinces_json'] ? json_decode($r['required_provinces_json'], true) : null,
+                'requiredFlags' => $r['required_flags_json'] ? json_decode($r['required_flags_json'], true) : null,
+                'forbiddenFlags' => $r['forbidden_flags_json'] ? json_decode($r['forbidden_flags_json'], true) : null,
+                'minStats' => $r['min_stats_json'] ? json_decode($r['min_stats_json'], true) : null,
+                'historicalFigureId' => $r['historical_figure_id'],
+                'narrativeTemplate' => $r['narrative_template'],
+                'dialoguePrompt' => $r['dialogue_prompt'],
+                'dialogueQuote' => $r['dialogue_quote'],
+                'choices' => json_decode($r['choices_json'], true) ?: [],
+            ];
+        }, $rows);
+
+        jsonResponse(200, '查询事件总谱成功', [
+            'total' => count($formatted),
+            'events' => $formatted,
+        ]);
+        break;
+
+    // 8. 录入/更新预存事件条目至数据表 (方便扩充与捋顺因果)
+    case 'save_event_to_catalog':
+        if (empty($body['id']) || empty($body['category']) || empty($body['narrativeTemplate'])) {
+            jsonResponse(400, '缺少必要字段 (id, category, narrativeTemplate)');
+        }
+
+        $stmt = $pdo->prepare("
+            INSERT INTO `tb_three_kingdoms_events_catalog`
+            (`id`, `category`, `priority`, `campaign_name`, `min_year`, `max_year`, `seasons_json`,
+             `min_age`, `max_age`, `required_camp`, `required_provinces_json`, `required_flags_json`,
+             `forbidden_flags_json`, `min_stats_json`, `historical_figure_id`, `narrative_template`,
+             `dialogue_prompt`, `dialogue_quote`, `choices_json`, `is_enabled`)
+            VALUES
+            (:id, :category, :priority, :campaign_name, :min_year, :max_year, :seasons_json,
+             :min_age, :max_age, :required_camp, :required_provinces_json, :required_flags_json,
+             :forbidden_flags_json, :min_stats_json, :historical_figure_id, :narrative_template,
+             :dialogue_prompt, :dialogue_quote, :choices_json, 1)
+            ON DUPLICATE KEY UPDATE
+             `category` = VALUES(`category`),
+             `priority` = VALUES(`priority`),
+             `campaign_name` = VALUES(`campaign_name`),
+             `min_year` = VALUES(`min_year`),
+             `max_year` = VALUES(`max_year`),
+             `seasons_json` = VALUES(`seasons_json`),
+             `min_age` = VALUES(`min_age`),
+             `max_age` = VALUES(`max_age`),
+             `required_camp` = VALUES(`required_camp`),
+             `required_provinces_json` = VALUES(`required_provinces_json`),
+             `required_flags_json` = VALUES(`required_flags_json`),
+             `forbidden_flags_json` = VALUES(`forbidden_flags_json`),
+             `min_stats_json` = VALUES(`min_stats_json`),
+             `historical_figure_id` = VALUES(`historical_figure_id`),
+             `narrative_template` = VALUES(`narrative_template`),
+             `dialogue_prompt` = VALUES(`dialogue_prompt`),
+             `dialogue_quote` = VALUES(`dialogue_quote`),
+             `choices_json` = VALUES(`choices_json`)
+        ");
+
+        $stmt->execute([
+            ':id' => $body['id'],
+            ':category' => $body['category'],
+            ':priority' => (int)($body['priority'] ?? 50),
+            ':campaign_name' => $body['campaignName'] ?? null,
+            ':min_year' => isset($body['minYear']) ? (int)$body['minYear'] : null,
+            ':max_year' => isset($body['maxYear']) ? (int)$body['maxYear'] : null,
+            ':seasons_json' => isset($body['seasons']) ? json_encode($body['seasons'], JSON_UNESCAPED_UNICODE) : null,
+            ':min_age' => isset($body['minAge']) ? (int)$body['minAge'] : null,
+            ':max_age' => isset($body['maxAge']) ? (int)$body['maxAge'] : null,
+            ':required_camp' => $body['requiredCamp'] ?? null,
+            ':required_provinces_json' => isset($body['requiredProvinces']) ? json_encode($body['requiredProvinces'], JSON_UNESCAPED_UNICODE) : null,
+            ':required_flags_json' => isset($body['requiredFlags']) ? json_encode($body['requiredFlags'], JSON_UNESCAPED_UNICODE) : null,
+            ':forbidden_flags_json' => isset($body['forbiddenFlags']) ? json_encode($body['forbiddenFlags'], JSON_UNESCAPED_UNICODE) : null,
+            ':min_stats_json' => isset($body['minStats']) ? json_encode($body['minStats'], JSON_UNESCAPED_UNICODE) : null,
+            ':historical_figure_id' => $body['historicalFigureId'] ?? null,
+            ':narrative_template' => $body['narrativeTemplate'],
+            ':dialogue_prompt' => $body['dialoguePrompt'] ?? null,
+            ':dialogue_quote' => $body['dialogueQuote'] ?? null,
+            ':choices_json' => json_encode($body['choices'] ?? [], JSON_UNESCAPED_UNICODE),
+        ]);
+
+        jsonResponse(200, '事件条目已成功录入数据表');
+        break;
+
     default:
         jsonResponse(400, '未知的 action 请求参数');
         break;

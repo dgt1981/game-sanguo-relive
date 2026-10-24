@@ -84,6 +84,11 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                     <span className="text-[#a89987] font-classical">{entry.lunarYear}</span>
                     <span className="text-[#847565]">·</span>
                     <span className="text-[#38bdf8] font-mono">{entry.age} 岁</span>
+                    {entry.physiologicalStageName && (
+                      <span className="px-1.5 py-0.2 rounded bg-[#332215] text-[#e5a84b] font-classical text-[10px] border border-[#523722]">
+                        {entry.physiologicalStageName}
+                      </span>
+                    )}
                   </div>
                   <span className="text-[#a39381] font-classical">
                     {entry.location} ({entry.occupation})
@@ -100,24 +105,33 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                   {entry.storySummary}
                 </p>
 
+                {/* Natural physiological growth & aging note */}
+                {entry.naturalChangeNote && (
+                  <div className="text-[11px] text-[#86af8b] bg-[#141d16] px-2.5 py-1 rounded border border-[#233827] font-classical flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80]" />
+                    <span>{entry.naturalChangeNote}</span>
+                  </div>
+                )}
+
                 {/* Choice made */}
                 {entry.choiceMade && (
                   <div className="text-[#d4af37] pt-1 border-t border-[#2d2218] flex items-center gap-1 font-classical">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e5c158]" />
-                    <span>当年决断：{entry.choiceMade}</span>
+                    <span>当年抉择：{entry.choiceMade}</span>
                   </div>
                 )}
 
-                {/* Stat Changes */}
+                {/* Stat Changes from choice */}
                 {entry.statChanges && Object.keys(entry.statChanges).length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px] tabular-nums">
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5 font-mono text-[11px] tabular-nums">
+                    <span className="text-[10px] text-[#baa996] font-classical">【抉择影响】</span>
                     {Object.entries(entry.statChanges).map(([k, v]) => {
                       if (!v) return null;
                       const isPos = (v as number) > 0;
                       return (
                         <span
                           key={k}
-                          className={`px-1 rounded bg-[#17110d] ${
+                          className={`px-1.5 py-0.2 rounded bg-[#17110d] border border-[#33261a] ${
                             isPos ? 'text-[#4ade80]' : 'text-[#f87171]'
                           }`}
                         >

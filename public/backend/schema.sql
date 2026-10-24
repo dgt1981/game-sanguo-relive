@@ -74,3 +74,57 @@ CREATE TABLE `tb_three_kingdoms_saves` (
   PRIMARY KEY (`user_token`),
   INDEX `idx_updated` (`updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='玩家实时进度存档表 (断点续传)';
+
+-- ----------------------------------------------------------
+-- 3. 历史与人生事件预存数据表 (规范事件触发时机、前置因果与扩充维护)
+-- ----------------------------------------------------------
+DROP TABLE IF EXISTS `tb_three_kingdoms_events_catalog`;
+CREATE TABLE `tb_three_kingdoms_events_catalog` (
+  `id` VARCHAR(64) NOT NULL COMMENT '事件条目唯一标识 (如 camp_chibi_fire, milestone_age_15)',
+  `category` VARCHAR(32) NOT NULL COMMENT '分类 (HISTORICAL_CAMPAIGN/CRISIS/LIFE_STAGE/VOCATION/FIGURE_ENCOUNTER/SEASONAL_FOLK)',
+  `priority` INT(11) NOT NULL DEFAULT 50 COMMENT '权重优先级 (越高越优先匹配，如战役100/危机95/名士85/日常50)',
+  `campaign_name` VARCHAR(64) DEFAULT NULL COMMENT '所属著名战役名称 (如 赤壁之战、官渡之战、长坂坡之变)',
+  
+  -- 时空与触发条件约束 (避免因果时机错乱)
+  `min_year` INT(11) DEFAULT NULL COMMENT '最早发生公元年份 (如 208)',
+  `max_year` INT(11) DEFAULT NULL COMMENT '最晚发生公元年份 (如 208)',
+  `seasons_json` VARCHAR(64) DEFAULT NULL COMMENT '允许触发的季节JSON (如 [0,1,2,3] 或 [3]仅冬季)',
+  `min_age` INT(11) DEFAULT NULL COMMENT '触发最小生理岁数 (如 16)',
+  `max_age` INT(11) DEFAULT NULL COMMENT '触发最大生理岁数 (如 65)',
+  `required_camp` VARCHAR(32) DEFAULT NULL COMMENT '限定军旅/隶属阵营 (WEI/SHU/WU/NONE)',
+  `required_provinces_json` TEXT DEFAULT NULL COMMENT '限定所在州郡JSON (如 ["JINGZHOU","YANGZHOU"])',
+  `required_flags_json` TEXT DEFAULT NULL COMMENT '必须已具备的因果标志JSON (如 ["joined_military","knows_zhuge_liang"])',
+  `forbidden_flags_json` TEXT DEFAULT NULL COMMENT '禁止出现的互斥标志JSON (如 ["fled_to_south","dead"])',
+  `min_stats_json` TEXT DEFAULT NULL COMMENT '五维属性门槛JSON (如 {"courage":50,"insight":40})',
+  
+  -- 事件叙事与历史人物互动
+  `historical_figure_id` VARCHAR(64) DEFAULT NULL COMMENT '登场历史名士ID (如 zhuge_liang, cao_cao, zhou_yu)',
+  `narrative_template` TEXT NOT NULL COMMENT '季节个人生平纪事正文模版',
+  `dialogue_prompt` TEXT DEFAULT NULL COMMENT '名士对话/军机发问引导语',
+  `dialogue_quote` TEXT DEFAULT NULL COMMENT '名士原话台词',
+  
+  -- 玩家决策选项 (JSON结构包含提示、隐藏数值、因果标签增减)
+  `choices_json` JSON NOT NULL COMMENT '抉择分支列表JSON (包含id, text, statChanges, setFlags, removeFlags)',
+  `is_enabled` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用该事件 (1启用, 0下线)',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_category` (`category`),
+  INDEX `idx_years` (`min_year`, `max_year`),
+  INDEX `idx_priority` (`priority`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='三国事件总谱预存数据表 (时序与因果关联引擎)';
+
+-- 预置种子事件数据示例
+INSERT INTO `tb_three_kingdoms_events_catalog` 
+(`id`, `category`, `priority`, `campaign_name`, `min_year`, `max_year`, `seasons_json`, `min_age`, `max_age`, `required_camp`, `narrative_template`, `choices_json`)
+VALUES
+('camp_chibi_fire', 'HISTORICAL_CAMPAIGN', 100, '赤壁之战', 208, 208, '[3]', 16, 60, NULL,
+ '建安十三年冬，江东大都督周瑜乘东南狂风纵火，曹公铁索连环战船烈焰蔽江！红光照彻赤壁数十里，江水尽沸。你在江畔大营中目睹了这场决定天下三分的大火……',
+ '[{"id":"chibi_c1","text":"顺水驾轻舟救捞落水溃兵与残存粮草","statChanges":{"benevolence":8,"reputation":5,"vitality":-4},"setFlags":["rescued_chibi_soldiers"]},
+   {"id":"chibi_c2","text":"趁乱背负缴获兵甲银两向江陵南撤","statChanges":{"wealth":15,"courage":-2,"insight":3},"setFlags":["gained_chibi_spoils"]},
+   {"id":"chibi_c3","text":"从容伫立矶头，研判曹刘两军退进军略","statChanges":{"insight":12,"courage":6,"reputation":4},"setFlags":["witnessed_chibi_tactics"]}]'
+),
+('camp_guandu_wuchao', 'HISTORICAL_CAMPAIGN', 100, '官渡乌巢之劫', 200, 200, '[2,3]', 16, 60, NULL,
+ '建安五年秋冬，曹操亲率奇兵假扮袁军衔枚夜行，袭破乌巢粮屯。烈火烛天，淳于琼覆没，数十万斛军粮化为焦炭！北方形势自此大逆转。',
+ '[{"id":"guandu_c1","text":"跟随溃散役夫四散奔逃保全性命","statChanges":{"vitality":4,"courage":-3,"insight":2},"setFlags":["fled_wuchao"]},
+   {"id":"guandu_c2","text":"趁夜在焦黑营地搜罗散落的蹄铁干粮","statChanges":{"wealth":8,"insight":4,"vitality":-2},"setFlags":["wuchao_scavenger"]}]'
+);

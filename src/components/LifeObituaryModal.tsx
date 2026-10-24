@@ -4,7 +4,7 @@ import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
 import { FunTitleInfo } from '../services/titleGenerator';
 import { matchHistoricalFigures, MatchedHistoricalFigure } from '../services/historicalFigures';
 import { sound } from '../services/sound';
-import { Scroll, RotateCcw, Share2, Check, BookOpen, Sparkles, Compass, UserCheck } from 'lucide-react';
+import { Scroll, RotateCcw, Share2, Check, BookOpen, Sparkles, Compass, UserCheck, Swords, Users, Award } from 'lucide-react';
 
 interface LifeObituaryModalProps {
   ending: RealisticEnding;
@@ -190,6 +190,53 @@ ${ending.historianNote}
               </div>
             </div>
           </div>
+
+          {/* 平生征伐与天下知交 (随军参与历史战役与结识人物总结) */}
+          {(profile.militaryAffiliation || (profile.knownFigures && profile.knownFigures.length > 0)) && (
+            <div className="bg-[#1f1712] border border-[#3e2e1e] rounded-lg p-3.5 space-y-2 text-xs">
+              {profile.militaryAffiliation && profile.militaryAffiliation.camp !== 'NONE' && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 text-[#f59e0b] font-semibold">
+                    <Swords className="w-3.5 h-3.5" />
+                    <span>【投身阵营】{profile.militaryAffiliation.roleTitle}</span>
+                  </div>
+                  {profile.militaryAffiliation.campaigns.length > 0 && (
+                    <div className="flex items-center gap-1 flex-wrap text-[11px] text-[#eab308]">
+                      <span className="text-[#8c7b6a]">亲历演义战役：</span>
+                      {profile.militaryAffiliation.campaigns.map((campName) => (
+                        <span
+                          key={campName}
+                          className="px-1.5 py-0.2 rounded bg-[#2e1d13] border border-[#523820] text-[#fcd34d]"
+                        >
+                          {campName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {profile.knownFigures && profile.knownFigures.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[#2e2218]">
+                  <div className="flex items-center gap-1.5 text-[#d4af37]">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>【平生知交】：</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {profile.knownFigures.map((fig) => (
+                      <span
+                        key={fig.id}
+                        className="px-2 py-0.5 rounded bg-[#2b2016] border border-[#4d3824] text-[#faece0] text-[11px] flex items-center gap-1"
+                      >
+                        <span className="text-[#f59e0b] font-bold">{fig.name}</span>
+                        <span className="text-[#8e7e6e]">（{fig.relation}）</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 宿命映照 · 三国历史同道 (NEW) */}
           {currentFigure && (

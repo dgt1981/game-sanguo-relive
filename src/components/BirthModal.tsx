@@ -335,6 +335,20 @@ export const BirthModal: React.FC<BirthModalProps> = ({
                 <span className="text-[#ddd0c0]">堂上尚有 {profile.siblingCount} 个兄妹</span>
               </div>
             </div>
+
+            {/* Physiological Starting Law Preview */}
+            <div className="bg-[#16110d] p-2.5 rounded border border-[#3b2b1e] text-[11px] font-classical text-[#ad9c8a] space-y-1">
+              <div className="text-[#e5a84b] font-semibold flex items-center justify-between">
+                <span>【初生生理法则 · 真实生命起点】</span>
+                <span className="text-[10px] text-[#8e7f6e]">0岁·襁褓幼婴</span>
+              </div>
+              <p className="leading-relaxed text-[#c7b8a7]">
+                婴儿初始：体魄弱小（16~22，易受风寒）、识见微萌（3~6）、勇略未开（1~3，肢体柔软无法直立行走）。
+              </p>
+              <div className="text-[10px] text-[#8a7a6a] italic">
+                “时间向前流逝，筋骨将在七岁后拔节抽条，青年气力大成；中年识见登峰，暮年气血自然衰老；在自然规律之上，天灾兵燹与你的抉择将进一步改写命途。”
+              </div>
+            </div>
           </div>
 
           {/* Optional Province Picker */}

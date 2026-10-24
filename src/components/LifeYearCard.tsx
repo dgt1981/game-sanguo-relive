@@ -13,6 +13,11 @@ import {
   Clock,
   Zap,
   Calendar,
+  MessageSquare,
+  Swords,
+  EyeOff,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 
 interface LifeYearCardProps {
@@ -178,6 +183,74 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
 
       {/* 3. Main Narrative Area */}
       <div className="p-4 sm:p-6 md:p-8 space-y-5">
+        {/* Major Campaign Banner if actively participating */}
+        {currentEvent.isCampaignEvent && currentEvent.campaignName && (
+          <div className="bg-gradient-to-r from-[#3f1912] via-[#2a130e] to-[#1d100d] border border-[#a13b28] p-3.5 sm:p-4 rounded-lg flex items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#7f1d1d] border border-[#ef4444] flex items-center justify-center text-[#fef2f2] shadow-inner">
+                <Swords className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-calligraphy text-base sm:text-lg text-[#fecaca] font-bold">
+                    【演义史诗 · {currentEvent.campaignName}】
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#991b1b] text-[#fee2e2] font-classical">
+                    随军亲历
+                  </span>
+                </div>
+                <p className="text-xs text-[#fca5a5]">
+                  你正跟随麾下名将亲临历史与演义风暴的核心，一举一动皆系天下存亡！
+                </p>
+              </div>
+            </div>
+            <Award className="w-6 h-6 text-[#f59e0b] shrink-0 hidden sm:block opacity-80" />
+          </div>
+        )}
+
+        {/* Historical Figure Dialogue Box (认识与对话同地区历史人物) */}
+        {currentEvent.figureDialogue && (
+          <div className="bg-[#1e1713] border border-[#6d5138] rounded-xl p-4 sm:p-5 shadow-xl relative overflow-hidden space-y-2.5">
+            <div className="flex items-center justify-between border-b border-[#3e2e22] pb-2.5">
+              <div className="flex items-center gap-2.5">
+                {/* Avatar Badge */}
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#d4af37] to-[#8c7322] text-[#1c1208] flex items-center justify-center font-calligraphy font-bold text-lg shadow-md border border-[#fef08a]">
+                  {currentEvent.figureDialogue.avatarChar}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-calligraphy text-base text-[#faece0] font-bold">
+                      {currentEvent.figureDialogue.speaker}
+                    </span>
+                    {currentEvent.figureDialogue.courtesyName && (
+                      <span className="text-xs text-[#c5a666]">
+                        字 {currentEvent.figureDialogue.courtesyName}
+                      </span>
+                    )}
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#332419] text-[#eab308] border border-[#523c28] font-classical">
+                      {currentEvent.figureDialogue.title}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[#9c8976] flex items-center gap-1 font-classical mt-0.5">
+                    <MessageSquare className="w-3 h-3 text-[#d4af37]" />
+                    <span>同郡知交 · 驿道会面</span>
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-[#d4af37] font-classical hidden sm:inline">
+                【名士引路】
+              </span>
+            </div>
+
+            {/* Spoken Quote Balloon */}
+            <div className="bg-[#271d17] border-l-2 border-[#d4af37] p-3 rounded-r text-sm text-[#f5eee4] font-classical leading-relaxed relative">
+              <p className="italic text-[#f2e6d6] tracking-wide">
+                {currentEvent.figureDialogue.quote}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Macro History (天下大势) */}
         <div className="bg-[#181310] border-l-2 border-[#d4af37] p-3.5 sm:p-4 rounded-r text-xs sm:text-sm text-[#ded3c5] leading-relaxed">
           <div className="flex items-center justify-between mb-1">
@@ -214,14 +287,15 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
         {/* Branching Choice (if any this season) */}
         {hasChoice && currentEvent.choice && (
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-sm font-semibold text-[#f0e4d3] font-classical flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-[#d4af37]" />
                 <span>{currentEvent.choice.prompt}</span>
               </h3>
-              <span className="text-xs text-[#9d8d7b]">
-                {wasAutoPausedForChoice ? '抉择后按原倍速继续流转' : '请做出抉择'}
-              </span>
+              <div className="flex items-center gap-1 text-[11px] text-[#a89582] font-classical">
+                <EyeOff className="w-3.5 h-3.5 text-[#e5a84b]" />
+                <span>暗投决断 · 影响值已隐藏（抉择后将于年谱显现）</span>
+              </div>
             </div>
 
             <div className="space-y-2.5">
@@ -236,43 +310,37 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
                     className="w-full text-left p-3.5 sm:p-4 rounded-lg bg-[#221a14] border border-[#443324] hover:bg-[#2c2119] hover:border-[#d4af37] transition-all cursor-pointer group flex flex-col justify-between"
                   >
                     <div className="flex items-start justify-between gap-3 mb-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="w-5 h-5 rounded-full bg-[#332418] border border-[#543b27] flex items-center justify-center text-xs font-mono text-[#d4af37] shrink-0">
                           {String.fromCharCode(65 + idx)}
                         </span>
                         <span className="font-semibold text-sm sm:text-base text-[#f5eee4] group-hover:text-[#f8e096] transition-colors">
                           {opt.label}
                         </span>
+                        {opt.approachTag && (
+                          <span className="text-[11px] font-classical px-2 py-0.5 rounded bg-[#2e1f14] text-[#d4af37] border border-[#523b26]">
+                            {opt.approachTag}
+                          </span>
+                        )}
                       </div>
                       <ChevronRight className="w-4 h-4 text-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </div>
 
-                    <p className="text-xs text-[#a0907f] pl-7 leading-relaxed">
+                    <p className="text-xs text-[#b8a795] pl-7 leading-relaxed">
                       {opt.description}
                     </p>
 
-                    {/* Stat hint */}
-                    <div className="flex items-center gap-2 pl-7 pt-2 text-[11px] font-mono tabular-nums text-[#8c7c6a]">
-                      {Object.entries(opt.statChanges).map(([k, v]) => {
-                        if (!v) return null;
-                        const isPos = (v as number) > 0;
-                        const labelMap: Record<string, string> = {
-                          health: '体魄',
-                          intellect: '识见',
-                          martial: '勇略',
-                          virtue: '仁厚',
-                          wealth: '家财',
-                          fortune: '气数',
-                        };
-                        return (
-                          <span
-                            key={k}
-                            className={isPos ? 'text-[#4ade80]' : 'text-[#f87171]'}
-                          >
-                            {labelMap[k] || k} {isPos ? `+${v}` : v}
-                          </span>
-                        );
-                      })}
+                    {/* Subtle Requirement Hint without numeric spoiler */}
+                    <div className="flex items-center justify-between pl-7 pt-2 text-[11px] text-[#8c7c6a] font-classical">
+                      {opt.requirementHint ? (
+                        <span className="text-[#eab308] flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          <span>{opt.requirementHint}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[#786959]">祸福唯心 · 顺逆由命</span>
+                      )}
+                      <span className="text-[10px] text-[#6b5d4e]">听凭本心立决</span>
                     </div>
                   </button>
                 );

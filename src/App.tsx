@@ -16,6 +16,8 @@ import {
   getSeasonalEvent,
   generateRealisticEnding,
   SEASONS_CONFIG,
+  calculateNaturalPhysiologicalChange,
+  getPhysiologicalStage,
 } from './services/lifeSimulator';
 import { PROVINCES } from './data/regions';
 import { sound } from './services/sound';
@@ -85,10 +87,14 @@ export default function App() {
     } catch {}
   }, [records]);
 
-  // Handle Birth Setup with Custom Name & Hometown
   const handleStartLife = (newProfile: PersonProfile) => {
-    const initStats = generateInitialAttributes(newProfile.socialClass);
-    setProfile(newProfile);
+    const freshProfile: PersonProfile = {
+      ...newProfile,
+      knownFigures: newProfile.knownFigures || [],
+      eventFlags: newProfile.eventFlags || {},
+    };
+    const initStats = generateInitialAttributes(freshProfile.socialClass);
+    setProfile(freshProfile);
     setStats(initStats);
     setYear(184);
     setSeason(0);
@@ -99,7 +105,7 @@ export default function App() {
     setFunTitles(null);
     setResumeSaveData(null);
 
-    const firstEvt = getSeasonalEvent(184, 0, 0, newProfile, initStats);
+    const firstEvt = getSeasonalEvent(184, 0, 0, freshProfile, initStats);
     setCurrentEvent(firstEvt);
 
     // Initial Year 184 Spring Log
@@ -111,6 +117,8 @@ export default function App() {
       lunarYear: firstEvt.lunarYear,
       macroHistory: firstEvt.macroHistory,
       storySummary: firstEvt.personalStory,
+      naturalChangeNote: '【降生人世】初临乱世，襁褓骨软神萌，全赖父母悉心哺育。',
+      physiologicalStageName: '襁褓幼婴',
       location: `${newProfile.commandery} · ${newProfile.county}`,
       occupation: newProfile.occupation,
     };
@@ -208,6 +216,9 @@ export default function App() {
       matchedFigureName: topMatch?.name,
       matchedFigureSimilarity: topMatch?.similarityScore,
       matchedFigureTitle: topMatch?.titleTag,
+      knownFiguresList: (profile.knownFigures || []).map((f) => `${f.name}（${f.relation}）`),
+      militaryCamp: profile.militaryAffiliation?.roleTitle || '乡野布衣',
+      campaignsList: profile.militaryAffiliation?.campaigns || [],
     };
     setRecords((prev) => [newRecord, ...prev]);
 
@@ -285,11 +296,14 @@ export default function App() {
   // Advance 1 Season (四季流转核心逻辑)
   const advanceOneSeason = (
     customChoiceMade?: string,
-    statDelta?: Partial<Record<keyof Attributes, number>>
+    statDelta?: Partial<Record<keyof Attributes, number>>,
+    overrideProfile?: PersonProfile
   ): boolean => {
     let nextYear = year;
     let nextAge = age;
     const nextSeason = ((season + 1) % 4) as SeasonIndex;
+
+    const currentProf = overrideProfile || profile;
 
     // If wrapping from Winter to Spring, advance year and age
     if (nextSeason === 0) {
@@ -297,8 +311,18 @@ export default function App() {
       nextAge += 1;
     }
 
-    // 1. Calculate updated stats
+    // 1. 先行计算并施加生理年龄与季节自然更迭的基础变化 (Natural Growth & Senescence)
+    const naturalRes = calculateNaturalPhysiologicalChange(nextAge, nextSeason, stats);
     const updatedStats: Attributes = { ...stats };
+
+    if (naturalRes.delta) {
+      Object.entries(naturalRes.delta).forEach(([k, v]) => {
+        const key = k as keyof Attributes;
+        updatedStats[key] = Math.max(0, Math.min(100, updatedStats[key] + (v as number)));
+      });
+    }
+
+    // 2. 然后在自然生长的基础上，叠加重大事件发生与玩家自主抉择的影响 (Event Choices & Consequences)
     if (statDelta) {
       Object.entries(statDelta).forEach(([k, v]) => {
         const key = k as keyof Attributes;
@@ -306,23 +330,23 @@ export default function App() {
       });
     }
 
-    // Natural aging effects past age 50 (subtle winter decay)
-    if (nextAge > 50 && nextSeason === 3) {
-      updatedStats.health = Math.max(0, updatedStats.health - 1);
-    }
-    if (nextAge > 65 && (nextSeason === 1 || nextSeason === 3)) {
-      updatedStats.health = Math.max(0, updatedStats.health - 1);
+    // Dynamic Occupation changes according to physiological age and social standing
+    let nextOccupation = currentProf.occupation;
+    if (nextAge <= 2) {
+      nextOccupation = '襁褓幼童';
+    } else if (nextAge <= 6) {
+      nextOccupation = '龆龀幼子';
+    } else if (nextAge <= 13) {
+      nextOccupation = '总角童蒙';
+    } else if (nextAge <= 18 && (currentProf.occupation === '总角童蒙' || currentProf.occupation === '龆龀幼子' || currentProf.occupation === '襁褓幼童')) {
+      nextOccupation = '及冠成丁';
+    } else if (nextAge >= 50 && (currentProf.occupation === '及冠成丁' || currentProf.occupation === '乡里耕丁')) {
+      nextOccupation = '乡党长者';
+    } else if (nextAge >= 65 && currentProf.occupation === '乡党长者') {
+      nextOccupation = '里社耆宿';
     }
 
-    // Dynamic Occupation changes
-    let nextOccupation = profile.occupation;
-    if (nextAge === 4) nextOccupation = '总角稚子';
-    if (nextAge === 7) nextOccupation = '放牛/学步童蒙';
-    if (nextAge === 14) nextOccupation = '及笄成丁';
-    if (nextAge === 18 && profile.occupation === '及笄成丁') nextOccupation = '乡里耕丁';
-    if (nextAge >= 50 && profile.occupation === '乡里耕丁') nextOccupation = '乡党长者';
-
-    const updatedProfile = { ...profile, occupation: nextOccupation };
+    const updatedProfile: PersonProfile = { ...currentProf, occupation: nextOccupation };
     setProfile(updatedProfile);
 
     // 2. Health & Old age check
@@ -343,7 +367,7 @@ export default function App() {
     setStats(updatedStats);
     setCurrentEvent(nextEvt);
 
-    // 4. Record to log
+    // 4. Record to log (包含生理成长足迹与选择影响)
     const logEntry: SeasonLogEntry = {
       year: nextYear,
       season: nextSeason,
@@ -354,6 +378,9 @@ export default function App() {
       storySummary: nextEvt.personalStory,
       choiceMade: customChoiceMade,
       statChanges: statDelta,
+      naturalChanges: naturalRes.delta,
+      naturalChangeNote: naturalRes.naturalNote,
+      physiologicalStageName: naturalRes.stage.stageName,
       location: `${updatedProfile.commandery} · ${updatedProfile.county}`,
       occupation: updatedProfile.occupation,
     };
@@ -427,8 +454,67 @@ export default function App() {
       }
     }
 
-    // Advance with the choice made
-    advanceOneSeason(choice.label, choice.statChanges);
+    // Process Figure Bonds & Relationships
+    let updatedFigures = [...(profile.knownFigures || [])];
+    if (choice.figureBond) {
+      const fb = choice.figureBond;
+      const existIdx = updatedFigures.findIndex((f) => f.id === fb.figureId);
+      if (existIdx >= 0) {
+        updatedFigures[existIdx] = {
+          ...updatedFigures[existIdx],
+          bondLevel: Math.min(4, updatedFigures[existIdx].bondLevel + 1),
+          relation: fb.relation,
+          lastSpoken: fb.dialogue,
+        };
+      } else {
+        updatedFigures.push({
+          id: fb.figureId,
+          name: fb.figureName,
+          courtesyName: fb.courtesyName,
+          title: fb.title,
+          camp: fb.camp,
+          campLabel: fb.campLabel,
+          relation: fb.relation,
+          bondLevel: 1,
+          lastSpoken: fb.dialogue,
+          metYear: year,
+        });
+      }
+    }
+
+    // Process Military Campaign & Role Unlocks
+    let updatedAffiliation = profile.militaryAffiliation;
+    if (choice.campaignUnlock) {
+      const cu = choice.campaignUnlock;
+      const currentCampaigns = updatedAffiliation?.campaigns || [];
+      const nextCampaigns = currentCampaigns.includes(cu.campaignName)
+        ? currentCampaigns
+        : [...currentCampaigns, cu.campaignName];
+      updatedAffiliation = {
+        camp: cu.camp,
+        commanderName: cu.commander,
+        roleTitle: cu.roleTitle,
+        enlistYear: updatedAffiliation?.enlistYear || year,
+        campaigns: nextCampaigns,
+      };
+    }
+
+    // Process Event Flags for Chained Continuity
+    const updatedFlags = { ...(profile.eventFlags || {}) };
+    if (choice.eventFlagToSet) {
+      updatedFlags[choice.eventFlagToSet] = true;
+    }
+
+    const updatedProf: PersonProfile = {
+      ...profile,
+      knownFigures: updatedFigures,
+      militaryAffiliation: updatedAffiliation,
+      eventFlags: updatedFlags,
+    };
+    setProfile(updatedProf);
+
+    // Advance with the choice made and updated profile
+    advanceOneSeason(choice.label, choice.statChanges, updatedProf);
 
     // If auto-advance was paused for this choice, automatically resume at previous speed!
     if (wasAutoPausedForChoice && !isGameOver) {
