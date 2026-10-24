@@ -364,6 +364,23 @@ if ($action === 'save_life') {
             </div>
 
             <div className="space-y-3 font-classical text-xs sm:text-sm">
+              {selectedRecord.matchedFigureName && (
+                <div className="bg-[#241a13] p-3 rounded-lg border border-[#523b26] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#e5c158] shrink-0" />
+                    <span className="text-xs text-[#dcd1c2]">
+                      宿命映照三国历史同道：<strong className="text-[#faece0] text-sm">{selectedRecord.matchedFigureName}</strong>{' '}
+                      <span className="text-[#d4af37] text-xs font-semibold">{selectedRecord.matchedFigureTitle || ''}</span>
+                    </span>
+                  </div>
+                  {selectedRecord.matchedFigureSimilarity && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-[#17110c] text-[#f59e0b] font-mono border border-[#483422] shrink-0">
+                      {selectedRecord.matchedFigureSimilarity}% 契合
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="bg-[#221a14] p-3.5 rounded border border-[#3f3022]">
                 <div className="text-[#d4af37] font-semibold mb-1">【平生小传】</div>
                 <p className="leading-relaxed text-[#ddd2c4]">

@@ -92,6 +92,9 @@ switch ($action) {
         $folkNickname = $funTitles['folkNickname'] ?? '村东头老懂哥';
         $badgesJson = json_encode($funTitles['badges'] ?? [], JSON_UNESCAPED_UNICODE);
         $humorousQuote = $funTitles['humorousQuote'] ?? '';
+        $matchedFigureName = $body['matchedFigureName'] ?? null;
+        $matchedFigureSimilarity = isset($body['matchedFigureSimilarity']) ? (int)$body['matchedFigureSimilarity'] : null;
+        $matchedFigureTitle = $body['matchedFigureTitle'] ?? null;
 
         $statsJson = json_encode($body['finalStats'] ?? [], JSON_UNESCAPED_UNICODE);
         $seasonLogsJson = json_encode($body['seasonLogs'] ?? [], JSON_UNESCAPED_UNICODE);
@@ -103,17 +106,19 @@ switch ($action) {
             `id`, `name`, `courtesy_name`, `gender`, `birth_year`, `death_year`, `death_season`,
             `death_age`, `birthplace`, `province_id`, `social_class`, `final_occupation`,
             `ending_title`, `epitaph_title`, `primary_fun_title`, `folk_nickname`, `badges_json`,
-            `summary`, `historian_note`, `humorous_quote`, `stats_json`, `season_logs_json`,
-            `season_logs_count`, `death_reason`, `ip_address`
+            `summary`, `historian_note`, `humorous_quote`, `matched_figure_name`, `matched_figure_similarity`,
+            `matched_figure_title`, `stats_json`, `season_logs_json`, `season_logs_count`, `death_reason`, `ip_address`
         ) VALUES (
             :id, :name, :courtesy_name, :gender, :birth_year, :death_year, :death_season,
             :death_age, :birthplace, :province_id, :social_class, :final_occupation,
             :ending_title, :epitaph_title, :primary_fun_title, :folk_nickname, :badges_json,
-            :summary, :historian_note, :humorous_quote, :stats_json, :season_logs_json,
-            :season_logs_count, :death_reason, :ip_address
+            :summary, :historian_note, :humorous_quote, :matched_figure_name, :matched_figure_similarity,
+            :matched_figure_title, :stats_json, :season_logs_json, :season_logs_count, :death_reason, :ip_address
         ) ON DUPLICATE KEY UPDATE
             `ending_title` = VALUES(`ending_title`),
             `summary` = VALUES(`summary`),
+            `matched_figure_name` = VALUES(`matched_figure_name`),
+            `matched_figure_similarity` = VALUES(`matched_figure_similarity`),
             `likes_count` = `likes_count` + 1";
 
         $stmt = $pdo->prepare($sql);
@@ -138,6 +143,9 @@ switch ($action) {
             ':summary' => $summary,
             ':historian_note' => $historianNote,
             ':humorous_quote' => $humorousQuote,
+            ':matched_figure_name' => $matchedFigureName,
+            ':matched_figure_similarity' => $matchedFigureSimilarity,
+            ':matched_figure_title' => $matchedFigureTitle,
             ':stats_json' => $statsJson,
             ':season_logs_json' => $seasonLogsJson,
             ':season_logs_count' => $seasonLogsCount,

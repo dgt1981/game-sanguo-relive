@@ -34,6 +34,9 @@ CREATE TABLE `tb_three_kingdoms_lives` (
   `summary` TEXT NOT NULL COMMENT '平生总叙全文',
   `historian_note` TEXT NOT NULL COMMENT '太史公史家赞曰',
   `humorous_quote` VARCHAR(255) DEFAULT '' COMMENT '幽默生平评语',
+  `matched_figure_name` VARCHAR(64) DEFAULT NULL COMMENT '宿命映照历史人物姓名 (如 贾诩, 廖化, 华佗)',
+  `matched_figure_similarity` INT(11) DEFAULT NULL COMMENT '历史人物宿命契合度百分比 (如 96)',
+  `matched_figure_title` VARCHAR(128) DEFAULT NULL COMMENT '历史人物名号标签 (如 【算无遗策 · 隐忍苟道之尊】)',
   
   -- 数据详情
   `stats_json` JSON NOT NULL COMMENT '终局五维属性JSON (体魄,识见,勇略,仁厚,家财,气数)',
