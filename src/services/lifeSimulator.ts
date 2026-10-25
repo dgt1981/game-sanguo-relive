@@ -611,12 +611,24 @@ export function generateRealisticEnding(
     };
   }
 
-  if (deathReason && deathReason.includes('阵亡')) {
+  if (deathReason && (deathReason.includes('阵亡') || deathReason.includes('战死') || deathReason.includes('就义') || deathReason.includes('矢石') || deathReason.includes('乌巢'))) {
+    const isWuchao = deathReason.includes('乌巢') || deathReason.includes('官渡');
+    const isJustMartyr = deathReason.includes('就义') || deathReason.includes('不降');
     return {
-      title: `${profile.county}随军戍卒 · 享年${deathAge}岁`,
-      epitaphTitle: '乱世白骨生还无期',
-      summary: `应征入伍十数载，转战中原数千里，殁于公元${deathYear}年战阵之中。死时怀中尚揣着一包未寄出的故乡泥土与母亲缝制的旧布鞋底。`,
-      historianNote: '可怜无定河边骨，犹是春闺梦里人。横槊之雄今安在，枯骨荒草伴残阳。',
+      title: isWuchao
+        ? `${profile.county}阵亡将士 · 享年${deathAge}岁`
+        : isJustMartyr
+        ? `${profile.county}不屈忠烈 · 享年${deathAge}岁`
+        : `${profile.county}随军戍卒 · 享年${deathAge}岁`,
+      epitaphTitle: isWuchao
+        ? '官渡烈火 · 残甲浩气'
+        : isJustMartyr
+        ? '慷慨就义 · 气节凛然'
+        : '乱世白骨 · 沙场裹尸',
+      summary: `从军入伍，转战中原，于公元${deathYear}年${deathReason}。死时怀中尚揣着一包未寄出的故乡泥土与母亲缝制的旧布鞋底。生平虽短，其气魄与忠烈令后人唏嘘。`,
+      historianNote: isJustMartyr
+        ? '宁死不失大节，杀身以成仁。汉末草芥之躯，亦有千秋烈士之风骨！'
+        : '可怜无定河边骨，犹是春闺梦里人。横槊之雄今安在，枯骨荒草伴残阳。',
       tier: 'TRAGIC',
     };
   }

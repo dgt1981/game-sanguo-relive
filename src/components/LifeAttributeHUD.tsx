@@ -206,7 +206,19 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
               <span className="text-[#8e7f6e]">阵营从军：</span>
               {profile.militaryAffiliation && profile.militaryAffiliation.camp !== 'NONE' ? (
                 <span className="font-semibold text-[#f59e0b] bg-[#291b10] px-2 py-0.5 rounded border border-[#543b24]">
-                  {profile.militaryAffiliation.camp === 'WEI' ? '【曹魏】' : profile.militaryAffiliation.camp === 'SHU' ? '【蜀汉】' : profile.militaryAffiliation.camp === 'WU' ? '【东吴】' : '【联军】'}
+                  {profile.militaryAffiliation.camp === 'WEI'
+                    ? '【曹魏】'
+                    : profile.militaryAffiliation.camp === 'SHU'
+                    ? '【蜀汉】'
+                    : profile.militaryAffiliation.camp === 'WU'
+                    ? '【东吴】'
+                    : profile.militaryAffiliation.camp === 'YUAN_SHAO'
+                    ? '【河北袁绍】'
+                    : profile.militaryAffiliation.camp === 'DONG_ZHUO'
+                    ? '【西凉董卓】'
+                    : profile.militaryAffiliation.camp === 'LU_BU'
+                    ? '【徐州吕布】'
+                    : '【联军】'}
                   {' '}{profile.militaryAffiliation.roleTitle}
                 </span>
               ) : (

@@ -4,6 +4,7 @@ import {
   LifeChoice,
   SeasonIndex,
   HistoricalDialogue,
+  CampType,
 } from './game';
 import { PersonProfile } from '../services/lifeSimulator';
 
@@ -26,7 +27,7 @@ export interface EventTriggerCondition {
   provinces?: ProvinceId[]; // 限制特定州郡 (若未指定则天下皆可)
   requiredFlags?: string[]; // 必须具备的因果链标签 (如 'learned_herbs', 'befriended:zhao_yun')
   forbiddenFlags?: string[]; // 不可具备的标签 (如 'done:evt_190_hulao'，防止重复)
-  requiredCamp?: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+  requiredCamp?: CampType | 'MILITARY_ANY' | 'CIVILIAN_ONLY';
   minStats?: Partial<Attributes>;
   requiredOccupation?: string[];
   onceOnly?: boolean; // 是否一生仅触发一次 (默认 true)

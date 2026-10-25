@@ -172,9 +172,16 @@ export function querySeasonalEventFromTable(context: EventQueryContext): Seasona
       const hasAnyForbidden = c.forbiddenFlags.some((ff) => Boolean(flags[ff]));
       if (hasAnyForbidden) return false;
     }
-    // 阵营限制检查
-    if (c.requiredCamp && profile.militaryAffiliation?.camp !== c.requiredCamp) {
-      return false;
+    // 阵营严格限制检查 (确保从军后只参与本阵营事务，平民只触发平民视角，避免越阵营乱跳)
+    if (c.requiredCamp) {
+      const playerCamp = profile.militaryAffiliation?.camp || 'NONE';
+      if (c.requiredCamp === 'CIVILIAN_ONLY') {
+        if (playerCamp !== 'NONE') return false;
+      } else if (c.requiredCamp === 'MILITARY_ANY') {
+        if (playerCamp === 'NONE') return false;
+      } else {
+        if (playerCamp !== c.requiredCamp) return false;
+      }
     }
     // 属性门槛检查
     if (c.minStats) {

@@ -57,12 +57,22 @@ export interface SeasonInfo {
   themeColor: string;
 }
 
+export type CampType =
+  | 'WEI'         // 曹魏 / 曹操
+  | 'SHU'         // 蜀汉 / 刘备
+  | 'WU'          // 东吴 / 孙策孙权
+  | 'YUAN_SHAO'   // 河北袁绍
+  | 'DONG_ZHUO'   // 凉州董卓
+  | 'LU_BU'       // 温侯吕布
+  | 'NEUTRAL'     // 地方诸侯/义军
+  | 'NONE';       // 乡野平民/非军职
+
 export interface HistoricalFigureBond {
   id: string;              // e.g. 'zhao_yun'
   name: string;            // e.g. '赵云'
   courtesyName: string;    // e.g. '子龙'
   title: string;           // e.g. '常山真定名将'
-  camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+  camp: CampType;
   campLabel: string;       // e.g. '蜀汉顺平侯'
   relation: string;        // e.g. '生死之交', '同道知己', '提携主将', '杏林良师'
   bondLevel: number;       // 1: 初识, 2: 相熟, 3: 莫逆, 4: 生死托付
@@ -71,11 +81,11 @@ export interface HistoricalFigureBond {
 }
 
 export interface MilitaryAffiliation {
-  camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL' | 'NONE';
-  commanderName: string;   // e.g. '赵云' | '曹操' | '诸葛亮' | '周瑜' | '关羽' | '刘备'
-  roleTitle: string;       // e.g. '常山义从亲骑', '典农司马督粮官', '白毦亲军校尉', '江东水师牙门将'
+  camp: CampType;
+  commanderName: string;   // e.g. '赵云' | '曹操' | '诸葛亮' | '周瑜' | '关羽' | '刘备' | '袁绍' | '淳于琼'
+  roleTitle: string;       // e.g. '常山义从亲骑', '典农司马督粮官', '白毦亲军校尉', '江东水师牙门将', '河北亲军大戟士'
   enlistYear: number;
-  campaigns: string[];     // e.g. ['虎牢关会盟', '官渡劫粮', '长坂坡护民', '赤壁火攻', '汉中鏖战', '出祁山']
+  campaigns: string[];     // e.g. ['虎牢关会盟', '官渡乌巢', '长坂坡护民', '赤壁火攻', '汉中鏖战', '出祁山']
 }
 
 export interface HistoricalDialogue {
@@ -83,7 +93,7 @@ export interface HistoricalDialogue {
   speaker: string;         // e.g. '赵云'
   courtesyName?: string;   // e.g. '子龙'
   title: string;           // e.g. '常山真定壮士'
-  camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+  camp: CampType;
   avatarChar: string;      // e.g. '云'
   quote: string;           // Character dialogue line
   replyPrompt?: string;    // Contextual explanation of the encounter
@@ -104,19 +114,33 @@ export interface LifeChoice {
     figureName: string;
     courtesyName: string;
     title: string;
-    camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+    camp: CampType;
     campLabel: string;
     relation: string;
     dialogue: string;
   };
   campaignUnlock?: {
     campaignName: string;
-    camp: 'WEI' | 'SHU' | 'WU' | 'NEUTRAL';
+    camp: CampType;
     commander: string;
     roleTitle: string;
   };
   eventFlagToSet?: string;
+  eventFlagToRemove?: string;
+  
+  // 阵营脱离与下野
+  leaveMilitary?: boolean; // 脱离军伍下野为民 (camp 归 NONE, 恢复乡野身份)
+  
+  // 生死战死判定
   fatalCheck?: (stats: Attributes) => { isFatal: boolean; deathReason: string } | null;
+  isDirectFatal?: boolean;  // 直接殉国/战死判定
+  fatalDeathReason?: string;// 战死原因文案 (如: 官渡乌巢烈火中力战身亡)
+  
+  // 被俘等临场二次抉择 (如被俘后是否归降、下野或就义)
+  followUpChoice?: {
+    prompt: string;
+    options: LifeChoice[];
+  };
 }
 
 export interface SeasonalEvent {

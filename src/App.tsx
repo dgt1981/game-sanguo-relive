@@ -446,6 +446,13 @@ export default function App() {
 
   // Choice Selection
   const handleSelectChoice = (choice: LifeChoice) => {
+    // 1. 直接战死/就义判定 (如誓死不降或冲锋阵亡)
+    if (choice.isDirectFatal) {
+      triggerDeath(choice.fatalDeathReason || '血战沙场，力竭阵亡。', age, year, season, stats);
+      return;
+    }
+
+    // 2. 基于属性阈值的生死凶险判定
     if (choice.fatalCheck) {
       const check = choice.fatalCheck(stats);
       if (check && check.isFatal) {
@@ -454,7 +461,7 @@ export default function App() {
       }
     }
 
-    // Process Figure Bonds & Relationships
+    // 3. 处理历史人物结交与羁绊
     let updatedFigures = [...(profile.knownFigures || [])];
     if (choice.figureBond) {
       const fb = choice.figureBond;
@@ -482,9 +489,15 @@ export default function App() {
       }
     }
 
-    // Process Military Campaign & Role Unlocks
+    // 4. 处理军阵所属、从军解锁或下野还乡
     let updatedAffiliation = profile.militaryAffiliation;
-    if (choice.campaignUnlock) {
+    let nextOccupation = profile.occupation;
+
+    if (choice.leaveMilitary) {
+      // 玩家主动或被俘后选择下野还乡，恢复平民身份
+      updatedAffiliation = undefined;
+      nextOccupation = age >= 50 ? '还乡耆宿' : '还乡耕民';
+    } else if (choice.campaignUnlock) {
       const cu = choice.campaignUnlock;
       const currentCampaigns = updatedAffiliation?.campaigns || [];
       const nextCampaigns = currentCampaigns.includes(cu.campaignName)
@@ -497,23 +510,48 @@ export default function App() {
         enlistYear: updatedAffiliation?.enlistYear || year,
         campaigns: nextCampaigns,
       };
+      nextOccupation = cu.roleTitle;
     }
 
-    // Process Event Flags for Chained Continuity
+    // 5. 因果链标签增减 (Flags)
     const updatedFlags = { ...(profile.eventFlags || {}) };
     if (choice.eventFlagToSet) {
       updatedFlags[choice.eventFlagToSet] = true;
     }
+    if (choice.eventFlagToRemove) {
+      delete updatedFlags[choice.eventFlagToRemove];
+    }
 
     const updatedProf: PersonProfile = {
       ...profile,
+      occupation: nextOccupation,
       knownFigures: updatedFigures,
       militaryAffiliation: updatedAffiliation,
       eventFlags: updatedFlags,
     };
     setProfile(updatedProf);
 
-    // Advance with the choice made and updated profile
+    // 6. 若存在临场生死抉择 (如被俘后是否归降、下野或就义)，留在当前季节供玩家做二次裁决！
+    if (choice.followUpChoice) {
+      sound.playMilestone();
+      const updatedStats: Attributes = { ...stats };
+      Object.entries(choice.statChanges).forEach(([k, v]) => {
+        const key = k as keyof Attributes;
+        updatedStats[key] = Math.max(0, Math.min(100, updatedStats[key] + (v as number)));
+      });
+      setStats(updatedStats);
+
+      setCurrentEvent((prev) => ({
+        ...prev,
+        personalStory: `${prev.personalStory}\n\n【局势突变】${choice.outcomeText}`,
+        choice: choice.followUpChoice,
+      }));
+      setIsAutoRunning(false);
+      setWasAutoPausedForChoice(true);
+      return;
+    }
+
+    // 7. 正常推进至下一季
     advanceOneSeason(choice.label, choice.statChanges, updatedProf);
 
     // If auto-advance was paused for this choice, automatically resume at previous speed!

@@ -204,57 +204,71 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
   {
     id: 'evt_adult_18_conscription',
     category: 'RITE_OF_PASSAGE',
-    title: '十八及冠 · 点卯征丁',
+    title: '十八及冠 · 点卯从军投效',
     priority: 85,
-    conditions: { minYear: 202, maxYear: 202, seasons: [2], minAge: 18, maxAge: 18 },
-    storyText: '十八岁秋，战火逼近。县里铜锣敲响，长官按籍点卯，一村之中必须抽丁两人随军出征。',
+    conditions: { minYear: 200, maxYear: 202, seasons: [1, 2], minAge: 16, maxAge: 20, forbiddenFlags: ['done:evt_adult_18_conscription'] },
+    storyText: '天下诸侯割据争锋，各地广发从军召募文告，铜锣声震动四野。值此及冠成丁之际，正是决定投效何方阵营的关键时刻！',
     choice: {
-      prompt: '点兵鼓声震天，差役腰悬皮鞭按名拿人，你作何决断？',
+      prompt: '天下诸侯纷争，营门大开召募勇士，你决定投身何方阵营，或自留乡间务农？',
       options: [
         {
-          id: 'c_age18_frontline',
-          label: '扛起丈二长矛应征入伍，做一名冲锋陷阵的行伍步卒',
-          description: '男儿横刀走战阵，博个军功光宗耀祖，总胜过饿死沟壑！',
-          approachTag: '【投身行伍】',
-          requirementHint: '生死搏杀，凶险难测',
-          statChanges: { martial: 14, health: 4, wealth: 4, fortune: -4 },
-          outcomeText: '穿上破旧皮甲，端起长枪开拔出营。母亲追着队列送了十里，将一包故乡热土塞入你怀里。',
+          id: 'c_enlist_yuan_shao',
+          label: '【投效河北袁绍军】投奔河北大将军袁本初麾下，入编大戟先锋亲骑',
+          description: '袁绍坐拥幽青并冀四州，带甲数十万，兵精粮足，为天下第一霸主！',
+          approachTag: '【河北大军】',
+          requirementHint: '需体魄筋骨强健',
+          statChanges: { martial: 12, health: 6, wealth: 8, fortune: 4 },
+          outcomeText: '你领到一具精铁扎甲与丈八硬槊，被编入袁大将军帐前前锋营，士气如虹！',
           campaignUnlock: {
-            campaignName: '行伍投军',
-            camp: 'NEUTRAL',
-            commander: '郡守都尉',
-            roleTitle: '行伍正卒',
+            campaignName: '行伍投军 · 河北',
+            camp: 'YUAN_SHAO',
+            commander: '袁绍',
+            roleTitle: '河北袁绍帐前亲骑',
           },
-          fatalCheck: (st) => {
-            if (st.health < 25 && st.martial < 35) {
-              return { isFatal: true, deathReason: '从军第一年随大军远征，因暴发水土不服霍乱，殁于荒野大营。' };
-            }
-            return null;
-          },
+          eventFlagToSet: 'done:evt_adult_18_conscription',
         },
         {
-          id: 'c_age18_logistics',
-          label: '主动申请充当后方运粮夫，推独轮小车跋涉山川运米',
-          description: '运粮虽苦不堪言，但无需首当其冲面对敌军刀矛箭雨。',
-          approachTag: '【随军督粮】',
-          requirementHint: '任劳任怨，避其锋芒',
-          statChanges: { health: 6, virtue: 6, wealth: 2 },
-          outcomeText: '车轮吱呀响彻古道，你脚磨起无数血泡，在后营运粮数月，结识了各方豪爽民夫。',
+          id: 'c_enlist_cao_cao',
+          label: '【投效中原曹魏营】投奔司空曹公兖州大营，立志做一名破阵步骑',
+          description: '曹公奉天子以令不臣，唯才是举，治军森严，乃中原雄主！',
+          approachTag: '【曹魏雄师】',
+          requirementHint: '需勇略过人',
+          statChanges: { martial: 14, intellect: 6, wealth: 6, fortune: -2 },
+          outcomeText: '你通过军门校阅，被编入曹公麾下正规战兵，发放环首长刀与皮胄。',
           campaignUnlock: {
-            campaignName: '随军押粮',
-            camp: 'NEUTRAL',
-            commander: '督粮都尉',
-            roleTitle: '后营运粮队正',
+            campaignName: '行伍投军 · 曹营',
+            camp: 'WEI',
+            commander: '曹操',
+            roleTitle: '曹公帐前亲兵步卒',
           },
+          eventFlagToSet: 'done:evt_adult_18_conscription',
         },
         {
-          id: 'c_age18_flee_south',
-          label: '典当破房薄田，连夜护持全家老少南逃荆襄避乱',
-          description: '避开诸侯混战泥潭，前往刘景升治下的安宁乐土。',
-          approachTag: '【举家避乱】',
-          requirementHint: '耗费家资，换得安宁',
-          statChanges: { wealth: -10, virtue: 8, fortune: 8, health: -4 },
-          outcomeText: '跋山涉水两千里，终于安然抵达襄阳。一家人在水边搭起茅屋，免去兵戈杀戮之苦。',
+          id: 'c_enlist_liu_bei',
+          label: '【投效刘玄德义师】投奔以仁德著称的刘玄德与常山赵子龙',
+          description: '刘备虽屡经屯邅，然仁厚得民，关张赵皆万人敌，誓保汉家山河！',
+          approachTag: '【仁德义从】',
+          requirementHint: '需仁厚仁义',
+          statChanges: { virtue: 16, martial: 10, health: 4, wealth: -4 },
+          outcomeText: '刘玄德亲握你手好言相慰，赵子龙为你正衣冠。虽军容简朴，然将士同心同德！',
+          campaignUnlock: {
+            campaignName: '行伍投军 · 刘义师',
+            camp: 'SHU',
+            commander: '赵云',
+            roleTitle: '玄德亲军义从步卒',
+          },
+          eventFlagToSet: 'done:evt_adult_18_conscription',
+        },
+        {
+          id: 'c_enlist_leave_civilian',
+          label: '【下野拒绝入伍】托请里正通融，宁愿多缴赋税，留在家乡耕织安生',
+          description: '远离诸侯杀伐征战的绞肉机，做一个本分安生的乡野耕民。',
+          approachTag: '【躬耕避战】',
+          requirementHint: '耗费微财，求得安宁',
+          statChanges: { wealth: -8, virtue: 6, fortune: 6 },
+          outcomeText: '你躲过了官府抽丁的鞭梢，安心留在家乡耕种一亩三分地，免去沙场尸骨无存之苦。',
+          leaveMilitary: true,
+          eventFlagToSet: 'done:evt_adult_18_conscription',
         },
       ],
     },
@@ -400,8 +414,162 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       ],
     },
   },
+  // -------------------------------------------------------------------------
+  // 4.1 建安五年 (200年) · 官渡之战分阵营事件
+  // -------------------------------------------------------------------------
+  // [袁绍阵营 · 乌巢守护与被俘/下野/战死]
   {
-    id: 'evt_campaign_200_guandu',
+    id: 'evt_guandu_200_yuanshao_wuchao',
+    category: 'HISTORICAL_CAMPAIGN',
+    title: '建安五年冬 · 官渡决战 · 乌巢烈火',
+    priority: 100,
+    campaignName: '官渡之战 · 乌巢生死',
+    isCampaignEvent: true,
+    conditions: {
+      minYear: 200,
+      maxYear: 200,
+      seasons: [2, 3],
+      minAge: 16,
+      maxAge: 65,
+      requiredCamp: 'YUAN_SHAO',
+      forbiddenFlags: ['done:evt_guandu'],
+    },
+    storyText:
+      '建安五年冬十月，两军对峙官渡半年。你随大将淳于琼驻守袁绍军粮命脉——乌巢万车粮囤。夜半三更，曹操亲统五千精锐轻骑衔枚夜袭，四面纵火，万车军粮顿陷火海！淳于琼惊起披甲，大营溃乱，曹骑铁蹄呼啸而至！',
+    choice: {
+      prompt: '乌巢烈火连天，万车粮囤尽毁，曹公亲提精骑四面围杀，你身陷重围，当作何决断？',
+      options: [
+        {
+          id: 'c_wuchao_fight_death',
+          label: '【誓死守护】挺枪冲入烈火与曹军突骑决一死战，誓保万车粮仓',
+          description: '面对曹操虎豹骑突击，死战不退！若武略体魄不足将当场战死，壮烈殉节。',
+          approachTag: '【忠烈死节】',
+          requirementHint: '需极高体魄与勇略',
+          statChanges: { martial: 14, virtue: 10, health: -15 },
+          outcomeText: '你持枪格杀数名曹军精骑，然烈火四合、寡不敌众，身负重伤倒地，被曹军擒获押解至营前！',
+          fatalCheck: (st) => {
+            if (st.martial < 50 || st.health < 45) {
+              return {
+                isFatal: true,
+                deathReason: '建安五年冬，官渡乌巢大营遭曹公突袭，浴血死战不退，身中数枪阵亡于烈火万囤之间。',
+              };
+            }
+            return null;
+          },
+          followUpChoice: {
+            prompt: '你力战身负重创，被缚于曹操大帐辕门之下。曹公按剑而视，面临生死关口！',
+            options: [
+              {
+                id: 'c_wuchao_sub_surrender',
+                label: '【俯首降曹】向曹公下拜愿降，誓效犬马之劳',
+                description: '识时务者为俊杰，脱离河北败军，编入曹营效命。',
+                approachTag: '【归顺新主】',
+                requirementHint: '保全性命，洗刷旧籍',
+                statChanges: { intellect: 8, wealth: 6, virtue: -6 },
+                outcomeText: '曹操亲手为你解开绳索，赐酒一口，赞你守囤之勇，擢升为曹军步营牙门正卒！自此改属曹魏。',
+                campaignUnlock: {
+                  campaignName: '官渡归降曹公',
+                  camp: 'WEI',
+                  commander: '曹操',
+                  roleTitle: '曹营降将牙门卒',
+                },
+                eventFlagToSet: 'done:evt_guandu',
+              },
+              {
+                id: 'c_wuchao_sub_escape_civilian',
+                label: '【趁乱下野】趁押解松懈脱掉皮甲弃械，趁夜色荒草逃回故里务农',
+                description: '抛弃刀兵浮名，脱离军伍归隐田园，保全余生。',
+                approachTag: '【解甲归田】',
+                requirementHint: '下野还乡，保全性命',
+                statChanges: { virtue: 6, wealth: -4, fortune: 8 },
+                outcomeText: '你趁曹军忙于抢缴粮秣看守松懈，滚入芦苇荡潜逃，隐姓埋名逃回故里，免去随袁军被坑杀之祸！',
+                leaveMilitary: true,
+                eventFlagToSet: 'done:evt_guandu',
+              },
+              {
+                id: 'c_wuchao_sub_die_martyr',
+                label: '【痛骂就义】挺胸怒斥曹瞒乃汉贼，宁死不降',
+                description: '引颈受戮，誓死不从国贼，尽显河北男儿刚烈风骨！',
+                approachTag: '【成仁取义】',
+                requirementHint: '舍生取义，名留青史',
+                statChanges: { virtue: 25 },
+                outcomeText: '你慷慨痛骂曹操，刀斧手挥刃就戮，从容赴死。',
+                isDirectFatal: true,
+                fatalDeathReason: '官渡乌巢战后被俘，誓死不从曹贼，慷慨就义于辕门。',
+              },
+            ],
+          },
+        },
+        {
+          id: 'c_wuchao_captured_branch',
+          label: '【兵败被俘】拼死突围但身负重创力竭被擒，押解至曹营大帐',
+          description: '突围不及陷入重围，沦为曹军俘虏，面临命运抉择。',
+          approachTag: '【临阵受缚】',
+          requirementHint: '被俘待决',
+          statChanges: { health: -10, martial: 4 },
+          outcomeText: '你拼死突围却被绊马索绊倒，曹军甲士将你五花大绑押至曹操辕门大营！',
+          followUpChoice: {
+            prompt: '你被押至曹公帐前，曹操问：“降否？”你作何决断？',
+            options: [
+              {
+                id: 'c_wuchao_cap_surrender',
+                label: '【俯首降曹】叩首愿降，改换门庭转投曹公麾下',
+                description: '投入曹魏阵营，保全性命与一身本领。',
+                approachTag: '【改投明主】',
+                requirementHint: '改换阵营',
+                statChanges: { intellect: 6, wealth: 8, virtue: -4 },
+                outcomeText: '曹操颔首收纳，将你编入曹营先锋队正，自此成为曹魏一员。',
+                campaignUnlock: {
+                  campaignName: '官渡乌巢降曹',
+                  camp: 'WEI',
+                  commander: '曹操',
+                  roleTitle: '曹营行伍步卒',
+                },
+                eventFlagToSet: 'done:evt_guandu',
+              },
+              {
+                id: 'c_wuchao_cap_resign',
+                label: '【下野求生】谎称后勤伙夫求免一死，趁夜翻出营墙下野还乡',
+                description: '从此脱离军旅，不再过问诸侯厮杀，隐入田舍。',
+                approachTag: '【脱甲还乡】',
+                requirementHint: '恢复平民身份',
+                statChanges: { virtue: 4, wealth: -6, fortune: 6 },
+                outcomeText: '你假扮役夫脱身逃遁，昼伏夜行跋涉千里潜回河北故里，做一个平头百姓度日。',
+                leaveMilitary: true,
+                eventFlagToSet: 'done:evt_guandu',
+              },
+              {
+                id: 'c_wuchao_cap_martyr',
+                label: '【誓死不从】破口痛骂，慷慨就义',
+                description: '绝不屈膝事敌，以死全节。',
+                approachTag: '【浩气长存】',
+                requirementHint: '从容就义',
+                statChanges: { virtue: 20 },
+                outcomeText: '刀光过处，血溅辕门，终不失河北忠勇之名！',
+                isDirectFatal: true,
+                fatalDeathReason: '官渡被俘后坚贞不屈，大骂曹贼，慷慨就义于辕门。',
+              },
+            ],
+          },
+        },
+        {
+          id: 'c_wuchao_resign_escape',
+          label: '【见机下野】眼见粮仓焚尽、大势已去，趁夜色火光脱下军服潜逃回河北故里',
+          description: '审时度势，脱离已溃散的袁军死地，避免被围歼坑杀。',
+          approachTag: '【潜逃脱身】',
+          requirementHint: '脱离军伍，保全性命',
+          statChanges: { intellect: 8, fortune: 8, martial: -2 },
+          outcomeText: '你趁四野混乱脱掉军甲潜入芦苇沼泽，借着夜色一路向北奔逃，终于安然返回河北老家务农。',
+          leaveMilitary: true,
+          eventFlagToSet: 'done:evt_guandu',
+        },
+      ],
+    },
+  },
+
+  // [曹操阵营 · 官渡奇袭乌巢与前线轰城]
+  {
+    id: 'evt_guandu_200_caocao_attack',
     category: 'HISTORICAL_CAMPAIGN',
     title: '建安五年 · 官渡奇袭乌巢',
     priority: 100,
@@ -413,7 +581,8 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       seasons: [2, 3],
       minAge: 16,
       maxAge: 65,
-      forbiddenFlags: ['done:evt_campaign_200_guandu'],
+      requiredCamp: 'WEI',
+      forbiddenFlags: ['done:evt_guandu'],
     },
     storyText:
       '官渡相持半年，两军粮少兵疲！许攸深夜脱逃来降，献乌巢屯粮虚实。曹操亲提五千轻骑，人衔枚马缚口，趁夜直扑袁绍粮囤！',
@@ -428,13 +597,19 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
           requirementHint: '需勇略过人',
           statChanges: { martial: 14, intellect: 6, wealth: 12, fortune: 6 },
           outcomeText: '万囤军粮化作滚滚火海！淳于琼溃败，袁军十万大军闻粮尽皆土崩瓦解。曹公亲自抚慰将士，赏帛十匹。',
+          fatalCheck: (st) => {
+            if (st.health < 28 && st.martial < 35) {
+              return { isFatal: true, deathReason: '随曹公夜袭乌巢，在烈火中突击淳于琼精锐中箭阵亡。' };
+            }
+            return null;
+          },
           campaignUnlock: {
             campaignName: '官渡之战 · 乌巢奇袭',
             camp: 'WEI',
             commander: '曹操',
             roleTitle: '牙门破虏别将',
           },
-          eventFlagToSet: 'done:evt_campaign_200_guandu',
+          eventFlagToSet: 'done:evt_guandu',
         },
         {
           id: 'c_guandu_guard',
@@ -450,13 +625,115 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
             commander: '曹操',
             roleTitle: '军械营司马',
           },
-          eventFlagToSet: 'done:evt_campaign_200_guandu',
+          eventFlagToSet: 'done:evt_guandu',
         },
       ],
     },
   },
+
+  // [刘备阵营 · 汝南侧翼游击]
   {
-    id: 'evt_campaign_208_changbanpo',
+    id: 'evt_guandu_200_shu_runan',
+    category: 'HISTORICAL_CAMPAIGN',
+    title: '建安五年 · 汝南侧击袭扰',
+    priority: 95,
+    campaignName: '官渡之战 · 汝南策应',
+    isCampaignEvent: true,
+    conditions: {
+      minYear: 200,
+      maxYear: 200,
+      seasons: [2, 3],
+      minAge: 16,
+      maxAge: 65,
+      requiredCamp: 'SHU',
+      forbiddenFlags: ['done:evt_guandu'],
+    },
+    storyText:
+      '建安五年官渡决战之际，刘玄德引军进驻汝南，联络刘辟、龚都余部，从侧翼袭扰许昌郊野，牵制曹军后路！',
+    choice: {
+      prompt: '刘备于汝南策应北方，曹仁大军逼近，你当如何行事？',
+      options: [
+        {
+          id: 'c_runan_ambush',
+          label: '随赵子龙埋伏于山谷密林，截击曹仁前哨骑兵',
+          description: '神出鬼没，袭扰敌军粮草辎重。',
+          approachTag: '【密林奇袭】',
+          requirementHint: '需敏锐与勇略',
+          statChanges: { martial: 12, intellect: 8, fortune: 6 },
+          outcomeText: '伏兵四起，曹仁斥候受创撤退。赵云夸你弓马熟练，引荐你为玄德帐前哨官。',
+          campaignUnlock: {
+            campaignName: '官渡汝南策应',
+            camp: 'SHU',
+            commander: '赵云',
+            roleTitle: '玄德帐前哨探长',
+          },
+          eventFlagToSet: 'done:evt_guandu',
+        },
+        {
+          id: 'c_runan_leave_civilian',
+          label: '【战乱下野】战局动荡颠沛流离，向刘玄德垂泪请辞还乡务农',
+          description: '刘玄德仁厚，赠你三斗大米放你还乡。',
+          approachTag: '【辞军为民】',
+          requirementHint: '下野还乡',
+          statChanges: { virtue: 10, wealth: 4 },
+          outcomeText: '刘备挥泪相送：“百姓艰难，君归乡好生度日。”你脱离军籍，返回老家躬耕。',
+          leaveMilitary: true,
+          eventFlagToSet: 'done:evt_guandu',
+        },
+      ],
+    },
+  },
+
+  // [平民视角 · 官渡大征粮与避难]
+  {
+    id: 'evt_guandu_200_civilian_grain',
+    category: 'CIVILIAN_DAILY',
+    title: '建安五年 · 官渡战云 · 草民命如纸',
+    priority: 85,
+    conditions: {
+      minYear: 200,
+      maxYear: 200,
+      seasons: [2, 3],
+      minAge: 12,
+      maxAge: 75,
+      requiredCamp: 'CIVILIAN_ONLY',
+      forbiddenFlags: ['done:evt_guandu'],
+    },
+    storyText:
+      '建安五年秋冬，官渡数十万大军交锋。两军差役四出搜刮，无论曹袁，皆挨家挨户索要军粮壮丁，里邻啼哭震野。',
+    choice: {
+      prompt: '官渡战云笼罩，差役挨户索粮抓丁，你该如何保全一家口粮？',
+      options: [
+        {
+          id: 'c_civ_hide_grain',
+          label: '在屋后枯井深挖暗窖，将麦米埋于地下，仅留秕糠应付搜查',
+          description: '斗智斗勇，保护活命口粮。',
+          approachTag: '【秘窖藏谷】',
+          requirementHint: '需机敏谋略',
+          statChanges: { intellect: 10, wealth: 6, fortune: 4 },
+          outcomeText: '差役搜走了一袋烂秕糠悻悻离去，一家人靠着窖藏麦粒熬过了大荒之冬。',
+          eventFlagToSet: 'done:evt_guandu',
+        },
+        {
+          id: 'c_civ_flee_mountains',
+          label: '收拾细软铺盖，举家躲入深山密林结寨自保',
+          description: '宁居山林受冻，不逢兵灾乱刃。',
+          approachTag: '【隐入深山】',
+          requirementHint: '勤劳忍苦',
+          statChanges: { health: 6, virtue: 8, wealth: -6 },
+          outcomeText: '在山中搭建草庵采野栗充饥，避开了两军拉夫之祸，全家安好。',
+          eventFlagToSet: 'done:evt_guandu',
+        },
+      ],
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // 4.2 建安十三年 (208年) · 长坂坡与赤壁之战分阵营事件
+  // -------------------------------------------------------------------------
+  // [蜀汉阵营 · 当阳长坂护幼主]
+  {
+    id: 'evt_campaign_208_changbanpo_shu',
     category: 'HISTORICAL_CAMPAIGN',
     title: '建安十三年 · 当阳长坂护幼主',
     priority: 100,
@@ -468,7 +745,8 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       seasons: [2],
       minAge: 16,
       maxAge: 65,
-      forbiddenFlags: ['done:evt_campaign_208_changbanpo'],
+      requiredCamp: 'SHU',
+      forbiddenFlags: ['done:evt_changbanpo'],
     },
     storyText:
       '曹操五千精锐纯血虎豹骑日夜兼程追及当阳景山！十万随刘备撤退的荆襄百姓号哭奔逃，赵子龙银枪白马回身杀入重围救护阿斗！',
@@ -481,15 +759,21 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
           description: '浑身是胆，于曹营百万军中七进七出，不负仁德忠义之名！',
           approachTag: '【死命护幼】',
           requirementHint: '需绝大勇气与体魄',
-          statChanges: { martial: 18, virtue: 16, health: -4, fortune: 10 },
+          statChanges: { martial: 18, virtue: 16, health: -8, fortune: 10 },
           outcomeText: '长矛刺穿数名追兵，你的战袍尽被血浸透！终于掩护子龙冲出景山合围，刘备携你双手洒泪相迎：“真义士也！”',
+          fatalCheck: (st) => {
+            if (st.health < 30 && st.martial < 40) {
+              return { isFatal: true, deathReason: '在长坂坡乱军中拼死掩护赵云撤退，身中数枪阵亡于景山。' };
+            }
+            return null;
+          },
           campaignUnlock: {
             campaignName: '当阳长坂护幼主',
             camp: 'SHU',
             commander: '赵云',
             roleTitle: '顺平侯贴身校尉',
           },
-          eventFlagToSet: 'done:evt_campaign_208_changbanpo',
+          eventFlagToSet: 'done:evt_changbanpo',
         },
         {
           id: 'c_changban_bridge',
@@ -505,13 +789,125 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
             commander: '张飞',
             roleTitle: '长坂桥卫士长',
           },
-          eventFlagToSet: 'done:evt_campaign_208_changbanpo',
+          eventFlagToSet: 'done:evt_changbanpo',
         },
       ],
     },
   },
+
+  // [曹魏阵营 · 赤壁铁索连环大火]
   {
-    id: 'evt_campaign_208_chibi',
+    id: 'evt_campaign_208_chibi_wei',
+    category: 'HISTORICAL_CAMPAIGN',
+    title: '建安十三年冬 · 赤壁铁索浩劫',
+    priority: 100,
+    campaignName: '赤壁鏖兵 · 锁江火海',
+    isCampaignEvent: true,
+    conditions: {
+      minYear: 208,
+      maxYear: 208,
+      seasons: [3],
+      minAge: 16,
+      maxAge: 65,
+      requiredCamp: 'WEI',
+      forbiddenFlags: ['done:evt_chibi'],
+    },
+    storyText:
+      '建安十三年冬十一月，东南狂风骤起！黄盖引数十艘火船撞入水寨，曹公战船铁索相连难解，瞬息化作一片火海！曹军水寨江水沸腾，全线大溃！',
+    choice: {
+      prompt: '赤壁烈焰冲天，铁索连环战船尽陷火海，吴军火箭如雨，你当如何突围？',
+      options: [
+        {
+          id: 'c_chibi_wei_cut_chains',
+          label: '【冒火斩索】手持巨斧冒着箭雨冲上船头劈砍铁索，抢救后营战船',
+          description: '极度凶险，若体魄与勇略不济，恐当场葬身滔天烈火！',
+          approachTag: '【火海死拼】',
+          requirementHint: '需极高体魄与勇略',
+          statChanges: { martial: 16, virtue: 8, health: -14 },
+          outcomeText: '你劈断两根铁索，救下两艘中型战船，护送中军突围南撤！曹公亲自赐你青釭佩剑以嘉其勇。',
+          fatalCheck: (st) => {
+            if (st.health < 35 || st.martial < 45) {
+              return { isFatal: true, deathReason: '建安十三年冬赤壁之战，于铁索战船之上冒火劈缆，被东南狂风烈焰吞噬阵亡。' };
+            }
+            return null;
+          },
+          campaignUnlock: {
+            campaignName: '赤壁突围死士',
+            camp: 'WEI',
+            commander: '曹操',
+            roleTitle: '破火先锋校尉',
+          },
+          eventFlagToSet: 'done:evt_chibi',
+        },
+        {
+          id: 'c_chibi_wei_jump_water',
+          label: '【弃船泅渡】弃船跳入冰冷江水，泅渡至南岸，护卫曹公败走华容道',
+          description: '江水冰刺刺骨，避开烈火直奔南岸陆路。',
+          approachTag: '【泅渡突围】',
+          requirementHint: '通晓水性，坚韧耐寒',
+          statChanges: { health: -8, intellect: 8, fortune: 6 },
+          outcomeText: '你在严冬刺骨的江水中拼力泅水登岸，跟随曹公冒大雨穿过泥泞华容道脱险还北！',
+          eventFlagToSet: 'done:evt_chibi',
+        },
+        {
+          id: 'c_chibi_wei_captured',
+          label: '【战乱被俘】泅水不及被东吴巡逻艨艟用铁钩锁拿，成为吴军俘虏',
+          description: '落入东吴水军之手，面临命运转折。',
+          approachTag: '【兵败被俘】',
+          requirementHint: '生死抉择',
+          statChanges: { health: -6, fortune: -4 },
+          outcomeText: '吴军将你捞上战船押解至柴桑大营！',
+          followUpChoice: {
+            prompt: '周郎中军大帐点验俘虏，令曹军降者不杀。你作何抉择？',
+            options: [
+              {
+                id: 'c_chibi_cap_join_wu',
+                label: '【归降东吴】愿投吴大帝孙权水师效力',
+                description: '换上吴军战袍，成为江东水师一员。',
+                approachTag: '【降吴效命】',
+                requirementHint: '阵营转为东吴',
+                statChanges: { intellect: 8, wealth: 6, virtue: -4 },
+                outcomeText: '周瑜赏识你通晓北方战阵，留任水寨操练降兵，自此改属东吴！',
+                campaignUnlock: {
+                  campaignName: '赤壁归降东吴',
+                  camp: 'WU',
+                  commander: '周瑜',
+                  roleTitle: '江东水师降阵牙将',
+                },
+                eventFlagToSet: 'done:evt_chibi',
+              },
+              {
+                id: 'c_chibi_cap_leave',
+                label: '【下野还乡】谎称荆州强征平民，求周郎放还故里',
+                description: '从此解甲归田，不再涉足兵戈。',
+                approachTag: '【下野为民】',
+                requirementHint: '脱离军伍',
+                statChanges: { virtue: 6, wealth: -4, fortune: 8 },
+                outcomeText: '吴军核实你为苦役，发还路引。你千恩万谢渡江北返，回乡做个踏实农夫。',
+                leaveMilitary: true,
+                eventFlagToSet: 'done:evt_chibi',
+              },
+              {
+                id: 'c_chibi_cap_die',
+                label: '【宁死不降】挺胸怒斥碧眼儿孙权背叛朝廷',
+                description: '尽显忠节，舍身成仁。',
+                approachTag: '【慷慨取义】',
+                requirementHint: '忠烈就义',
+                statChanges: { virtue: 20 },
+                outcomeText: '周瑜感叹其忠勇，斩首厚葬。',
+                isDirectFatal: true,
+                fatalDeathReason: '赤壁战败被俘后宁死不从东吴，慷慨就义于江畔。',
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+
+  // [东吴阵营 · 赤壁大胜]
+  {
+    id: 'evt_campaign_208_chibi_wu',
     category: 'HISTORICAL_CAMPAIGN',
     title: '建安十三年冬 · 赤壁鏖兵火烧连环',
     priority: 100,
@@ -523,15 +919,16 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       seasons: [3],
       minAge: 16,
       maxAge: 65,
-      forbiddenFlags: ['done:evt_campaign_208_chibi'],
+      requiredCamp: 'WU',
+      forbiddenFlags: ['done:evt_chibi'],
     },
     storyText:
       '冬十一月，东南风狂啸！黄盖引二十艘蒙冲斗舰，满载芦苇油脂突入曹军水寨，大呼“降曹”，烈焰顺风腾空八百里，江水尽赤！',
     choice: {
-      prompt: '东南风骤起！黄盖引二十艘蒙冲快船满载干柴鱼膏疾驰曹军水寨，大呼“降曹”，烈焰瞬息腾空！',
+      prompt: '东南风骤起！黄盖引二十艘蒙冲快船满载干柴鱼膏疾驰曹军水寨，烈焰腾空！',
       options: [
         {
-          id: 'c_chibi_fire_ship',
+          id: 'c_chibi_wu_fire_ship',
           label: '跃上满载油脂干苇的蒙冲快船，引火撞击曹营锁江巨舰',
           description: '乘东南狂风突进，烈焰横江八百里，樯橹灰飞烟灭！',
           approachTag: '【烈火冲阵】',
@@ -544,23 +941,51 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
             commander: '周瑜',
             roleTitle: '破曹水师牙门将',
           },
-          eventFlagToSet: 'done:evt_campaign_208_chibi',
+          eventFlagToSet: 'done:evt_chibi',
         },
+      ],
+    },
+  },
+
+  // [平民视角 · 江汉大难与避火]
+  {
+    id: 'evt_campaign_208_chibi_civilian',
+    category: 'CIVILIAN_DAILY',
+    title: '建安十三年冬 · 江汉烽火草民叹',
+    priority: 85,
+    conditions: {
+      minYear: 208,
+      maxYear: 208,
+      seasons: [2, 3],
+      minAge: 12,
+      maxAge: 75,
+      requiredCamp: 'CIVILIAN_ONLY',
+      forbiddenFlags: ['done:evt_chibi'],
+    },
+    storyText:
+      '建安十三年曹公大军南下荆襄，水陆数十万兵马扎营赤壁。江上战火将天空烧得通红，两岸渔民与流民四散避匿。',
+    choice: {
+      prompt: '江汉战事汹涌，大火照彻百里，你作何避难决断？',
+      options: [
         {
-          id: 'c_chibi_flee_save',
-          label: '在华容道泥泞芦苇荡中搭救落水百姓与溃卒伤员',
-          description: '大火滔天生灵涂炭，在江边放生竹筏救护生灵。',
-          approachTag: '【慈航救民】',
+          id: 'c_chibi_civ_boat_save',
+          label: '摇动乌篷小舟，在江汉浅滩搭救落水百姓与伤兵',
+          description: '慈悲为怀，广积阴德。',
+          approachTag: '【慈航救生】',
           requirementHint: '需仁厚仁义',
           statChanges: { virtue: 18, intellect: 8, fortune: 10 },
-          outcomeText: '你撑着扁舟从浓烟中救起三十余名落水号哭的士卒妇孺。两岸百姓合掌赞你为“大江活菩萨”。',
-          campaignUnlock: {
-            campaignName: '赤壁鏖兵火烧连环',
-            camp: 'NEUTRAL',
-            commander: '天下黎庶',
-            roleTitle: '江汉慈心义士',
-          },
-          eventFlagToSet: 'done:evt_campaign_208_chibi',
+          outcomeText: '你在浓烟中捞救了二十余口落水妇孺，两岸乡党尊称你为江上活佛。',
+          eventFlagToSet: 'done:evt_chibi',
+        },
+        {
+          id: 'c_chibi_civ_stay_hills',
+          label: '藏身云梦泽深处芦苇荡，静待天下大势平息',
+          description: '不问兵戈，但求阖家安康。',
+          approachTag: '【隐匿湖泽】',
+          requirementHint: '安分守常',
+          statChanges: { health: 6, wealth: 6, fortune: 6 },
+          outcomeText: '春暖花开，曹操北撤，你在湖边修补茅屋，日子重归平静。',
+          eventFlagToSet: 'done:evt_chibi',
         },
       ],
     },
@@ -622,12 +1047,16 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       ],
     },
   },
+  // -------------------------------------------------------------------------
+  // 4.3 建安二十四年 (219年) · 襄樊之战与荆州之变
+  // -------------------------------------------------------------------------
+  // [蜀汉阵营 · 关羽水淹七军与败走麦城]
   {
-    id: 'evt_campaign_219_fancheng',
+    id: 'evt_campaign_219_fancheng_shu',
     category: 'HISTORICAL_CAMPAIGN',
     title: '建安二十四年 · 关云长水淹七军',
     priority: 100,
-    campaignName: '关云长水淹七军',
+    campaignName: '襄樊鏖兵 · 水淹七军',
     isCampaignEvent: true,
     conditions: {
       minYear: 219,
@@ -635,50 +1064,117 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       seasons: [2, 3],
       minAge: 16,
       maxAge: 65,
-      forbiddenFlags: ['done:evt_campaign_219_fancheng'],
+      requiredCamp: 'SHU',
+      forbiddenFlags: ['done:evt_fancheng'],
     },
     storyText:
-      '秋八月霖雨连绵，汉水暴涨五丈！关羽乘大船浮水攻樊城，于禁七军三万人尽皆沉溺投降，威震华夏，曹操几欲迁都！',
+      '秋八月霖雨连绵，汉水暴涨五丈！关羽乘大船浮水攻樊城，于禁七军三万人尽皆沉溺投降，威震华夏！然而冬十月吕蒙白衣渡江偷袭荆州，后路断绝，大军退守麦城！',
     choice: {
-      prompt: '秋八月霖雨暴溢，关羽乘大舰攻樊城，于禁七军三万尽降！你身临汉水前线，如何行事？',
+      prompt: '汉水滔天淹七军，后方江陵却遭吕蒙袭破！四面楚歌之际，你当如何决断？',
       options: [
         {
-          id: 'c_fancheng_boat',
-          label: '操持大舰战船，冒大雨围猎被困土丘的敌军大将庞德',
-          description: '长矛搭弦射杀抵抗之顽敌，擒获三万魏卒。',
-          approachTag: '【水战围猎】',
-          requirementHint: '需通晓水性与射艺',
-          statChanges: { martial: 14, wealth: 8, virtue: 4 },
-          outcomeText: '白波荡漾，关君侯横刀立于船头，称赞你操舟沉稳、弓不虚发。',
+          id: 'c_fancheng_maicheng_breakout',
+          label: '【死战麦城】随关君侯与关平突围决死，阻截吴军层层绊马索与伏兵',
+          description: '面对数万吴军合围，拼死护卫君侯！若勇力不足恐力竭殉节。',
+          approachTag: '【义薄云天】',
+          requirementHint: '需绝大勇略与忠诚',
+          statChanges: { martial: 16, virtue: 18, health: -15 },
+          outcomeText: '临沮小道伏兵尽起，你挺枪搏杀数人掩护君侯突围，身中三矢负创坠马，被益州山民冒死救入深山。',
+          fatalCheck: (st) => {
+            if (st.health < 35 || st.martial < 45) {
+              return { isFatal: true, deathReason: '建安二十四年冬麦城突围，于临沮小道死战断后，身中数箭阵亡于寒雪之中。' };
+            }
+            return null;
+          },
           campaignUnlock: {
-            campaignName: '关云长水淹七军',
+            campaignName: '麦城死战突围',
             camp: 'SHU',
             commander: '关羽',
-            roleTitle: '前将军亲随校尉',
+            roleTitle: '忠勇先锋牙门校尉',
           },
-          eventFlagToSet: 'done:evt_campaign_219_fancheng',
+          eventFlagToSet: 'done:evt_fancheng',
         },
         {
-          id: 'c_fancheng_guard_grain',
-          label: '驻守江陵后方粮库，督办救济襄阳两岸淹田难民',
-          description: '治水排涝，安置水难黎庶，防范江东商船异动。',
-          approachTag: '【安后防患】',
-          requirementHint: '需识见通达',
-          statChanges: { intellect: 12, virtue: 14, fortune: 6 },
-          outcomeText: '你察觉江东商客鬼祟行径，提前遣送难民入城避祸，保全万口生灵。',
+          id: 'c_fancheng_escape_sichuan',
+          label: '【潜入西川】抄小道翻越崇山峻岭，跋涉千里逃往西川成都报信',
+          description: '避开吴军盘查，为先主刘备带回荆州前线机密军情。',
+          approachTag: '【翻山还蜀】',
+          requirementHint: '需识见机敏与坚毅',
+          statChanges: { intellect: 12, health: -6, virtue: 8 },
+          outcomeText: '你历经千难万险翻越巴山蜀水抵达成都，先主刘备痛哭抚你背脊，拔擢你为禁军卫尉。',
           campaignUnlock: {
-            campaignName: '关云长水淹七军',
+            campaignName: '襄樊突围还蜀',
             camp: 'SHU',
-            commander: '关羽',
-            roleTitle: '江陵督粮从事',
+            commander: '刘备',
+            roleTitle: '成都宿卫牙门校尉',
           },
-          eventFlagToSet: 'done:evt_campaign_219_fancheng',
+          eventFlagToSet: 'done:evt_fancheng',
+        },
+        {
+          id: 'c_fancheng_leave_civilian',
+          label: '【下野避难】战局崩裂荆州异主，脱下铠甲隐入汉水民舍务农',
+          description: '远离蜀吴争斗旋涡，做个本分乡民。',
+          approachTag: '【藏身草莽】',
+          requirementHint: '脱离军伍',
+          statChanges: { virtue: 6, wealth: -4, fortune: 6 },
+          outcomeText: '你将兵刃埋于竹林，重做布衣耕汉水肥田，安然度过荆州易主之劫。',
+          leaveMilitary: true,
+          eventFlagToSet: 'done:evt_fancheng',
         },
       ],
     },
   },
+
+  // [平民视角 · 汉水大洪灾]
   {
-    id: 'evt_campaign_228_qishan',
+    id: 'evt_campaign_219_fancheng_civilian',
+    category: 'CIVILIAN_DAILY',
+    title: '建安二十四年 · 汉水洪灾与兵戈',
+    priority: 85,
+    conditions: {
+      minYear: 219,
+      maxYear: 219,
+      seasons: [2, 3],
+      minAge: 12,
+      maxAge: 75,
+      requiredCamp: 'CIVILIAN_ONLY',
+      forbiddenFlags: ['done:evt_fancheng'],
+    },
+    storyText:
+      '建安二十四年秋，襄樊大水漫灌城墙，平地积水数丈，沿江庄稼瓦舍漂没无数，关羽与曹军在水中激战，百姓流离失所。',
+    choice: {
+      prompt: '大水浸漫屋舍，大批淹死人畜漂过，你如何带领家人度过洪荒？',
+      options: [
+        {
+          id: 'c_flood_raft',
+          label: '连夜扎结木筏高搭窝棚，划水捞救浮木与落水邻舍',
+          description: '互助共济，熬过水灾。',
+          approachTag: '【扎筏救民】',
+          requirementHint: '需仁厚仁义',
+          statChanges: { virtue: 16, health: 4, wealth: -4 },
+          outcomeText: '全村靠你的大木筏保全了二十余户性命，水退后乡邻合力替你重修房舍。',
+          eventFlagToSet: 'done:evt_fancheng',
+        },
+        {
+          id: 'c_flood_high_ground',
+          label: '背负存粮举家逃往荆山高岗，避开下流瘟疫与乱兵',
+          description: '登高避水，防范时疫。',
+          approachTag: '【登高远避】',
+          requirementHint: '机敏谨慎',
+          statChanges: { health: 6, intellect: 8, fortune: 6 },
+          outcomeText: '你在高山干燥处度过灾期，无一人受湿热恶疾感染，秋后重返田舍。',
+          eventFlagToSet: 'done:evt_fancheng',
+        },
+      ],
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // 4.4 建兴六年 (228年) · 诸葛亮一出祁山与街亭之战
+  // -------------------------------------------------------------------------
+  // [蜀汉阵营 · 北伐出祁山与街亭要塞]
+  {
+    id: 'evt_campaign_228_qishan_shu',
     category: 'HISTORICAL_CAMPAIGN',
     title: '建兴六年 · 武乡侯一出祁山',
     priority: 100,
@@ -690,44 +1186,89 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       seasons: [0],
       minAge: 16,
       maxAge: 65,
-      forbiddenFlags: ['done:evt_campaign_228_qishan'],
+      requiredCamp: 'SHU',
+      forbiddenFlags: ['done:evt_qishan'],
     },
     storyText:
-      '建兴六年春，诸葛亮上一出师表，汉军北伐出祁山，天水三郡震动归蜀！马谡驻守街亭要塞，魏蜀两军胜负系于一线！',
+      '建兴六年春，诸葛丞相上一出师表，率三军出祁山，天水三郡震动降蜀！张郃引魏军精骑直扑要道街亭，马谡违规舍水扎营于孤山，胜负系于一线！',
     choice: {
-      prompt: '武乡侯上一出师表，汉军出祁山，天水三郡响应归蜀！马谡据街亭当道扎营，军情十万火急！',
+      prompt: '街亭前线，马谡欲舍水上山扎营，张郃大军转瞬即至，你当如何行事？',
       options: [
         {
-          id: 'c_qishan_transport',
-          label: '在崎岖秦岭蜀道上推运新制木牛流马，确保前线粮秣无绝',
-          description: '蜀道虽难，粮道是胜负之机。夜以继日运送高粱麦米。',
-          approachTag: '【督运木牛】',
-          requirementHint: '需坚韧体魄与责任心',
-          statChanges: { health: 6, virtue: 12, intellect: 8, wealth: 6 },
-          outcomeText: '木牛流马机关灵便，你冒雨把三千石军粮按期送达祁山大营。诸葛丞相亲手为你斟上一盏温米酒以示嘉许。',
+          id: 'c_qishan_guard_pass',
+          label: '【随王平据道】随裨将军王平坚守山下当道筑垒，死守水源防线',
+          description: '力遵丞相方略，严防魏军切断汲水道。',
+          approachTag: '【死守要冲】',
+          requirementHint: '需识见沉稳与武略',
+          statChanges: { martial: 14, intellect: 10, fortune: 8 },
+          outcomeText: '张郃四面围山放火，马谡大溃！唯你随王平鸣钲勒兵拒守，徐徐整队击退追兵，保全大队退回汉中，丞相特嘉奖升赏！',
           campaignUnlock: {
-            campaignName: '武乡侯一出祁山',
+            campaignName: '街亭断后立功',
             camp: 'SHU',
             commander: '诸葛亮',
-            roleTitle: '丞相府参军督粮吏',
+            roleTitle: '汉中统军牙门正将',
           },
-          eventFlagToSet: 'done:evt_campaign_228_qishan',
+          eventFlagToSet: 'done:evt_qishan',
         },
         {
-          id: 'c_qishan_guard_pass',
-          label: '在街亭山下当道要塞死守水源，拼死劝谏分兵扎营',
-          description: '力阻马谡舍水上山之误，构筑当道营垒死顶张郃精骑。',
-          approachTag: '【死守当道】',
-          requirementHint: '需通晓兵法与坚毅胆略',
-          statChanges: { martial: 14, intellect: 10, fortune: 8 },
-          outcomeText: '你率残部据守山下泉水三日三夜，终使蜀军大队从容收整物资退还汉中，全军无一人陷于绝境。',
+          id: 'c_qishan_transport',
+          label: '【督运粮草】在险峻秦岭栈道督运粮秣，协助迁移天水千户百姓入蜀',
+          description: '运送三军命脉，接济北伐军民。',
+          approachTag: '【秦岭督粮】',
+          requirementHint: '任劳任怨，善抚百姓',
+          statChanges: { health: 6, virtue: 12, intellect: 8, wealth: 6 },
+          outcomeText: '你冒雨运送数千石麦米，妥善安顿天水迁蜀千余户百姓，丞相亲赐锦袍以旌其劳。',
           campaignUnlock: {
-            campaignName: '武乡侯一出祁山',
+            campaignName: '祁山督粮安民',
             camp: 'SHU',
             commander: '诸葛亮',
-            roleTitle: '汉中卫戌牙门将',
+            roleTitle: '丞相府督粮从事',
           },
-          eventFlagToSet: 'done:evt_campaign_228_qishan',
+          eventFlagToSet: 'done:evt_qishan',
+        },
+      ],
+    },
+  },
+
+  // [平民视角 · 陇右移民]
+  {
+    id: 'evt_campaign_228_qishan_civilian',
+    category: 'CIVILIAN_DAILY',
+    title: '建兴六年 · 陇右移民风云',
+    priority: 85,
+    conditions: {
+      minYear: 228,
+      maxYear: 228,
+      seasons: [0],
+      minAge: 12,
+      maxAge: 75,
+      requiredCamp: 'CIVILIAN_ONLY',
+      forbiddenFlags: ['done:evt_qishan'],
+    },
+    storyText:
+      '建兴六年春诸葛亮收拔天水三郡，后因街亭失利，丞相下令拔西县千余家百姓迁居汉中盆地。四野百姓收拾锅碗推车南渡栈道。',
+    choice: {
+      prompt: '蜀军护送百姓南迁汉中，路途险峻但免于曹魏战后报复，你作何决断？',
+      options: [
+        {
+          id: 'c_qishan_civ_migrate',
+          label: '跟随大队官兵南迁汉中天府，分领熟田瓦舍耕种',
+          description: '前往安宁少战的蜀中立业。',
+          approachTag: '【南迁安家】',
+          requirementHint: '搬迁立业',
+          statChanges: { wealth: 8, virtue: 8, fortune: 6 },
+          outcomeText: '官府在汉中平原为你拨付良田三十亩与耕牛一头，全家在益州安稳扎下根来。',
+          eventFlagToSet: 'done:evt_qishan',
+        },
+        {
+          id: 'c_qishan_civ_stay',
+          label: '故土难离，留守陇右老宅修复麦田',
+          description: '守望桑梓，不离家山。',
+          approachTag: '【守望故土】',
+          requirementHint: '安土重迁',
+          statChanges: { health: 6, wealth: 4 },
+          outcomeText: '战事暂歇，魏军重新进驻，你在旧田上继续春耕劳作。',
+          eventFlagToSet: 'done:evt_qishan',
         },
       ],
     },
