@@ -3,11 +3,12 @@ import { Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import { sound } from '../services/sound';
 
 interface HeaderProps {
-  activeTab: 'SIMULATION' | 'CHRONICLE' | 'PEOPLE_GALLERY' | 'PROVINCES_GUIDE';
-  setActiveTab: (tab: 'SIMULATION' | 'CHRONICLE' | 'PEOPLE_GALLERY' | 'PROVINCES_GUIDE') => void;
+  activeTab: 'SIMULATION' | 'FIGURES' | 'CHRONICLE' | 'PEOPLE_GALLERY' | 'PROVINCES_GUIDE';
+  setActiveTab: (tab: 'SIMULATION' | 'FIGURES' | 'CHRONICLE' | 'PEOPLE_GALLERY' | 'PROVINCES_GUIDE') => void;
   onRestart: () => void;
   isMuted: boolean;
   onToggleSound: () => void;
+  knownFiguresCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRestart,
   isMuted,
   onToggleSound,
+  knownFiguresCount = 0,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-[#161311]/90 backdrop-blur-md border-b border-[#3d3228] px-4 md:px-8 py-3.5 transition-colors">
@@ -33,8 +35,8 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: 4 clean single-line text navigation links */}
-        <nav className="hidden sm:flex items-center gap-6 md:gap-8 text-sm font-medium text-[#a89b8d]">
+        {/* Zone 2: Navigation links */}
+        <nav className="hidden sm:flex items-center gap-6 md:gap-7 text-sm font-medium text-[#a89b8d]">
           <button
             onClick={() => {
               sound.playPluck(523);
@@ -47,6 +49,24 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             岁月流转
+          </button>
+          <button
+            onClick={() => {
+              sound.playPluck(550);
+              setActiveTab('FIGURES');
+            }}
+            className={`whitespace-nowrap shrink-0 hover:text-[#f3ede2] transition-colors pb-0.5 border-b-2 cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'FIGURES'
+                ? 'text-[#e5c158] border-[#e5c158]'
+                : 'border-transparent'
+            }`}
+          >
+            <span>天下名仕</span>
+            {knownFiguresCount > 0 && (
+              <span className="text-[10px] px-1.5 py-0.2 bg-[#8b261e] text-[#fae8c8] rounded-full border border-[#d4af37]/40 font-mono">
+                {knownFiguresCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => {

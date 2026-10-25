@@ -67,6 +67,13 @@ export type CampType =
   | 'NEUTRAL'     // 地方诸侯/义军
   | 'NONE';       // 乡野平民/非军职
 
+export type FigureArchetype =
+  | 'MARTIAL'     // 勇武过人 (赵云, 关羽, 孙策, 甘宁)
+  | 'STRATEGIST'  // 才智过人 (诸葛亮, 曹操, 周瑜, 荀彧, 贾诩)
+  | 'WEALTHY'     // 财富雄厚 (鲁肃, 糜竺)
+  | 'HEALER'      // 妙手医圣 (华佗, 张仲景)
+  | 'HERMIT';     // 经学名士 (庞德公)
+
 export interface HistoricalFigureBond {
   id: string;              // e.g. 'zhao_yun'
   name: string;            // e.g. '赵云'
@@ -78,6 +85,21 @@ export interface HistoricalFigureBond {
   bondLevel: number;       // 1: 初识, 2: 相熟, 3: 莫逆, 4: 生死托付
   lastSpoken: string;      // Latest famous quote or conversational line
   metYear: number;
+  birthYear: number;
+  deathYear: number;
+  currentAge: number;
+  isAlive: boolean;
+  archetype: FigureArchetype;
+  currentStats: Attributes;
+  perkTitle: string;
+  perkEffect: string;
+  avatarChar: string;
+  birthplace: string;
+  provinceId: ProvinceId;
+  commandery?: string;
+  county?: string;
+  titleTag?: string;
+  historicalBio?: string;
 }
 
 export interface MilitaryAffiliation {
@@ -176,6 +198,8 @@ export interface PhysiologicalStage {
   };
 }
 
+export type ChronicleCategory = 'MILITARY' | 'AGRICULTURE' | 'ENCOUNTER' | 'OTHER';
+
 export interface SeasonLogEntry {
   year: number;
   season: SeasonIndex;
@@ -191,6 +215,8 @@ export interface SeasonLogEntry {
   physiologicalStageName?: string;
   location: string;
   occupation: string;
+  category?: ChronicleCategory;
+  tags?: ('MILITARY' | 'AGRICULTURE' | 'ENCOUNTER')[];
 }
 
 export interface RealisticEnding {

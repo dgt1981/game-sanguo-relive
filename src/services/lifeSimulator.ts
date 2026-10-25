@@ -13,6 +13,7 @@ import {
 } from '../types/game';
 import { PROVINCES } from '../data/regions';
 import { querySeasonalEventFromTable } from './eventEngine';
+import { initChildhoodBonds } from './figuresSimulation';
 
 export interface PersonProfile {
   name: string;
@@ -113,7 +114,7 @@ export function generateRandomBirth(): PersonProfile {
     motherAlive: true,
     siblingCount: Math.floor(Math.random() * 4),
     childrenCount: 0,
-    knownFigures: [],
+    knownFigures: initChildhoodBonds(provincePick.id, commanderyPick, countyPick, 184),
     eventFlags: {},
   };
 }

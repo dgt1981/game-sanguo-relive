@@ -22,6 +22,7 @@ interface LifeAttributeHUDProps {
   season: SeasonIndex;
   age: number;
   lunarYear: string;
+  onNavigateToFigures?: () => void;
 }
 
 export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
@@ -31,6 +32,7 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   season,
   age,
   lunarYear,
+  onNavigateToFigures,
 }) => {
   const seasonCfg = SEASONS_CONFIG[season];
   const stage = getPhysiologicalStage(age);
@@ -244,21 +246,26 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
 
         {/* Known Historical Figures List */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[#8e7f6e] flex items-center gap-1">
+          <button
+            onClick={onNavigateToFigures}
+            className="text-[#8e7f6e] hover:text-[#d4af37] flex items-center gap-1 transition-colors cursor-pointer text-xs"
+            title="点击查看名仕人脉与特权谱牒"
+          >
             <Users className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>天下知交 ({profile.knownFigures?.length || 0})：</span>
-          </span>
+            <span className="underline decoration-dotted underline-offset-2">天下知交 ({profile.knownFigures?.length || 0})：</span>
+          </button>
           {profile.knownFigures && profile.knownFigures.length > 0 ? (
             <div className="flex items-center gap-1.5 flex-wrap">
               {profile.knownFigures.map((fig) => (
-                <span
+                <button
                   key={fig.id}
-                  className="px-2 py-0.5 rounded text-[11px] bg-[#241c15] border border-[#4a3928] text-[#faece0] flex items-center gap-1 shadow-sm"
-                  title={`${fig.name}（字${fig.courtesyName}）· ${fig.title} · ${fig.relation}`}
+                  onClick={onNavigateToFigures}
+                  className="px-2 py-0.5 rounded text-[11px] bg-[#241c15] hover:bg-[#34271e] border border-[#4a3928] text-[#faece0] flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
+                  title={`${fig.name}（字${fig.courtesyName}）· ${fig.title} · ${fig.relation} (点击查看五维成长与特权)`}
                 >
                   <span className="text-[#d4af37] font-semibold">{fig.name}</span>
                   <span className="text-[10px] text-[#9c8976]">({fig.relation})</span>
-                </span>
+                </button>
               ))}
             </div>
           ) : (

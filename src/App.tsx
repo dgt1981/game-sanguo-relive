@@ -32,11 +32,19 @@ import { BirthModal } from './components/BirthModal';
 import { LifeObituaryModal } from './components/LifeObituaryModal';
 import { PeopleGallery } from './components/PeopleGallery';
 import { ProvincesGuide } from './components/ProvincesGuide';
+import { FiguresNetwork } from './components/FiguresNetwork';
+import {
+  updateKnownFiguresForSeason,
+  evaluateFigurePerks,
+  createFigureBond,
+} from './services/figuresSimulation';
+import { HISTORICAL_FIGURES_CATALOG } from './data/historicalFiguresCatalog';
 import { BookmarkCheck, LogOut } from 'lucide-react';
+import { getEntryTags } from './utils/chronicleFilter';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'SIMULATION' | 'CHRONICLE' | 'PEOPLE_GALLERY' | 'PROVINCES_GUIDE'
+    'SIMULATION' | 'FIGURES' | 'CHRONICLE' | 'PEOPLE_GALLERY' | 'PROVINCES_GUIDE'
   >('SIMULATION');
 
   const [isBorn, setIsBorn] = useState(false);
@@ -346,19 +354,35 @@ export default function App() {
       nextOccupation = '里社耆宿';
     }
 
+    // 3. 动态同步已结识名士年岁与五维成长，并结算人脉庇护特权
+    const evolvedFigures = updateKnownFiguresForSeason(currentProf.knownFigures || [], nextYear);
+    const perks = evaluateFigurePerks(evolvedFigures);
+
+    // 巨贾岁末商道接济
+    if (nextSeason === 3 && perks.seasonalWealthYield > 0) {
+      updatedStats.wealth = Math.min(100, updatedStats.wealth + perks.seasonalWealthYield);
+    }
+
     const updatedProfile: PersonProfile = {
       ...currentProf,
       occupation: nextOccupation,
+      knownFigures: evolvedFigures,
       eventFlags: currentEvent?.eventFlagTriggered
         ? { ...(currentProf.eventFlags || {}), [currentEvent.eventFlagTriggered]: true }
         : currentProf.eventFlags,
     };
     setProfile(updatedProfile);
 
-    // 2. Health & Old age check
+    // 4. 生死与大寿判定 (含名将救援与神医逆转庇护)
     if (updatedStats.health <= 0) {
-      triggerDeath('积劳体虚，寿终气竭。', nextAge, nextYear, nextSeason, updatedStats);
-      return false;
+      if (perks.fatalDamageProtection && Math.random() < 0.65) {
+        updatedStats.health = 24; // 名士挚友舍命驰援护住心脉！
+      } else if (perks.epidemicImmunity && Math.random() < 0.7) {
+        updatedStats.health = 20; // 杏林神医灵药拔除病根！
+      } else {
+        triggerDeath('积劳体虚，寿终气竭。', nextAge, nextYear, nextSeason, updatedStats);
+        return false;
+      }
     }
     if (nextAge >= 85 || nextYear >= 265) {
       triggerDeath('历尽沧桑，见三国归一，寿终正寝。', nextAge, nextYear, nextSeason, updatedStats);
@@ -390,6 +414,7 @@ export default function App() {
       location: `${updatedProfile.commandery} · ${updatedProfile.county}`,
       occupation: updatedProfile.occupation,
     };
+    logEntry.tags = getEntryTags(logEntry);
     const updatedLogs = [...seasonLogs, logEntry];
     setSeasonLogs(updatedLogs);
 
@@ -467,11 +492,13 @@ export default function App() {
       }
     }
 
-    // 3. 处理历史人物结交与羁绊
+    // 3. 处理历史人物结交与羁绊 (含动态年岁、五维成长、专属庇护特权)
     let updatedFigures = [...(profile.knownFigures || [])];
     if (choice.figureBond) {
       const fb = choice.figureBond;
       const existIdx = updatedFigures.findIndex((f) => f.id === fb.figureId);
+      const catalogEntry = HISTORICAL_FIGURES_CATALOG.find((e) => e.id === fb.figureId);
+
       if (existIdx >= 0) {
         updatedFigures[existIdx] = {
           ...updatedFigures[existIdx],
@@ -479,6 +506,10 @@ export default function App() {
           relation: fb.relation,
           lastSpoken: fb.dialogue,
         };
+      } else if (catalogEntry) {
+        updatedFigures.push(
+          createFigureBond(catalogEntry, year, fb.relation, 1, year)
+        );
       } else {
         updatedFigures.push({
           id: fb.figureId,
@@ -491,6 +522,17 @@ export default function App() {
           bondLevel: 1,
           lastSpoken: fb.dialogue,
           metYear: year,
+          birthYear: 184 - age,
+          deathYear: 245,
+          currentAge: age,
+          isAlive: true,
+          archetype: 'MARTIAL',
+          currentStats: { health: 70, intellect: 70, martial: 70, virtue: 70, wealth: 50, fortune: 70 },
+          perkTitle: '【义烈相托】',
+          perkEffect: '结识汉末同道，共历乱世风云。',
+          avatarChar: fb.figureName.slice(-1),
+          birthplace: '汉土名城',
+          provinceId: profile.currentProvince,
         });
       }
     }
@@ -610,6 +652,7 @@ export default function App() {
         onRestart={handleRestartLife}
         isMuted={isMuted}
         onToggleSound={handleToggleSound}
+        knownFiguresCount={profile.knownFigures?.length || 0}
       />
 
       {/* Main Container */}
@@ -650,6 +693,7 @@ export default function App() {
               season={season}
               age={age}
               lunarYear={currentEvent.lunarYear}
+              onNavigateToFigures={() => setActiveTab('FIGURES')}
             />
 
             {!isGameOver && (
@@ -670,6 +714,27 @@ export default function App() {
           </div>
         )}
 
+        {/* Tab: Figures Network (天下名仕与人脉气运) */}
+        {activeTab === 'FIGURES' && isBorn && (
+          <div className="space-y-6">
+            <LifeAttributeHUD
+              stats={stats}
+              profile={profile}
+              year={year}
+              season={season}
+              age={age}
+              lunarYear={currentEvent.lunarYear}
+              onNavigateToFigures={() => setActiveTab('FIGURES')}
+            />
+            <FiguresNetwork
+              knownFigures={profile.knownFigures || []}
+              profile={profile}
+              currentYear={year}
+              currentStats={stats}
+            />
+          </div>
+        )}
+
         {/* Tab 2: Chronicle Timeline */}
         {activeTab === 'CHRONICLE' && isBorn && (
           <div className="space-y-6">
@@ -680,6 +745,7 @@ export default function App() {
               season={season}
               age={age}
               lunarYear={currentEvent.lunarYear}
+              onNavigateToFigures={() => setActiveTab('FIGURES')}
             />
             <ChronicleTimeline logs={seasonLogs} characterName={profile.name} />
           </div>

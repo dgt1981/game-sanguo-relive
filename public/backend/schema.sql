@@ -113,18 +113,85 @@ CREATE TABLE `tb_three_kingdoms_events_catalog` (
   INDEX `idx_priority` (`priority`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='三国事件总谱预存数据表 (时序与因果关联引擎)';
 
--- 预置种子事件数据示例
-INSERT INTO `tb_three_kingdoms_events_catalog` 
-(`id`, `category`, `priority`, `campaign_name`, `min_year`, `max_year`, `seasons_json`, `min_age`, `max_age`, `required_camp`, `narrative_template`, `choices_json`)
+-- ----------------------------------------------------------
+-- 4. 汉末历史名士人物全谱表 (记录生卒年、五维演化轨迹、同乡羁绊、专属特权与对白)
+-- ----------------------------------------------------------
+DROP TABLE IF EXISTS `tb_three_kingdoms_figures`;
+CREATE TABLE `tb_three_kingdoms_figures` (
+  `id` VARCHAR(64) NOT NULL COMMENT '名士唯一标识 (如 zhao_yun, zhuge_liang, hua_tuo)',
+  `name` VARCHAR(32) NOT NULL COMMENT '名士姓名 (如 赵云)',
+  `courtesy_name` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '表字 (如 子龙)',
+  `birth_year` INT(11) NOT NULL COMMENT '出生公元年份 (如 168)',
+  `death_year` INT(11) NOT NULL COMMENT '辞世公元年份 (如 229)',
+  `birthplace` VARCHAR(128) NOT NULL COMMENT '出生籍贯全称 (如 幽州常山国真定县)',
+  `province_id` VARCHAR(32) NOT NULL COMMENT '所属州域 (如 YOUZHOU, XUZHOU, YUZHOU)',
+  `commandery` VARCHAR(64) NOT NULL COMMENT '所属郡国 (如 常山郡, 琅琊国)',
+  `county` VARCHAR(64) NOT NULL COMMENT '所属县邑 (如 真定县, 阳都县)',
+  `camp` VARCHAR(32) NOT NULL DEFAULT 'NONE' COMMENT '终局阵营 (WEI/SHU/WU/YUAN_SHAO/NONE)',
+  `camp_label` VARCHAR(64) NOT NULL COMMENT '官职与封爵称谓 (如 蜀汉镇东将军 · 顺平侯)',
+  `title_tag` VARCHAR(128) NOT NULL COMMENT '称号标签 (如 【常胜义将 · 一身是胆】)',
+  `avatar_char` VARCHAR(8) NOT NULL COMMENT '印信大字头像 (如 云, 亮, 肃)',
+  `archetype` ENUM('MARTIAL', 'STRATEGIST', 'WEALTHY', 'HEALER', 'HERMIT') NOT NULL COMMENT '贤士流派 (勇武/谋略/巨贾/医圣/经学)',
+  
+  -- 五维属性演化起点与巅峰
+  `base_stats_184_json` JSON NOT NULL COMMENT '公元184年灵帝末期初始属性 (体魄,识见,勇略,仁厚,家财,气数)',
+  `peak_stats_json` JSON NOT NULL COMMENT '壮盛巅峰期属性 (体魄,识见,勇略,仁厚,家财,气数)',
+  
+  -- 专属庇护特权
+  `perk_title` VARCHAR(128) NOT NULL COMMENT '特权名称 (如 【一身是胆 · 阵前护佑】)',
+  `perk_description` TEXT NOT NULL COMMENT '特权详细阐述',
+  `perk_buff_effect` VARCHAR(255) NOT NULL COMMENT '具体数值与庇护机制 (如 主角面临致死战败时，赵云驰援庇护，抵御致命杀伤)',
+  
+  -- 四大生理与年岁阶段对白
+  `dialogues_json` JSON NOT NULL COMMENT '幼年、青年、巅峰、垂暮四个阶段的问候与交互对白',
+  `historic_quote` VARCHAR(255) NOT NULL COMMENT '名垂青史名言',
+  `historical_bio` TEXT NOT NULL COMMENT '传记考据与平生梗概',
+  
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_province` (`province_id`),
+  INDEX `idx_commandery` (`commandery`),
+  INDEX `idx_archetype` (`archetype`),
+  INDEX `idx_years` (`birth_year`, `death_year`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='三国历史名仕人脉谱牒表 (成长演化与羁绊特权)';
+
+-- 预置种子名士数据示例
+INSERT INTO `tb_three_kingdoms_figures` 
+(`id`, `name`, `courtesy_name`, `birth_year`, `death_year`, `birthplace`, `province_id`, `commandery`, `county`, `camp`, `camp_label`, `title_tag`, `avatar_char`, `archetype`, `base_stats_184_json`, `peak_stats_json`, `perk_title`, `perk_description`, `perk_buff_effect`, `dialogues_json`, `historic_quote`, `historical_bio`)
 VALUES
-('camp_chibi_fire', 'HISTORICAL_CAMPAIGN', 100, '赤壁之战', 208, 208, '[3]', 16, 60, NULL,
- '建安十三年冬，江东大都督周瑜乘东南狂风纵火，曹公铁索连环战船烈焰蔽江！红光照彻赤壁数十里，江水尽沸。你在江畔大营中目睹了这场决定天下三分的大火……',
- '[{"id":"chibi_c1","text":"顺水驾轻舟救捞落水溃兵与残存粮草","statChanges":{"benevolence":8,"reputation":5,"vitality":-4},"setFlags":["rescued_chibi_soldiers"]},
-   {"id":"chibi_c2","text":"趁乱背负缴获兵甲银两向江陵南撤","statChanges":{"wealth":15,"courage":-2,"insight":3},"setFlags":["gained_chibi_spoils"]},
-   {"id":"chibi_c3","text":"从容伫立矶头，研判曹刘两军退进军略","statChanges":{"insight":12,"courage":6,"reputation":4},"setFlags":["witnessed_chibi_tactics"]}]'
+('zhao_yun', '赵云', '子龙', 168, 229, '幽州常山国真定县', 'YOUZHOU', '常山郡', '真定县', 'SHU', '蜀汉镇东将军 · 顺平侯', '【常胜义将 · 一身是胆】', '云', 'MARTIAL',
+ '{"health":78,"intellect":58,"martial":72,"virtue":82,"wealth":28,"fortune":75}',
+ '{"health":92,"intellect":78,"martial":97,"virtue":95,"wealth":45,"fortune":88}',
+ '【一身是胆 · 阵前护佑】', '赵云勇烈兼备，深明大义。结交之后，战场临危得免死救护，勇略大幅精进。',
+ '主角若面临致死军阵战败，有极大概率得赵子龙策马驰援保全性命，并永久提升勇略。',
+ '{"childhoodGreeting":"阿兄，真定郊外的野马又在林间嘶鸣，咱们且去比试一番御马骑射如何？","youthGreeting":"天下蟊贼四起，大丈夫当拔剑从戎，岂可伏于草野？","primeGreeting":"子龙受先帝厚恩，纵使千军万马当前，亦誓死护百姓与同袍周全！","seniorGreeting":"烈士暮年，壮心不已。想当年长坂坡鏖战，犹历历在目……"}',
+ '古来冲阵扶危主，只有常山赵子龙。',
+ '常山真定人，姿颜雄伟，从公孙瓒，后随刘备三十余年，汉水一战被刘备赞为“子龙一身都是胆也”。'
 ),
-('camp_guandu_wuchao', 'HISTORICAL_CAMPAIGN', 100, '官渡乌巢之劫', 200, 200, '[2,3]', 16, 60, NULL,
- '建安五年秋冬，曹操亲率奇兵假扮袁军衔枚夜行，袭破乌巢粮屯。烈火烛天，淳于琼覆没，数十万斛军粮化为焦炭！北方形势自此大逆转。',
- '[{"id":"guandu_c1","text":"跟随溃散役夫四散奔逃保全性命","statChanges":{"vitality":4,"courage":-3,"insight":2},"setFlags":["fled_wuchao"]},
-   {"id":"guandu_c2","text":"趁夜在焦黑营地搜罗散落的蹄铁干粮","statChanges":{"wealth":8,"insight":4,"vitality":-2},"setFlags":["wuchao_scavenger"]}]'
+('zhuge_liang', '诸葛亮', '孔明', 181, 234, '徐州琅琊国阳都县', 'XUZHOU', '琅琊国', '阳都县', 'SHU', '蜀汉丞相 · 武乡侯', '【卧龙腾渊 · 智绝千古】', '亮', 'STRATEGIST',
+ '{"health":45,"intellect":60,"martial":18,"virtue":65,"wealth":32,"fortune":85}',
+ '{"health":72,"intellect":100,"martial":38,"virtue":98,"wealth":40,"fortune":92}',
+ '【卧龙明机 · 运筹帷幄】', '与诸葛孔明结为知音，通晓天下大势走向，危难之际得妙计指引。',
+ '重大历史关隘抉择时解锁特殊绝佳选项，识见与气数大幅获得指点加成。',
+ '{"childhoodGreeting":"琅琊山野葱茏，草木皆有灵性，闲暇时同去竹林听风抚琴可好？","youthGreeting":"亮躬耕于南阳，非求闻达于诸侯，特待明主以安海内苍生。","primeGreeting":"受命于败军之际，奉命于危难之间，二十有一年矣。亮必竭股肱之力！","seniorGreeting":"鞠躬尽瘁，死而后已。汉室未复，先帝之托，安敢有一刻懈怠……"}',
+ '鞠躬尽力，死而后已。',
+ '徐州琅琊阳都人，早孤随叔父至荆州隆中隐居，精通内政、军谋、阵法，为三国智绝化身。'
+),
+('lu_su', '鲁肃', '子敬', 172, 217, '扬州临淮郡东城县', 'YANGZHOU', '九江郡', '东城县', 'WU', '东吴奋武校尉 · 临淮名士', '【榻上雄谟 · 掷仓济世】', '肃', 'WEALTHY',
+ '{"health":68,"intellect":70,"martial":45,"virtue":85,"wealth":90,"fortune":80}',
+ '{"health":78,"intellect":92,"martial":58,"virtue":96,"wealth":98,"fortune":86}',
+ '【倾家指廪 · 淮商巨贾】', '鲁子敬家赀巨万而仗义疏财，指囷相赠。结交之后，永无粮资匮乏之忧。',
+ '每年岁末冬令必定得赠大量铜钱军饷（家资+50~100），经商种田产出大幅翻倍。',
+ '{"childhoodGreeting":"阿兄何必忧虑无粮？我家粮仓尚满，尽管取用便是！","youthGreeting":"天下纷扰，富家何用？唯有招贤纳士，保境安民方为正道。","primeGreeting":"曹操南下，众谋士劝降皆为自保私计，唯主公不可降也！","seniorGreeting":"临淮鲁肃虽不才，愿倾尽毕生之资，以保江东父老无恙。"}',
+ '指囷相赠，天下高义。',
+ '临淮东城人，性格豪爽好施，周瑜缺粮时指一囷（三千斛）相赠，后提出汉室不可复兴、建号帝王的榻上策。'
+),
+('hua_tuo', '华佗', '元化', 145, 208, '豫州沛国谯县', 'YUZHOU', '沛国', '谯县', 'HEALER',
+ '{"health":85,"intellect":82,"martial":35,"virtue":92,"wealth":35,"fortune":78}',
+ '{"health":95,"intellect":96,"martial":48,"virtue":99,"wealth":42,"fortune":82}',
+ '{"title":"【青囊回春 · 拔除百疾】","description":"华佗精研五禽戏与麻沸散，悬壶救苦。结识后大幅增强体魄，疫病退散。","buffEffect":"主角及家眷免疫各种伤寒恶疾猝死，体魄上限突破，危急时有神医施针延寿。"}',
+ '{"childhoodGreeting":"老夫采药方归，小友骨骼清奇，切莫久坐，随我练练这五禽戏罢！","youthGreeting":"人身如流水户枢，动则不腐。若知导引之术，何惧乱世瘟疫？","primeGreeting":"麻沸散已成，不论刳腹涤肠、断骨刮毒，老夫皆可手到病除。","seniorGreeting":"这卷青囊经若能传于后世，活人无数，老夫便无憾矣……"}',
+ '医者仁心，活人无数。',
+ '沛国谯人，兼通数经，晓养性之术，发明麻沸散与五禽之戏，后世尊为外科鼻祖。'
 );
+
