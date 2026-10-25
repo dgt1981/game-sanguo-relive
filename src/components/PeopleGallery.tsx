@@ -102,6 +102,16 @@ CREATE TABLE IF NOT EXISTS tb_three_kingdoms_lives (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );`;
 
+  const sampleSeedSnippet = `-- 导入事件总谱预置数据 (共51条大事件与多分支因果抉择)
+-- 执行: mysql -u root -p three_kingdoms_life < backend/seed_events.sql
+INSERT INTO tb_three_kingdoms_events_catalog (
+  id, category, priority, min_year, max_year, seasons_json, min_age, max_age, narrative_template, choices_json
+) VALUES (
+  'evt_toddler_1_zhuazhou', 'INFANT_SURVIVAL', 90, 185, 185, '[0,1]', 1, 1,
+  '公元185年中平二年，你满周岁了！按汉家习俗，父母在红漆案几上设下“晬盘”...',
+  '[{"id":"c_zhuazhou_abacus","label":"【算盘铜钱】..."},{"id":"c_zhuazhou_wooden_sword","label":"【桃木小剑】..."}]'
+) ON DUPLICATE KEY UPDATE choices_json = VALUES(choices_json);`;
+
   const samplePhpSnippet = `<?php
 // PHP 7.4+ / 8.x PDO 存储与读取接口 (backend/api.php)
 $pdo = new PDO("mysql:host=127.0.0.1;dbname=three_kingdoms_life;charset=utf8mb4", "root", "root123456");
@@ -342,6 +352,32 @@ if ($action === 'save_life') {
             </div>
             <pre className="p-2.5 bg-[#120e0b] rounded text-[11px] text-[#cfc2b2] font-mono overflow-x-auto">
               {samplePhpSnippet}
+            </pre>
+          </div>
+
+          {/* Seed Events Catalog SQL Block */}
+          <div className="bg-[#181310] border border-[#382b1f] rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-[#d4af37]">3. 事件总谱数据初始化脚本 (backend/seed_events.sql · 共51条预置事件)</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href="./backend/seed_events.sql"
+                  download="seed_events.sql"
+                  className="text-[11px] text-[#f59e0b] hover:underline"
+                >
+                  下载完整SQL
+                </a>
+                <button
+                  onClick={() => handleCopyCode('seed', sampleSeedSnippet)}
+                  className="text-[11px] text-[#a49381] hover:text-[#faece0] flex items-center gap-1 cursor-pointer"
+                >
+                  {copiedCode === 'seed' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedCode === 'seed' ? '已复制' : '复制代码'}</span>
+                </button>
+              </div>
+            </div>
+            <pre className="p-2.5 bg-[#120e0b] rounded text-[11px] text-[#cfc2b2] font-mono overflow-x-auto">
+              {sampleSeedSnippet}
             </pre>
           </div>
         </div>

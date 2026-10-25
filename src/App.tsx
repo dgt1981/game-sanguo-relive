@@ -346,7 +346,13 @@ export default function App() {
       nextOccupation = '里社耆宿';
     }
 
-    const updatedProfile: PersonProfile = { ...currentProf, occupation: nextOccupation };
+    const updatedProfile: PersonProfile = {
+      ...currentProf,
+      occupation: nextOccupation,
+      eventFlags: currentEvent?.eventFlagTriggered
+        ? { ...(currentProf.eventFlags || {}), [currentEvent.eventFlagTriggered]: true }
+        : currentProf.eventFlags,
+    };
     setProfile(updatedProfile);
 
     // 2. Health & Old age check
@@ -517,6 +523,9 @@ export default function App() {
     const updatedFlags = { ...(profile.eventFlags || {}) };
     if (choice.eventFlagToSet) {
       updatedFlags[choice.eventFlagToSet] = true;
+    }
+    if (currentEvent.eventFlagTriggered) {
+      updatedFlags[currentEvent.eventFlagTriggered] = true;
     }
     if (choice.eventFlagToRemove) {
       delete updatedFlags[choice.eventFlagToRemove];

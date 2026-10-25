@@ -195,7 +195,14 @@ export function querySeasonalEventFromTable(context: EventQueryContext): Seasona
   // 按优先级排序 (战役 100 > 危机 95 > 成长 85 > 日常 70)
   eligibleEvents.sort((a, b) => b.priority - a.priority);
 
-  let selectedRow: EventTableRow | undefined = eligibleEvents[0];
+  // 若存在多个同等最高优先级的候选事件，进行随机抽选，大幅提升重玩丰富度与分支多样性
+  let selectedRow: EventTableRow | undefined = undefined;
+  if (eligibleEvents.length > 0) {
+    const topPriority = eligibleEvents[0].priority;
+    const topCandidates = eligibleEvents.filter((e) => e.priority === topPriority);
+    selectedRow = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+  }
+
   let personalStory = '';
   let choice: { prompt: string; options: LifeChoice[] } | undefined = undefined;
   let figureDialogue: HistoricalDialogue | undefined = undefined;
@@ -382,6 +389,7 @@ export function querySeasonalEventFromTable(context: EventQueryContext): Seasona
     figureDialogue,
     campaignName,
     isCampaignEvent,
+    eventFlagTriggered: selectedRow ? `done:${selectedRow.id}` : undefined,
     choice,
   };
 }
