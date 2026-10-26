@@ -10,6 +10,7 @@ import {
   HistoricalFigureBond,
   MilitaryAffiliation,
   HistoricalDialogue,
+  NobleBoon,
 } from '../types/game';
 import { PROVINCES } from '../data/regions';
 import { querySeasonalEventFromTable } from './eventEngine';
@@ -35,6 +36,7 @@ export interface PersonProfile {
   spouseName?: string;
   childrenCount: number;
   knownFigures: HistoricalFigureBond[];
+  collectedBoons?: NobleBoon[];
   militaryAffiliation?: MilitaryAffiliation;
   eventFlags: Record<string, boolean | number | string>;
 }

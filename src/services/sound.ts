@@ -124,6 +124,32 @@ class SoundService {
       }, idx * 110);
     });
   }
+
+  // Ancient copper coin clinking sound
+  public playCoin() {
+    if (this.isMuted) return;
+    try {
+      this.initContext();
+      if (!this.ctx) return;
+      [1320, 1980].forEach((freq, idx) => {
+        setTimeout(() => {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.22);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.25);
+        }, idx * 60);
+      });
+    } catch {
+      // Audio error catch
+    }
+  }
 }
 
 export const sound = new SoundService();

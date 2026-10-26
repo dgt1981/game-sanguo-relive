@@ -235,6 +235,25 @@ ${ending.historianNote}
                   </div>
                 </div>
               )}
+
+              {profile.collectedBoons && profile.collectedBoons.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[#2e2218]">
+                  <div className="flex items-center gap-1.5 text-amber-300">
+                    <Award className="w-3.5 h-3.5" />
+                    <span>【名士重赐】：</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {profile.collectedBoons.map((boon) => (
+                      <span
+                        key={boon.id}
+                        className="px-2 py-0.5 rounded bg-[#2c1d15] border border-[#6b4728] text-[#fcd34d] text-[11px] font-mono"
+                      >
+                        {boon.name} · {boon.figureName}赠
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

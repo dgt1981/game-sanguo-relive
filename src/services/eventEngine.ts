@@ -9,7 +9,7 @@ import { EventTableRow, EventQueryContext } from '../types/eventTable';
 import { EVENTS_DATA_TABLE } from '../data/eventsCatalog';
 import { PROVINCES } from '../data/regions';
 import { SEASONS_CONFIG, getLunarYearName } from './lifeSimulator';
-import { getRegionalFigure } from './historicalEncounters';
+import { generateContextualFigureEncounter } from './figuresSimulation';
 
 /**
  * 宏观历史大事年表 (公元184 ~ 265年)
@@ -209,103 +209,28 @@ export function querySeasonalEventFromTable(context: EventQueryContext): Seasona
   let campaignName: string | undefined = undefined;
   let isCampaignEvent = false;
 
-  // 4. 若无特定脚本战役或阶段抉择，检查同郡历史名士相逢事件 (13~52岁之间，根据历史年代与州郡检索)
-  const encounterYearKey = `encounter_${year}_${profile.currentProvince}`;
+  // 4. 若无特定脚本战役或阶段抉择，适度触发有深度、合因果的名士奇遇或故友重逢
+  const lastFigYear = Number(flags['last_figure_year'] || 0);
+  const yearsSinceLastFig = year - lastFigYear;
+
+  // 严格避免频繁对话同一个人：两次名士相会至少间隔 3 年（12个季节），并在关键成丁节点（16, 21, 28, 36, 48）或适当节律触发
+  const isMilestoneAge = age === 16 || age === 21 || age === 28 || age === 36 || age === 48;
   const shouldCheckFigure =
     !selectedRow &&
     age >= 13 &&
-    age <= 55 &&
-    !flags[encounterYearKey] &&
-    ((year * 3 + season) % 7 === 1 || age === 16 || age === 21 || age === 31);
+    age <= 60 &&
+    yearsSinceLastFig >= 3 &&
+    (isMilestoneAge || ((year * 4 + season) % 7 === 0 && Math.random() < 0.45));
 
   if (shouldCheckFigure) {
-    const figure = getRegionalFigure(profile.currentProvince, year);
-    if (figure) {
-      figureDialogue = {
-        figureId: figure.id,
-        speaker: figure.name,
-        courtesyName: figure.courtesyName,
-        title: figure.title,
-        camp: figure.camp,
-        avatarChar: figure.avatarChar,
-        quote: figure.greeting,
-        replyPrompt: `你于【${profile.county}】市井驿道偶遇同郡名士【${figure.name}（字${figure.courtesyName}）】。`,
-      };
-
-      personalStory = `这一日，你在【${profile.county}】驿亭集市间，忽见一人器宇轩昂、举止非凡，正是名闻海内的同郡名士【${figure.name}（字${figure.courtesyName}）】。他驻足与你交谈，言辞中尽显对当今天下大势与百姓生计的关切。`;
-
-      choice = {
-        prompt: `偶遇同郡名士【${figure.name}】，对方驻足与你攀谈，你当如何应对？`,
-        options: [
-          {
-            id: `c_encounter_${figure.id}_learn`,
-            label: `恭敬拱手请教世道风云与安身之策，聆听教诲`,
-            description: `虚心受教，以诚相待，聆听当世英杰的高见。`,
-            approachTag: '【虚怀请益】',
-            requirementHint: '崇德慕义，增进识见',
-            statChanges: { intellect: 10, virtue: 6, fortune: 4 },
-            outcomeText: `【${figure.name}】见你目光清澈、虚心好学，抚须欣然传授了你诸多经史要诀与度世法度，二人遂结为相知！`,
-            figureBond: {
-              figureId: figure.id,
-              figureName: figure.name,
-              courtesyName: figure.courtesyName,
-              title: figure.title,
-              camp: figure.camp,
-              campLabel: figure.campLabel,
-              relation: '推心置腹之师友',
-              dialogue: figure.greeting,
-            },
-            eventFlagToSet: encounterYearKey,
-          },
-          {
-            id: `c_encounter_${figure.id}_treat`,
-            label: `倾囊置办一角老酒与干粮薄礼，邀其于凉棚下促膝对饮`,
-            description: `仗义疏财，以乡党邻里之情温厚相待。`,
-            approachTag: '【倾盖如故】',
-            requirementHint: '需家资或仁厚',
-            statChanges: { virtue: 10, wealth: -4, fortune: 6 },
-            outcomeText: `二人就着粗碗浊酒畅叙桑梓风物，【${figure.name}】大赞你为人敦厚慷慨，引为莫逆同道！`,
-            figureBond: {
-              figureId: figure.id,
-              figureName: figure.name,
-              courtesyName: figure.courtesyName,
-              title: figure.title,
-              camp: figure.camp,
-              campLabel: figure.campLabel,
-              relation: '同道莫逆知己',
-              dialogue: figure.greeting,
-            },
-            eventFlagToSet: encounterYearKey,
-          },
-          {
-            id: `c_encounter_${figure.id}_join`,
-            label: `长揖及地，坦陈愿投身其麾下，誓作部曲随行从军`,
-            description: `天下大乱，良禽择木而栖。跟随当世英豪共同投身大业！`,
-            approachTag: '【效死相随】',
-            requirementHint: '需勇略或识见出众',
-            requirements: { martial: 25 },
-            statChanges: { martial: 10, intellect: 8, fortune: 8 },
-            outcomeText: `【${figure.name}】握住你的双手欣然大笑：“得足下相助，何愁大事不成！”当即收你入其亲兵随行帐幕！`,
-            figureBond: {
-              figureId: figure.id,
-              figureName: figure.name,
-              courtesyName: figure.courtesyName,
-              title: figure.title,
-              camp: figure.camp,
-              campLabel: figure.campLabel,
-              relation: '麾下托付心腹',
-              dialogue: figure.greeting,
-            },
-            campaignUnlock: {
-              campaignName: `${figure.name}麾下从军`,
-              camp: figure.camp,
-              commander: figure.name,
-              roleTitle: `${figure.name}帐前亲随牙将`,
-            },
-            eventFlagToSet: encounterYearKey,
-          },
-        ],
-      };
+    const contextualEncounter = generateContextualFigureEncounter(profile, year, season, age, stats);
+    if (contextualEncounter) {
+      figureDialogue = contextualEncounter.figureDialogue;
+      personalStory = contextualEncounter.personalStory;
+      choice = contextualEncounter.choice;
+      // 记录最近对话年份与人物，保障冷却与历史连贯性
+      flags['last_figure_year'] = year;
+      flags['last_figure_spoken'] = contextualEncounter.figureDialogue.figureId;
     }
   }
 

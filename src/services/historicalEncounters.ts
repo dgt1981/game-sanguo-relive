@@ -426,8 +426,9 @@ export function getRegionalFigure(
   const matches = REGIONAL_HISTORICAL_FIGURES.filter(
     (f) => f.provinceId === provinceId && year >= f.activeYears[0] && year <= f.activeYears[1]
   );
-  if (matches.length === 0) return undefined;
-  return matches[(year * 3 + provinceId.length) % matches.length];
+  const charSum = provinceId.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const idx = Math.abs((year * 37 + Math.floor(year / 3) + charSum) % matches.length);
+  return matches[idx];
 }
 
 /**

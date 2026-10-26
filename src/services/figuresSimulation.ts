@@ -1,5 +1,14 @@
-import { Attributes, ProvinceId, HistoricalFigureBond, FigureArchetype } from '../types/game';
+import {
+  Attributes,
+  ProvinceId,
+  HistoricalFigureBond,
+  FigureArchetype,
+  LifeChoice,
+  HistoricalDialogue,
+  SeasonIndex,
+} from '../types/game';
 import { HISTORICAL_FIGURES_CATALOG, FigureCatalogEntry } from '../data/historicalFiguresCatalog';
+import type { PersonProfile } from './lifeSimulator';
 
 /**
  * 历史名仕动态成长与属性计算
@@ -107,6 +116,8 @@ export function createFigureBond(
     campLabel: entry.campLabel,
     relation,
     bondLevel,
+    intimacy: Math.max(15, bondLevel * 25 - 5),
+    unlockedGifts: [],
     lastSpoken,
     metYear,
     birthYear: entry.birthYear,
@@ -354,4 +365,391 @@ export function increaseFigureBond(
     }
     return fig;
   });
+}
+
+export interface ContextualEncounterResult {
+  figureDialogue: HistoricalDialogue;
+  personalStory: string;
+  choice: {
+    prompt: string;
+    options: LifeChoice[];
+  };
+}
+
+/**
+ * 依据玩家当前时空、身份（平民/军旅阵营）、年龄、以及与名士的历史渊源（总角竹马/初识新遇/同袍），
+ * 严格杜绝逻辑自相矛盾，动态生成高度契合因果的前后呼应名士对话与抉择！
+ */
+export function generateContextualFigureEncounter(
+  profile: PersonProfile,
+  year: number,
+  season: SeasonIndex,
+  age: number,
+  stats: Attributes
+): ContextualEncounterResult | null {
+  const flags = profile.eventFlags || {};
+  const playerCamp = profile.militaryAffiliation?.camp || 'NONE';
+  const isCivilian = playerCamp === 'NONE';
+
+  // 1. 严格过滤候选人物 (杜绝频繁对话同一个人、杜绝寿元错乱、杜绝敌营长官违和闲聊)
+  const eligibleFigures = HISTORICAL_FIGURES_CATALOG.filter((entry) => {
+    // 寿限检查
+    if (year < entry.birthYear || year > entry.deathYear) return false;
+
+    // 冷却检查: 4年 (16个季节) 内严禁重复触发同一人
+    const cooldownUntil = Number(flags[`cooldown_fig_${entry.id}`] || 0);
+    if (year < cooldownUntil) return false;
+
+    // 严禁刚对话过的人物连续出现
+    if (flags['last_figure_spoken'] === entry.id) return false;
+
+    // 阵营匹配检查: 从军者只能遇到同阵营长官/同袍，或中立医圣、隐士
+    if (!isCivilian) {
+      const isNeutral = entry.archetype === 'HEALER' || entry.archetype === 'HERMIT';
+      const isSameCamp = entry.camp === playerCamp;
+      if (!isNeutral && !isSameCamp) return false;
+    }
+
+    // 地理或阵营合规
+    const isLocal = entry.provinceId === profile.currentProvince;
+    const isNative = entry.provinceId === profile.birthProvince;
+    const isKnown = (profile.knownFigures || []).some((f) => f.id === entry.id);
+    const isWanderer = entry.archetype === 'HEALER' || entry.archetype === 'HERMIT';
+    const isCampOfficer = !isCivilian && entry.camp === playerCamp;
+
+    return isLocal || isNative || isKnown || isWanderer || isCampOfficer;
+  });
+
+  if (eligibleFigures.length === 0) return null;
+
+  // 2. 优化名仕抽选分布：优先结识尚未谋面的天下名仕（拓宽人脉），其次是相隔数年未见的故知
+  const unmetList = eligibleFigures.filter(
+    (e) => !(profile.knownFigures || []).some((f) => f.id === e.id)
+  );
+  const knownList = eligibleFigures.filter(
+    (e) => (profile.knownFigures || []).some((f) => f.id === e.id)
+  );
+
+  let picked: FigureCatalogEntry;
+  if (unmetList.length > 0 && (knownList.length === 0 || Math.random() < 0.65)) {
+    picked = unmetList[Math.floor(Math.random() * unmetList.length)];
+  } else {
+    picked = knownList[Math.floor(Math.random() * knownList.length)];
+  }
+
+  const figureAge = Math.max(0, year - picked.birthYear);
+  const quote = getFigureDialogueForAge(picked, figureAge);
+
+  const existingBond = (profile.knownFigures || []).find((f) => f.id === picked.id);
+  const isChildhood =
+    existingBond &&
+    (existingBond.relation.includes('竹马') ||
+      existingBond.relation.includes('总角') ||
+      existingBond.relation.includes('同邑') ||
+      existingBond.relation.includes('同里'));
+  const isSameCampMilitary = !isCivilian && picked.camp === playerCamp;
+
+  let personalStory = '';
+  let prompt = '';
+  let options: LifeChoice[] = [];
+
+  const cooldownKey = `cooldown_fig_${picked.id}`;
+
+  // =========================================================================
+  // 分支 1: 总角同窗 / 莫逆旧友重聚 (彻底解决“早就是发小却说初识相知”的矛盾！)
+  // =========================================================================
+  if (isChildhood || (existingBond && existingBond.bondLevel >= 2)) {
+    if (isChildhood) {
+      personalStory = `这一日，你在【${profile.county}】与少小相识的总角旧友【${picked.name}（字${picked.courtesyName}）】阔别重逢。当年乡里同砚少年，如今各自历尽风雨。相视一笑间，满是故交重逢的醇厚暖意。`;
+    } else {
+      personalStory = `这一日，你在【${profile.county}】与深交知己【${picked.name}（字${picked.courtesyName}）】再次相会。大乱年月音讯阻绝，今朝得见故人无恙，二人执手相看，皆大为宽慰。`;
+    }
+
+    prompt = `与旧友【${picked.name}】阔别重逢，二人相坐叙话，你当如何应对？`;
+
+    // 依流派定制专属请益选项
+    let adviceLabel = `向【${picked.name}】求教`;
+    let adviceOutcome = '';
+    let statDelta: Partial<Record<keyof Attributes, number>> = {};
+
+    switch (picked.archetype) {
+      case 'MARTIAL':
+        adviceLabel = `向【${picked.name}】请益破阵枪棒与战阵防身要诀`;
+        adviceOutcome = `【${picked.name}】欣然取枪示范，悉心提点你近身攻防的命门与力道，令你勇略与体魄大有长进！`;
+        statDelta = { martial: 10, health: 4 };
+        break;
+      case 'STRATEGIST':
+        adviceLabel = `向【${picked.name}】请教天下各路割据大势与安身避祸良策`;
+        adviceOutcome = `【${picked.name}】取树枝在地上为你细画诸侯虚实，点拨你见微知著、趋吉避凶之道，令你识见大开！`;
+        statDelta = { intellect: 10, fortune: 6 };
+        break;
+      case 'WEALTHY':
+        adviceLabel = `向【${picked.name}】探讨商道钱谷通融与经业营生之方`;
+        adviceOutcome = `【${picked.name}】为你指点各地官市物价起落，并慷慨资助你两包精制茶饼与通关路引，家资大增！`;
+        statDelta = { wealth: 14, intellect: 6 };
+        break;
+      case 'HEALER':
+        adviceLabel = `向【${picked.name}】请教四时节令调摄与避疫导引长生之法`;
+        adviceOutcome = `【${picked.name}】为你号脉调治，赠予你数副秘制辟秽药囊与延寿经方，通体大受裨益！`;
+        statDelta = { health: 10, virtue: 6 };
+        break;
+      case 'HERMIT':
+        adviceLabel = `向【${picked.name}】研求圣贤经籍与修身立德之道`;
+        adviceOutcome = `【${picked.name}】为你阐发古圣修己安人之理，字字珠玑，令你心境高洁超迈，仁厚德望更隆！`;
+        statDelta = { virtue: 12, intellect: 8 };
+        break;
+    }
+
+    options = [
+      {
+        id: `c_reunion_${picked.id}_drink`,
+        label: `沽上一壶温热浊酒，与【${picked.name}】围炉畅叙别后桑梓风物`,
+        description: `重温总角同道旧情，在战乱岁月互慰平生。`,
+        approachTag: '【故人温情】',
+        requirementHint: '增进仁厚，抚平沧桑',
+        statChanges: { virtue: 10, health: 4, fortune: 4 },
+        outcomeText: `二人把酒言欢，虽逢甲子大乱，但同里故交情谊愈笃。彼此相约无论世事如何，永为知心同道！`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: isChildhood ? '同邑总角 · 莫逆之交' : '至契知己 · 患难相扶',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+      {
+        id: `c_reunion_${picked.id}_learn`,
+        label: adviceLabel,
+        description: `虚心向故友请益其所长，砥砺自身才学。`,
+        approachTag: '【切磋砥砺】',
+        requirementHint: '增进专长属性',
+        statChanges: statDelta,
+        outcomeText: adviceOutcome,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: isChildhood ? '总角同砚 · 师友相兼' : '深交莫逆 · 互为砥砺',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+      {
+        id: `c_reunion_${picked.id}_pledge`,
+        label: `备下一份盘缠干粮或随身手信相赠，相约若逢危难必倾力赴救`,
+        description: `乱世存身不易，与深交好友互立守望相助之诺。`,
+        approachTag: '【生死相托】',
+        requirementHint: '备薄资结盟，铸就生死托付',
+        statChanges: { virtue: 8, fortune: 8, wealth: -4 },
+        outcomeText: `【${picked.name}】极为动容，亦解下贴身信物相赠：“有贤弟此言，此生无憾！来日若逢大难，某必全力赴救！”二人自此情同骨肉！`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: '生死托付 · 金兰同舟',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+    ];
+  }
+  // =========================================================================
+  // 分支 2: 行伍同袍检阅 (从军者在军营中检阅操练，绝不出现市井闲坐与敌营叛逃！)
+  // =========================================================================
+  else if (isSameCampMilitary) {
+    personalStory = `军营辕门鼓角肃杀，你在【${profile.militaryAffiliation?.roleTitle || '行伍'}】哨卡值守之时，恰逢军中名将【${picked.name}】按剑督察前沿阵防。见你刀弓严整、气度沉稳，【${picked.name}】特驻足校考你的行伍操练。`;
+    prompt = `主将【${picked.name}】巡营检阅，考校战阵军备，你当如何应对？`;
+
+    options = [
+      {
+        id: `c_mil_encounter_${picked.id}_drill`,
+        label: `当面操演破阵刀枪与挽弓引矢，展现过硬武略`,
+        description: '在主将面前展露武略，争当破阵前锋。',
+        approachTag: '【精熟武艺】',
+        requirementHint: '需勇略过人',
+        statChanges: { martial: 12, health: 4, fortune: 4 },
+        outcomeText: `【${picked.name}】抚掌赞赏：“真健卒也！”当即下令军需官赏赐你精铁短刀一把，并记大功一次。`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: '帐前赏识校尉',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+      {
+        id: `c_mil_encounter_${picked.id}_plan`,
+        label: `呈递前沿斥候密探图卷，陈说军寨粮道整饬与防偷袭之策`,
+        description: '展现治军韬略与细密心思，得主帅青睐。',
+        approachTag: '【建言方略】',
+        requirementHint: '需识见沉稳',
+        statChanges: { intellect: 12, virtue: 6 },
+        outcomeText: `【${picked.name}】细阅图卷连连颔首：“足下颇有大将之才，深谙关要虚实！”特擢升你参赞中军行伍。`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: '军前倚重亲信',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+      {
+        id: `c_mil_encounter_${picked.id}_logistics`,
+        label: `主动请缨负责后营草料盘库与伤病士卒看护，确保后方无虞`,
+        description: '勤勉敬业，任劳任怨抚恤袍泽。',
+        approachTag: '【笃谨军风】',
+        requirementHint: '仁厚务实',
+        statChanges: { virtue: 10, wealth: 8 },
+        outcomeText: `后营粮草井井有条，伤员大受照料。【${picked.name}】在全军面前亲口嘉勉你的仁厚忠谨。`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: '麾下得力心腹',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+    ];
+  }
+  // =========================================================================
+  // 分支 3: 初识新名士 (平民偶遇名士，合乎情理的结交与请益)
+  // =========================================================================
+  else {
+    personalStory = `这一日，你在【${profile.county}】市井驿道/杏林草舍间，偶遇初临此地的名士【${picked.name}（字${picked.courtesyName}）】。对方见你目光清澈、举止沉稳，驻足与你温言攀谈。`;
+    prompt = `偶遇当世名士【${picked.name}】，对方驻足攀谈，你当如何应对？`;
+
+    // 只有在玩家是平民且正值青壮年（16~35岁）、且该名士确属军事领袖时，才提供从军选项
+    const canEnlist = isCivilian && age >= 16 && age <= 35 && picked.camp !== 'NONE';
+
+    options = [
+      {
+        id: `c_new_encounter_${picked.id}_learn`,
+        label: `恭敬拱手请教世道风云与安身之策，聆听教诲`,
+        description: `虚心受教，以诚相待，聆听当世英杰的高见。`,
+        approachTag: '【虚怀受教】',
+        requirementHint: '崇德慕义，增进识见',
+        statChanges: { intellect: 10, virtue: 6, fortune: 4 },
+        outcomeText: `【${picked.name}】见你目光清澈、虚心好学，欣然传授了你诸多经世要诀与度世法度，二人遂结为相知！`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: '推心置腹之师友',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+      {
+        id: `c_new_encounter_${picked.id}_treat`,
+        label: `以乡党邻里之谊置办一席粗茶干粮，为【${picked.name}】温厚接风`,
+        description: `仗义疏财，以纯厚仁义相待。`,
+        approachTag: '【倾盖相待】',
+        requirementHint: '纯朴好义，广结善缘',
+        statChanges: { virtue: 10, wealth: -2, fortune: 6 },
+        outcomeText: `二人就着粗茶畅叙四方风物，【${picked.name}】大赞你为人敦厚慷慨，引为莫逆同道！`,
+        figureBond: {
+          figureId: picked.id,
+          figureName: picked.name,
+          courtesyName: picked.courtesyName,
+          title: picked.titleTag,
+          camp: picked.camp,
+          campLabel: picked.campLabel,
+          relation: '同道莫逆知己',
+          dialogue: quote,
+        },
+        eventFlagToSet: cooldownKey,
+      },
+      canEnlist
+        ? {
+            id: `c_new_encounter_${picked.id}_enlist`,
+            label: `长揖及地，坦陈愿投身其麾下，从军报国保全桑梓`,
+            description: `乱世投效明主，投身沙场闯荡一番功名！`,
+            approachTag: '【投军麾下】',
+            requirementHint: '需勇略过人',
+            requirements: { martial: 25 },
+            statChanges: { martial: 12, intellect: 6, fortune: 6 },
+            outcomeText: `【${picked.name}】见你身手矫健、志在四方，欣然大笑：“得足下相从，实乃幸事！”收你入其帐前亲兵行伍！`,
+            figureBond: {
+              figureId: picked.id,
+              figureName: picked.name,
+              courtesyName: picked.courtesyName,
+              title: picked.titleTag,
+              camp: picked.camp,
+              campLabel: picked.campLabel,
+              relation: '麾下投效牙将',
+              dialogue: quote,
+            },
+            campaignUnlock: {
+              campaignName: `${picked.name}麾下从军`,
+              camp: picked.camp,
+              commander: picked.name,
+              roleTitle: `${picked.name}帐前随行牙将`,
+            },
+            eventFlagToSet: cooldownKey,
+          }
+        : {
+            id: `c_new_encounter_${picked.id}_recommend`,
+            label: `向其探讨乡里民风物产，恳请在官府太守或大族门前予以美言清议`,
+            description: '结识海内名士，增益乡望与声名。',
+            approachTag: '【结好名望】',
+            requirementHint: '修德积善，名传乡里',
+            statChanges: { virtue: 10, intellect: 6, fortune: 6 },
+            outcomeText: `【${picked.name}】对你大加赞赏，亲手写下评语赐你，你的名望在四邻八乡大为传扬。`,
+            figureBond: {
+              figureId: picked.id,
+              figureName: picked.name,
+              courtesyName: picked.courtesyName,
+              title: picked.titleTag,
+              camp: picked.camp,
+              campLabel: picked.campLabel,
+              relation: '赏识提携先贤',
+              dialogue: quote,
+            },
+            eventFlagToSet: cooldownKey,
+          },
+    ];
+  }
+
+  return {
+    figureDialogue: {
+      figureId: picked.id,
+      speaker: picked.name,
+      courtesyName: picked.courtesyName,
+      title: picked.titleTag,
+      camp: picked.camp,
+      avatarChar: picked.avatarChar,
+      quote,
+      replyPrompt: personalStory,
+    },
+    personalStory,
+    choice: {
+      prompt,
+      options,
+    },
+  };
 }

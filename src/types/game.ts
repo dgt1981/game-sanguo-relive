@@ -100,6 +100,28 @@ export interface HistoricalFigureBond {
   county?: string;
   titleTag?: string;
   historicalBio?: string;
+  intimacy?: number;       // 0 ~ 100 详细羁绊数值 (0~29: 初识, 30~59: 相熟, 60~89: 莫逆, 90~100: 生死托付)
+  unlockedGifts?: string[];// 已领受的名士赐予ID列表
+  lastInteractedYear?: number;
+  lastInteractedSeason?: SeasonIndex;
+}
+
+export type BoonType = 'WEAPON' | 'MANUAL' | 'INTEL' | 'TREASURE'; // 名剑神兵、绝学秘籍、战略情报、传世奇珍
+
+export interface NobleBoon {
+  id: string;
+  name: string;             // e.g. '青釭宝剑'
+  type: BoonType;
+  typeLabel: string;        // '名剑神兵' | '兵法秘籍' | '战略情报' | '传世奇珍'
+  requiredBondLevel: number;// 3: 莫逆同道 或 4: 生死托付
+  description: string;      // 描述及来历文案
+  figureId: string;
+  figureName: string;
+  statBonus: Partial<Record<keyof Attributes, number>>;
+  specialEffect: string;    // 专属庇护或战斗/经商加成
+  claimed?: boolean;
+  claimedYear?: number;
+  claimedSeasonName?: string;
 }
 
 export interface MilitaryAffiliation {
@@ -249,4 +271,5 @@ export interface CompletedLifeRecord {
   knownFiguresList?: string[];
   militaryCamp?: string;
   campaignsList?: string[];
+  collectedBoonsList?: string[];
 }

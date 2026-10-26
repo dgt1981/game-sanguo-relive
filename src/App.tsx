@@ -8,6 +8,8 @@ import {
   CompletedLifeRecord,
   LifeChoice,
   SeasonIndex,
+  NobleBoon,
+  HistoricalFigureBond,
 } from './types/game';
 import {
   PersonProfile,
@@ -99,6 +101,7 @@ export default function App() {
     const freshProfile: PersonProfile = {
       ...newProfile,
       knownFigures: newProfile.knownFigures || [],
+      collectedBoons: newProfile.collectedBoons || [],
       eventFlags: newProfile.eventFlags || {},
     };
     const initStats = generateInitialAttributes(freshProfile.socialClass);
@@ -227,6 +230,7 @@ export default function App() {
       knownFiguresList: (profile.knownFigures || []).map((f) => `${f.name}（${f.relation}）`),
       militaryCamp: profile.militaryAffiliation?.roleTitle || '乡野布衣',
       campaignsList: profile.militaryAffiliation?.campaigns || [],
+      collectedBoonsList: (profile.collectedBoons || []).map((b) => b.name),
     };
     setRecords((prev) => [newRecord, ...prev]);
 
@@ -500,9 +504,12 @@ export default function App() {
       const catalogEntry = HISTORICAL_FIGURES_CATALOG.find((e) => e.id === fb.figureId);
 
       if (existIdx >= 0) {
+        const curIntimacy = updatedFigures[existIdx].intimacy ?? (updatedFigures[existIdx].bondLevel * 25);
+        const nextBond = Math.min(4, updatedFigures[existIdx].bondLevel + 1);
         updatedFigures[existIdx] = {
           ...updatedFigures[existIdx],
-          bondLevel: Math.min(4, updatedFigures[existIdx].bondLevel + 1),
+          bondLevel: nextBond,
+          intimacy: Math.max(nextBond * 25, Math.min(100, curIntimacy + 25)),
           relation: fb.relation,
           lastSpoken: fb.dialogue,
         };
@@ -520,6 +527,8 @@ export default function App() {
           campLabel: fb.campLabel,
           relation: fb.relation,
           bondLevel: 1,
+          intimacy: 25,
+          unlockedGifts: [],
           lastSpoken: fb.dialogue,
           metYear: year,
           birthYear: 184 - age,
@@ -564,7 +573,15 @@ export default function App() {
     // 5. 因果链标签增减 (Flags)
     const updatedFlags = { ...(profile.eventFlags || {}) };
     if (choice.eventFlagToSet) {
-      updatedFlags[choice.eventFlagToSet] = true;
+      if (choice.eventFlagToSet.startsWith('cooldown_fig_')) {
+        updatedFlags[choice.eventFlagToSet] = year + 4;
+        updatedFlags['last_figure_year'] = year;
+        if (choice.figureBond) {
+          updatedFlags['last_figure_spoken'] = choice.figureBond.figureId;
+        }
+      } else {
+        updatedFlags[choice.eventFlagToSet] = true;
+      }
     }
     if (currentEvent.eventFlagTriggered) {
       updatedFlags[currentEvent.eventFlagTriggered] = true;
@@ -641,6 +658,162 @@ export default function App() {
       rolled.county = p.counties[Math.floor(Math.random() * p.counties.length)];
     }
     handleStartLife(rolled);
+  };
+
+  // 名士每季主动互动 (消耗体魄或家财，增进羁绊与自身五维)
+  const handleInteractFigure = (
+    figureId: string,
+    interactionType: 'SPAR_STUDY' | 'FEAST_GIFT' | 'LETTER_GREETING',
+    dialogueQuote: string,
+    statCosts: Partial<Record<keyof Attributes, number>>,
+    statGains: Partial<Record<keyof Attributes, number>>,
+    intimacyGain: number
+  ) => {
+    const figureIndex = (profile.knownFigures || []).findIndex((f) => f.id === figureId);
+    if (figureIndex === -1) return;
+
+    const fig = profile.knownFigures[figureIndex];
+    const currentIntimacy = fig.intimacy ?? fig.bondLevel * 25;
+    const nextIntimacy = Math.min(100, currentIntimacy + intimacyGain);
+
+    let nextBondLevel = fig.bondLevel;
+    if (nextIntimacy >= 90) nextBondLevel = 4;
+    else if (nextIntimacy >= 60) nextBondLevel = Math.max(3, fig.bondLevel);
+    else if (nextIntimacy >= 30) nextBondLevel = Math.max(2, fig.bondLevel);
+
+    const updatedFigure: HistoricalFigureBond = {
+      ...fig,
+      intimacy: nextIntimacy,
+      bondLevel: nextBondLevel,
+      lastSpoken: dialogueQuote,
+      lastInteractedYear: year,
+      lastInteractedSeason: season,
+    };
+
+    const nextKnownFigures = [...profile.knownFigures];
+    nextKnownFigures[figureIndex] = updatedFigure;
+
+    // Apply stat changes (deduct costs, add gains)
+    const nextStats = { ...stats };
+    if (statCosts.health) {
+      nextStats.health = Math.max(1, nextStats.health - statCosts.health);
+    }
+    if (statCosts.wealth) {
+      nextStats.wealth = Math.max(0, nextStats.wealth - statCosts.wealth);
+    }
+    Object.entries(statGains).forEach(([k, v]) => {
+      const key = k as keyof Attributes;
+      nextStats[key] = Math.max(0, Math.min(100, nextStats[key] + (v as number)));
+    });
+
+    const updatedProfile: PersonProfile = {
+      ...profile,
+      knownFigures: nextKnownFigures,
+    };
+
+    setStats(nextStats);
+    setProfile(updatedProfile);
+
+    // Record an entry in Chronicle so the player's seasonal visits are remembered
+    const seasonName = SEASONS_CONFIG[season].name;
+    const typeLabelMap = {
+      SPAR_STUDY: '切磋论道',
+      FEAST_GIFT: '设宴备礼',
+      LETTER_GREETING: '修书致意',
+    };
+    const interactLogNote = `【名士过从】于${seasonName}季寻访${fig.name}（${typeLabelMap[interactionType]}），长谈论世，相知更笃，羁绊值增至 ${nextIntimacy}。`;
+
+    const updatedLogs = [...seasonLogs];
+    if (updatedLogs.length > 0) {
+      const latestLog = { ...updatedLogs[updatedLogs.length - 1] };
+      if (latestLog.year === year && latestLog.season === season) {
+        latestLog.storySummary = `${latestLog.storySummary}\n\n${interactLogNote}`;
+        updatedLogs[updatedLogs.length - 1] = latestLog;
+        setSeasonLogs(updatedLogs);
+      }
+    }
+
+    // Auto save mid-game progress
+    storage.saveMidGameProgress({
+      playerName: updatedProfile.name,
+      currentYear: year,
+      currentSeason: season,
+      currentAge: age,
+      profile: updatedProfile,
+      stats: nextStats,
+      seasonLogs: updatedLogs,
+      currentEvent,
+      isAutoRunning,
+      playbackSpeed,
+    });
+  };
+
+  // 领受名士赐予 (如名剑、秘籍或战略情报)
+  const handleClaimBoon = (figureId: string, boon: NobleBoon) => {
+    const figureIndex = (profile.knownFigures || []).findIndex((f) => f.id === figureId);
+    if (figureIndex === -1) return;
+
+    const fig = profile.knownFigures[figureIndex];
+    const claimedList = fig.unlockedGifts || [];
+    if (claimedList.includes(boon.id)) return;
+
+    const nextClaimed = [...claimedList, boon.id];
+    const updatedFigure: HistoricalFigureBond = {
+      ...fig,
+      unlockedGifts: nextClaimed,
+    };
+
+    const nextKnownFigures = [...profile.knownFigures];
+    nextKnownFigures[figureIndex] = updatedFigure;
+
+    // Apply boon's stat bonuses to player
+    const nextStats = { ...stats };
+    Object.entries(boon.statBonus).forEach(([k, v]) => {
+      const key = k as keyof Attributes;
+      nextStats[key] = Math.max(0, Math.min(100, nextStats[key] + (v as number)));
+    });
+
+    const claimedBoonRecord: NobleBoon = {
+      ...boon,
+      claimed: true,
+      claimedYear: year,
+      claimedSeasonName: SEASONS_CONFIG[season].fullName,
+    };
+
+    const updatedProfile: PersonProfile = {
+      ...profile,
+      knownFigures: nextKnownFigures,
+      collectedBoons: [...(profile.collectedBoons || []), claimedBoonRecord],
+    };
+
+    setStats(nextStats);
+    setProfile(updatedProfile);
+
+    // Record this milestone boon in chronicle log
+    const boonLogNote = `【名士赐予 · 重宝出世】${fig.name}感念生死契盟，郑重以${boon.name}（${boon.typeLabel}）相赠！${boon.specialEffect}。`;
+    const updatedLogs = [...seasonLogs];
+    if (updatedLogs.length > 0) {
+      const latestLog = { ...updatedLogs[updatedLogs.length - 1] };
+      if (latestLog.year === year && latestLog.season === season) {
+        latestLog.storySummary = `${latestLog.storySummary}\n\n${boonLogNote}`;
+        updatedLogs[updatedLogs.length - 1] = latestLog;
+        setSeasonLogs(updatedLogs);
+      }
+    }
+
+    // Auto save
+    storage.saveMidGameProgress({
+      playerName: updatedProfile.name,
+      currentYear: year,
+      currentSeason: season,
+      currentAge: age,
+      profile: updatedProfile,
+      stats: nextStats,
+      seasonLogs: updatedLogs,
+      currentEvent,
+      isAutoRunning,
+      playbackSpeed,
+    });
   };
 
   return (
@@ -730,7 +903,10 @@ export default function App() {
               knownFigures={profile.knownFigures || []}
               profile={profile}
               currentYear={year}
+              currentSeason={season}
               currentStats={stats}
+              onInteractFigure={handleInteractFigure}
+              onClaimBoon={handleClaimBoon}
             />
           </div>
         )}
