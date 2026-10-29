@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CompletedLifeRecord } from '../types/game';
 import { CommunityLifeItem, storage } from '../services/storage';
 import { PROVINCES } from '../data/regions';
+import { PixelFigureAvatar } from './PixelFigureAvatar';
 import { sound } from '../services/sound';
 import {
   Users,
@@ -275,8 +276,8 @@ if ($action === 'save_life') {
                       {/* Historical Parallel Badge if present */}
                       {item.matchedFigureName && (
                         <div className="mb-2 flex items-center justify-between text-[11px] bg-[#1e1610] px-2 py-1 rounded border border-[#3d2c1d] text-[#e5c158] font-classical">
-                          <span className="flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-[#f59e0b]" />
+                          <span className="flex items-center gap-1.5">
+                            <PixelFigureAvatar name={item.matchedFigureName} size="xs" showCampBorder={false} />
                             <span>宿命同道：{item.matchedFigureName}</span>
                           </span>
                           {item.matchedFigureSimilarity && (
@@ -414,8 +415,13 @@ if ($action === 'save_life') {
             <div className="space-y-3 font-classical text-xs sm:text-sm">
               {selectedRecord.matchedFigureName && (
                 <div className="bg-[#241a13] p-3 rounded-lg border border-[#523b26] flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#e5c158] shrink-0" />
+                  <div className="flex items-center gap-2.5">
+                    <PixelFigureAvatar
+                      name={selectedRecord.matchedFigureName}
+                      size="sm"
+                      showCampBadge={true}
+                      showCampBorder={true}
+                    />
                     <span className="text-xs text-[#dcd1c2]">
                       宿命映照三国历史同道：<strong className="text-[#faece0] text-sm">{selectedRecord.matchedFigureName}</strong>{' '}
                       <span className="text-[#d4af37] text-xs font-semibold">{selectedRecord.matchedFigureTitle || ''}</span>

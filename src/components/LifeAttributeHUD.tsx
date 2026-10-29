@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   Swords,
   Award,
+  BookmarkCheck,
+  LogOut,
 } from 'lucide-react';
 
 interface LifeAttributeHUDProps {
@@ -23,6 +25,8 @@ interface LifeAttributeHUDProps {
   age: number;
   lunarYear: string;
   onNavigateToFigures?: () => void;
+  sidebarMode?: boolean;
+  onExitSave?: () => void;
 }
 
 export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
@@ -33,6 +37,8 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   age,
   lunarYear,
   onNavigateToFigures,
+  sidebarMode = false,
+  onExitSave,
 }) => {
   const seasonCfg = SEASONS_CONFIG[season];
   const stage = getPhysiologicalStage(age);
@@ -85,6 +91,167 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
     { key: 'fortune', label: '气数', icon: <Sparkles className="w-3.5 h-3.5" />, color: '#a855f7' },
   ];
 
+  // ----------------------------------------------------
+  // PC 模式下的左栏垂直命盘结构 (Sidebar Mode)
+  // ----------------------------------------------------
+  if (sidebarMode) {
+    return (
+      <div className="bg-[#1a1612] border border-[#3e3024] rounded-xl p-4 shadow-xl space-y-4 text-xs font-classical select-none">
+        {/* 顶部身份与印契 */}
+        <div className="flex items-center gap-3 pb-3 border-b border-[#33261a]">
+          <div className="w-11 h-11 rounded bg-[#2a1e15] border-2 border-[#d4af37]/80 flex items-center justify-center font-calligraphy text-2xl text-[#fcd34d] shadow-md shrink-0">
+            {profile.name.slice(0, 1)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5 truncate">
+              <span className="font-calligraphy text-xl text-[#faece0] font-bold">
+                {profile.name}
+              </span>
+              <span className="text-xs text-[#a39482]">字 {profile.courtesyName}</span>
+            </div>
+            <div className="text-[11px] text-[#c5a666] flex items-center gap-1 mt-0.5 truncate">
+              <span>{profile.gender === 'MALE' ? '男丁' : '女秀'}</span>
+              <span>·</span>
+              <span className="text-[#f59e0b] font-semibold">{profile.occupation}</span>
+            </div>
+            <div className="text-[10px] text-[#8c7b69] flex items-center gap-1 mt-0.5 truncate">
+              <MapPin className="w-3 h-3 text-[#d4af37] shrink-0" />
+              <span>{profile.commandery} · {profile.county}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 纪元时序与享年 */}
+        <div className="bg-[#14100c] p-2.5 rounded-lg border border-[#2d2218] space-y-1.5 text-[11px]">
+          <div className="flex items-center justify-between">
+            <span className="text-[#8e7e6e]">天命纪元</span>
+            <div className="flex items-center gap-1.5 font-mono text-[#f59e0b] font-semibold">
+              <span>公元 {year} 年</span>
+              <span
+                className="px-1.5 py-0.2 rounded font-classical text-[10px]"
+                style={{
+                  color: seasonCfg.color,
+                  backgroundColor: `${seasonCfg.color}15`,
+                  border: `1px solid ${seasonCfg.color}40`,
+                }}
+              >
+                {seasonCfg.name}季
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-[#8e7e6e]">农历干支</span>
+            <span className="text-[#c7baa8]">{lunarYear} · {seasonCfg.solarTerm}</span>
+          </div>
+
+          <div className="flex items-center justify-between pt-1 border-t border-[#231a13]">
+            <span className="text-[#8e7e6e]">当前享年</span>
+            <span className="text-[#38bdf8] font-mono font-bold text-sm">{age} 岁</span>
+          </div>
+        </div>
+
+        {/* 生理阶段成长律动 */}
+        <div className="bg-[#211a14] p-2.5 rounded-lg border border-[#4a3625] space-y-1 text-[11px]">
+          <div className="flex items-center justify-between text-[#e5a84b] font-semibold">
+            <div className="flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5 text-[#e5a84b]" />
+              <span>【{stage.stageName} · {stage.tag}】</span>
+            </div>
+            <span className="text-[10px] font-mono text-[#a89985]">{stage.ageRange}</span>
+          </div>
+          <p className="text-[10px] text-[#c5b7a7] leading-relaxed italic">
+            {stage.description}
+          </p>
+        </div>
+
+        {/* 六维气数垂直计量槽 */}
+        <div className="space-y-2">
+          <div className="text-[11px] text-[#8e7e6e] flex items-center justify-between">
+            <span>身家五维与气数命盘</span>
+            <span className="text-[10px] text-[#6b5b4c]">满值 100</span>
+          </div>
+
+          <div className="space-y-1.5">
+            {statConfig.map(({ key, label, icon, color }) => {
+              const val = Math.max(0, Math.min(100, stats[key]));
+              const trend = getStatTrend(key);
+
+              return (
+                <div
+                  key={key}
+                  className="bg-[#211a14] border border-[#382d23] rounded-lg p-2 space-y-1"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-classical text-[#ded3c5]">
+                      <span style={{ color }}>{icon}</span>
+                      <span>{label}</span>
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: trend.color }} className="text-[10px]">
+                        {trend.text}
+                      </span>
+                      <span className="font-mono font-bold text-sm text-[#f5ede3] w-6 text-right">
+                        {val}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-[#14100c] h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${val}%`, backgroundColor: color }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 阵营与从军情况 */}
+        {profile.militaryAffiliation && profile.militaryAffiliation.camp !== 'NONE' && (
+          <div className="bg-[#211a14] p-2.5 rounded-lg border border-[#4d3824] space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[#f59e0b] font-semibold text-xs">
+              <Swords className="w-3.5 h-3.5" />
+              <span>阵营从军：{profile.militaryAffiliation.roleTitle}</span>
+            </div>
+            {profile.militaryAffiliation.campaigns.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap text-[10px] text-[#e5a84b]">
+                {profile.militaryAffiliation.campaigns.map((campName) => (
+                  <span
+                    key={campName}
+                    className="px-1.5 py-0.2 rounded bg-[#2e1d13] border border-[#523820] text-[#fcd34d]"
+                  >
+                    {campName}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 存盘退出按钮 */}
+        {onExitSave && (
+          <div className="pt-2 border-t border-[#33261a]">
+            <button
+              onClick={onExitSave}
+              className="w-full py-2 rounded-lg bg-[#231b15] hover:bg-[#32251c] border border-[#3e3023] text-[#dcd1c2] hover:text-[#faece0] flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-xs"
+              title="保存当前进度并退出，随时可承接前缘继续"
+            >
+              <LogOut className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>中途存盘 · 退出到卷首</span>
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // 移动端或顶部平铺模式 (Horizontal Mode)
+  // ----------------------------------------------------
   return (
     <div className="bg-[#1c1815] border border-[#3b3026] rounded-lg p-3 md:p-4 shadow-lg text-[#e6ded5] space-y-3">
       {/* Top Identity Row */}

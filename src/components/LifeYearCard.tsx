@@ -1,6 +1,7 @@
 import React from 'react';
 import { SeasonalEvent, LifeChoice, Attributes, SeasonIndex } from '../types/game';
 import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
+import { PixelFigureAvatar } from './PixelFigureAvatar';
 import { sound } from '../services/sound';
 import {
   Flame,
@@ -213,10 +214,17 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
           <div className="bg-[#1e1713] border border-[#6d5138] rounded-xl p-4 sm:p-5 shadow-xl relative overflow-hidden space-y-2.5">
             <div className="flex items-center justify-between border-b border-[#3e2e22] pb-2.5">
               <div className="flex items-center gap-2.5">
-                {/* Avatar Badge */}
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#d4af37] to-[#8c7322] text-[#1c1208] flex items-center justify-center font-calligraphy font-bold text-lg shadow-md border border-[#fef08a]">
-                  {currentEvent.figureDialogue.avatarChar}
-                </div>
+                {/* Pixel Art Avatar Badge */}
+                <PixelFigureAvatar
+                  figureId={currentEvent.figureDialogue.figureId}
+                  name={currentEvent.figureDialogue.speaker}
+                  courtesyName={currentEvent.figureDialogue.courtesyName}
+                  camp={currentEvent.figureDialogue.camp}
+                  size="md"
+                  showCampBadge={true}
+                  showCampBorder={true}
+                  avatarChar={currentEvent.figureDialogue.avatarChar}
+                />
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-calligraphy text-base text-[#faece0] font-bold">

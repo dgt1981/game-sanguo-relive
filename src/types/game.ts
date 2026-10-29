@@ -239,6 +239,7 @@ export interface SeasonLogEntry {
   occupation: string;
   category?: ChronicleCategory;
   tags?: ('MILITARY' | 'AGRICULTURE' | 'ENCOUNTER')[];
+  figureDialogue?: HistoricalDialogue;
 }
 
 export interface RealisticEnding {

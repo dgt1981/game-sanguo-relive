@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { SeasonLogEntry } from '../types/game';
 import { SEASONS_CONFIG } from '../services/lifeSimulator';
+import { PixelFigureAvatar } from './PixelFigureAvatar';
 import {
   Clock,
   CheckCircle2,
@@ -354,6 +355,33 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                     <div className="text-[11px] text-[#86af8b] bg-[#141d16] px-2.5 py-1 rounded border border-[#233827] font-classical flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80]" />
                       <span>{entry.naturalChangeNote}</span>
+                    </div>
+                  )}
+
+                  {/* 当季偶遇历史名士纪事 */}
+                  {entry.figureDialogue && (
+                    <div className="bg-[#1b1511] border-l-2 border-[#d4af37] p-2.5 rounded-r flex items-center gap-2.5 text-xs text-[#faece0] font-classical">
+                      <PixelFigureAvatar
+                        figureId={entry.figureDialogue.figureId}
+                        name={entry.figureDialogue.speaker}
+                        courtesyName={entry.figureDialogue.courtesyName}
+                        camp={entry.figureDialogue.camp}
+                        size="sm"
+                        showCampBadge={true}
+                        showCampBorder={true}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#f59e0b]">
+                          <span className="font-bold">{entry.figureDialogue.speaker}</span>
+                          {entry.figureDialogue.courtesyName && (
+                            <span className="text-[#a89b8d]">字{entry.figureDialogue.courtesyName}</span>
+                          )}
+                          <span className="text-[#8c7e72]">· {entry.figureDialogue.title}</span>
+                        </div>
+                        <p className="italic text-[#ded4c5] line-clamp-2 mt-0.5">
+                          {entry.figureDialogue.quote}
+                        </p>
+                      </div>
                     </div>
                   )}
 

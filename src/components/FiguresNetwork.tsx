@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HistoricalFigureBond,
   FigureArchetype,
@@ -43,8 +43,11 @@ import {
   Send,
   Flame,
   Check,
+  Hourglass,
+  Clock,
 } from 'lucide-react';
 import { sound } from '../services/sound';
+import { PixelFigureAvatar, PixelAvatarSize } from './PixelFigureAvatar';
 
 interface FiguresNetworkProps {
   knownFigures: HistoricalFigureBond[];
@@ -94,6 +97,180 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
     statGainsText: string;
     levelUpNotice?: string;
   } | null>(null);
+
+  // 互动冷却追踪状态 (记录名士互动起始时间与倒计时)
+  interface CooldownRecord {
+    startedAt: number;
+    durationMs: number;
+    year: number;
+    season: SeasonIndex;
+  }
+  const [cooldowns, setCooldowns] = useState<Record<string, CooldownRecord>>({});
+  const [currentTime, setCurrentTime] = useState<number>(Date.now());
+
+  // 印章动效状态 (名士头像加盖朱红【羁绊加深】印章)
+  const [activeStamp, setActiveStamp] = useState<{
+    figureId: string;
+    figureName: string;
+    intimacyGain: number;
+    timestamp: number;
+  } | null>(null);
+  const [isStamping, setIsStamping] = useState<boolean>(false);
+
+  // 定时刷新冷却倒计时与进度显示 (每100ms平滑更新)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 100);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 评估名士当前冷却状态与下季倒计时
+  const getFigureCooldownStatus = (figure: HistoricalFigureBond) => {
+    const isInteractedThisSeason =
+      figure.lastInteractedYear === currentYear &&
+      figure.lastInteractedSeason === currentSeason;
+
+    const cd = cooldowns[figure.id];
+    const now = currentTime;
+    const nextSeasonIndex = ((currentSeason + 1) % 4) as SeasonIndex;
+    const nextSeasonConfig = SEASONS_CONFIG[nextSeasonIndex];
+
+    if (cd) {
+      const elapsed = Math.max(0, now - cd.startedAt);
+      const duration = cd.durationMs || 12000;
+      const remainingMs = Math.max(0, duration - elapsed);
+      const remainingSec = Math.ceil(remainingMs / 1000);
+      const progressPercent = Math.min(100, Math.round((elapsed / duration) * 100));
+
+      if (remainingMs > 0 || isInteractedThisSeason) {
+        return {
+          inCooldown: true,
+          remainingSec,
+          progressPercent: remainingMs === 0 ? 100 : progressPercent,
+          isSeasonLocked: isInteractedThisSeason,
+          nextSeasonName: nextSeasonConfig.name,
+          nextSeasonFullName: nextSeasonConfig.fullName,
+        };
+      }
+    }
+
+    if (isInteractedThisSeason) {
+      return {
+        inCooldown: true,
+        remainingSec: 0,
+        progressPercent: 100,
+        isSeasonLocked: true,
+        nextSeasonName: nextSeasonConfig.name,
+        nextSeasonFullName: nextSeasonConfig.fullName,
+      };
+    }
+
+    return {
+      inCooldown: false,
+      remainingSec: 0,
+      progressPercent: 0,
+      isSeasonLocked: false,
+      nextSeasonName: nextSeasonConfig.name,
+      nextSeasonFullName: nextSeasonConfig.fullName,
+    };
+  };
+
+  // 渲染带有古典【羁绊加深】朱红印章动效的名士头像（支持复古像素画风与墨印古风）
+  const renderAvatarWithSeal = (
+    figure: HistoricalFigureBond,
+    sizeClass: string = 'w-12 h-12',
+    textClass: string = 'text-2xl',
+    isModal: boolean = false
+  ) => {
+    const isTargetOfActiveStamp = activeStamp?.figureId === figure.id;
+    const cdStatus = getFigureCooldownStatus(figure);
+    const showWatermark = !isTargetOfActiveStamp && cdStatus.inCooldown;
+    const pixelSize: PixelAvatarSize = isModal
+      ? 'lg'
+      : sizeClass.includes('14')
+      ? 'lg'
+      : sizeClass.includes('10')
+      ? 'sm'
+      : 'md';
+
+    return (
+      <div className={`relative ${sizeClass} shrink-0`}>
+        <div
+          className={`transition-transform duration-300 ${
+            isTargetOfActiveStamp
+              ? 'animate-stamp-tremor ring-2 ring-red-600/70 shadow-[0_0_12px_rgba(220,38,38,0.7)] rounded'
+              : ''
+          }`}
+        >
+          <PixelFigureAvatar
+            figureId={figure.id}
+            name={figure.name}
+            courtesyName={figure.courtesyName}
+            camp={figure.camp}
+            archetype={figure.archetype}
+            size={pixelSize}
+            isAlive={figure.isAlive}
+            showCampBadge={true}
+            showCampBorder={true}
+            avatarChar={figure.avatarChar}
+          />
+        </div>
+
+        {/* 1. 盖印瞬间的古典仪式感动效: 朱砂墨晕震荡 + 金色羁绊升腾 + 朱印下压 */}
+        {isTargetOfActiveStamp && (
+          <>
+            {/* 朱砂墨圈震荡扩散 */}
+            <div className="absolute -inset-1 rounded-full border-2 border-red-500 animate-seal-shockwave pointer-events-none" />
+
+            {/* 金色羁绊数值飞升浮动 */}
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 pointer-events-none z-30 font-calligraphy text-amber-300 text-sm font-bold whitespace-nowrap animate-float-intimacy drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <span>+{activeStamp.intimacyGain} 羁绊</span>
+            </div>
+
+            {/* 核心朱红方印【羁绊加深】瞬间撞击盖印 */}
+            <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none animate-seal-slam">
+              <div className="w-11 h-11 border-2 border-red-600 bg-red-950/92 text-red-200 rounded-xs flex flex-col items-center justify-center font-calligraphy text-[11px] leading-tight shadow-[0_0_16px_rgba(220,38,38,0.95)] rotate-[-6deg] select-none">
+                <div className="border border-red-500/80 w-[36px] h-[36px] flex flex-col items-center justify-center p-0.5">
+                  <div className="flex gap-0.5 font-bold tracking-tighter text-red-100">
+                    <span>羁</span>
+                    <span>绊</span>
+                  </div>
+                  <div className="flex gap-0.5 font-bold tracking-tighter text-red-200 mt-0.5">
+                    <span>加</span>
+                    <span>深</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* 2. 互动后冷却期间保留的朱砂印契水印 */}
+        {showWatermark && (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none select-none transition-opacity duration-300 opacity-90"
+            title="本季已结契寻访，朱印为凭"
+          >
+            <div className="w-9 h-9 border border-red-600/80 bg-red-950/65 text-red-300 rounded-xs flex flex-col items-center justify-center font-calligraphy text-[9px] leading-none rotate-[-6deg] shadow-sm">
+              <div className="border border-red-500/50 w-[30px] h-[30px] flex flex-col items-center justify-center p-0.5">
+                <div className="flex gap-0.5 font-bold text-red-200">
+                  <span>羁</span>
+                  <span>绊</span>
+                </div>
+                <div className="flex gap-0.5 font-bold text-red-300 mt-0.5">
+                  <span>加</span>
+                  <span>深</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   const perksInfo = evaluateFigurePerks(knownFigures);
   const unmetRegional = getUnmetRegionalFigures(
@@ -159,7 +336,7 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
     }
   };
 
-  // Perform interaction
+  // Perform interaction with seal stamp animation & cooldown initiation
   const handlePerformInteraction = (
     figure: HistoricalFigureBond,
     option: InteractionOption
@@ -187,12 +364,34 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
 
     const quote = getInteractionQuote(figure, option.type, newLevel);
 
-    // Audio cue
+    // Audio cue: play interaction sound and vermilion seal stamp impact sound
     if (option.type === 'FEAST_GIFT') {
       sound.playCoin();
     } else {
       sound.playPluck(640);
     }
+    sound.playSealStamp();
+
+    // 1. 触发【羁绊加深】朱红印章动效
+    setActiveStamp({
+      figureId: figure.id,
+      figureName: figure.name,
+      intimacyGain: gain,
+      timestamp: Date.now(),
+    });
+    setIsStamping(true);
+
+    // 2. 启动防过度交互的冷却倒计时 (12秒冷却进度)
+    const durationMs = 12000;
+    setCooldowns((prev) => ({
+      ...prev,
+      [figure.id]: {
+        startedAt: Date.now(),
+        durationMs,
+        year: currentYear,
+        season: currentSeason,
+      },
+    }));
 
     let levelUpNotice: string | undefined;
     if (newLevel > oldLevel) {
@@ -226,16 +425,26 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
       );
     }
 
-    setInteractingFigure(null);
-    setInteractionResult({
-      figureName: figure.name,
-      optionTitle: option.title,
-      quote,
-      intimacyGain: gain,
-      statGainsText,
-      levelUpNotice,
-    });
+    // 短暂留白展现朱砂印章盖下仪式感 (750ms)，随后过渡至名士对白反馈框
+    setTimeout(() => {
+      setIsStamping(false);
+      setInteractingFigure(null);
+      setInteractionResult({
+        figureName: figure.name,
+        optionTitle: option.title,
+        quote,
+        intimacyGain: gain,
+        statGainsText,
+        levelUpNotice,
+      });
+    }, 750);
+
+    // 盖印动效保持2.5秒后优雅转为静态印契
+    setTimeout(() => {
+      setActiveStamp((curr) => (curr?.figureId === figure.id ? null : curr));
+    }, 2500);
   };
+
 
   // Claim a boon
   const handleClaim = (figure: HistoricalFigureBond, boon: NobleBoon) => {
@@ -494,7 +703,7 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
               const intimacy = figure.intimacy ?? figure.bondLevel * 25;
               const bondInfo = getIntimacyLevelInfo(intimacy);
               const boons = getBoonsForFigure(figure, profile.collectedBoons?.map((b) => b.id));
-              const interactCheck = canInteractThisSeason(figure, currentYear, currentSeason);
+              const cdStatus = getFigureCooldownStatus(figure);
               const isChildhoodFriend =
                 figure.relation.includes('竹马') ||
                 figure.relation.includes('总角') ||
@@ -516,16 +725,8 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                     {/* 头部信息栏 */}
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="flex items-center gap-3">
-                        {/* 人物汉字头像 */}
-                        <div
-                          className={`w-12 h-12 rounded bg-[#2a221c] border flex items-center justify-center font-calligraphy text-2xl shadow-inner shrink-0 ${
-                            figure.isAlive
-                              ? 'border-[#8b261e] text-[#fae8c8]'
-                              : 'border-[#4a3d31] text-[#7a6f65]'
-                          }`}
-                        >
-                          {figure.avatarChar}
-                        </div>
+                        {/* 人物汉字头像（含【羁绊加深】朱红印章动效与印契水印） */}
+                        {renderAvatarWithSeal(figure, 'w-12 h-12', 'text-2xl')}
 
                         <div>
                           <div className="flex items-center gap-2">
@@ -597,33 +798,81 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                         </div>
                       </div>
 
-                      {/* 互动动作触发按钮 */}
+                      {/* 互动动作触发按钮与可视化冷却倒计时 */}
                       <div className="pt-2 border-t border-[#292019] flex items-center justify-between">
                         {figure.isAlive ? (
-                          interactCheck.canInteract ? (
+                          cdStatus.inCooldown ? (
+                            <div className="w-full relative overflow-hidden rounded bg-[#16120f] border border-[#423328] p-2 shadow-inner space-y-1.5">
+                              {/* Animated Cooldown Progress Bar Fill */}
+                              <div
+                                className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-[#8b261e]/45 via-[#995c23]/40 to-[#c28422]/35 transition-all duration-200 ease-linear pointer-events-none"
+                                style={{ width: `${cdStatus.progressPercent}%` }}
+                              />
+                              <div className="absolute inset-0 cooldown-shimmer-bg pointer-events-none" />
+
+                              {/* Header line of cooldown */}
+                              <div className="relative z-10 flex items-center justify-between text-xs font-serif">
+                                <div className="flex items-center gap-1.5 text-[#fae8c8]">
+                                  {cdStatus.remainingSec > 0 ? (
+                                    <Hourglass className="w-3.5 h-3.5 text-[#e5c158] animate-spin" style={{ animationDuration: '3s' }} />
+                                  ) : (
+                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  )}
+                                  <span className="font-medium text-[#fae8c8]">
+                                    {cdStatus.remainingSec > 0
+                                      ? `时令调息中 · 倒计时 ${cdStatus.remainingSec}s`
+                                      : `调息已毕 · 待${cdStatus.nextSeasonName}季复至`}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] font-mono text-[#d4af37] font-semibold">
+                                    {cdStatus.progressPercent}%
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Progress track bar */}
+                              <div className="relative z-10 w-full bg-[#0e0c0a]/80 h-1.5 rounded-full overflow-hidden border border-[#382b21]">
+                                <div
+                                  className="bg-gradient-to-r from-[#8b261e] via-[#c28422] to-[#e5c158] h-full transition-all duration-200 rounded-full"
+                                  style={{ width: `${cdStatus.progressPercent}%` }}
+                                />
+                              </div>
+
+                              {/* Footer status explaining next season */}
+                              <div className="relative z-10 flex items-center justify-between text-[10px] text-[#9c8e80] font-serif pt-0.5">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-[#7a6d60]" />
+                                  每季限修好一次 · 避免过度消耗
+                                </span>
+                                <span className="text-[#c2983b]">
+                                  {cdStatus.remainingSec > 0
+                                    ? `距下季约 ${cdStatus.remainingSec} 秒`
+                                    : `待推进至【${cdStatus.nextSeasonFullName}】`}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
                             <button
                               onClick={() => {
                                 sound.playPluck(540);
                                 setInteractingFigure(figure);
                               }}
-                              className="w-full py-1.5 px-3 rounded bg-gradient-to-r from-[#382b21] to-[#453427] hover:from-[#4d3a2b] hover:to-[#574332] text-[#fae8c8] hover:text-[#fff5e6] border border-[#d4af37]/40 shadow-sm flex items-center justify-center gap-2 text-xs font-serif cursor-pointer transition-colors"
+                              className="w-full py-1.5 px-3 rounded bg-gradient-to-r from-[#382b21] to-[#453427] hover:from-[#4d3a2b] hover:to-[#574332] text-[#fae8c8] hover:text-[#fff5e6] border border-[#d4af37]/40 shadow-sm flex items-center justify-center gap-2 text-xs font-serif cursor-pointer transition-all hover:shadow-[0_0_8px_rgba(212,175,55,0.2)] active:scale-[0.99]"
                             >
                               <Wine className="w-3.5 h-3.5 text-[#e5c158]" />
                               <span>寻访过从 · 登门切磋论道 / 设宴备礼</span>
                             </button>
-                          ) : (
-                            <div className="w-full py-1 px-2.5 rounded bg-[#1c1713] text-[#8c7e72] border border-[#2e2620] text-center text-[11px] font-serif flex items-center justify-center gap-1.5">
-                              <Check className="w-3 h-3 text-[#6b5541]" />
-                              <span>本季已曾寻访，待下季复至</span>
-                            </div>
                           )
                         ) : (
-                          <div className="w-full py-1 px-2.5 rounded bg-[#171411] text-[#6b5e54] border border-[#241e19] text-center text-[11px] font-serif">
+                          <div className="w-full py-1.5 px-2.5 rounded bg-[#171411] text-[#6b5e54] border border-[#241e19] text-center text-[11px] font-serif">
                             该名士已故去，空余史册遗芳
                           </div>
                         )}
                       </div>
                     </div>
+
 
                     {/* 名士赐予奖励展示栏 (高羁绊解锁) */}
                     <div className="bg-[#191512] border border-[#382b22] rounded p-2.5 mb-3">
@@ -817,8 +1066,17 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded bg-[#2a221b] border border-[#8b261e] flex items-center justify-center text-[#d4af37] shadow">
-                            {getBoonTypeIcon(boon.type)}
+                          <div className="relative">
+                            <PixelFigureAvatar
+                              figureId={boon.figureId}
+                              name={boon.figureName}
+                              size="sm"
+                              showCampBadge={false}
+                              showCampBorder={true}
+                            />
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#1c140e] border border-[#d4af37] flex items-center justify-center text-[#d4af37] text-[10px] shadow">
+                              {getBoonTypeIcon(boon.type)}
+                            </div>
                           </div>
                           <div>
                             <h4 className="font-calligraphy text-base text-[#fae8c8]">
@@ -911,9 +1169,15 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-[#241d18] border border-[#4a3d31] flex items-center justify-center font-calligraphy text-xl text-[#fae8c8]">
-                          {entry.avatarChar}
-                        </div>
+                        <PixelFigureAvatar
+                          figureId={entry.id}
+                          name={entry.name}
+                          courtesyName={entry.courtesyName}
+                          camp={entry.camp}
+                          size="md"
+                          showCampBadge={true}
+                          showCampBorder={true}
+                        />
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-calligraphy text-base text-[#fae8c8]">
@@ -975,9 +1239,7 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
 
             {/* 模态框头部 */}
             <div className="flex items-center gap-3 border-b border-[#3d3228] pb-3">
-              <div className="w-12 h-12 rounded bg-[#28201a] border border-[#d4af37] flex items-center justify-center font-calligraphy text-2xl text-[#fae8c8] shadow">
-                {interactingFigure.avatarChar}
-              </div>
+              {renderAvatarWithSeal(interactingFigure, 'w-14 h-14', 'text-3xl', true)}
               <div>
                 <h3 className="font-calligraphy text-lg text-[#fae8c8] tracking-wider flex items-center gap-2">
                   过访拜谒 · {interactingFigure.name}
@@ -989,6 +1251,17 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                   {interactingFigure.campLabel} · {interactingFigure.relation}
                 </p>
               </div>
+            </div>
+
+            {/* 时令流转与每季限制提示 */}
+            <div className="bg-[#181310] px-3 py-1.5 rounded border border-[#3e3024] flex items-center justify-between text-[11px] font-serif text-[#c7baa8]">
+              <span className="flex items-center gap-1.5 text-[#e5c158]">
+                <Clock className="w-3.5 h-3.5" />
+                公元 {currentYear} 年 · {currentSeasonConfig.fullName}
+              </span>
+              <span className="text-[#8c7e72]">
+                每季每位名士限修好一次 · 盖印后进入下季前调息倒计时
+              </span>
             </div>
 
             {/* 当前主角体魄与家财状态 */}
@@ -1042,17 +1315,24 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                       </div>
 
                       <button
-                        disabled={!canAfford}
+                        disabled={!canAfford || isStamping}
                         onClick={() => handlePerformInteraction(interactingFigure, opt)}
-                        className={`px-3 py-1.5 rounded text-xs font-serif shrink-0 cursor-pointer shadow transition-all ${
-                          canAfford
-                            ? 'bg-[#8b261e] hover:bg-[#a82e25] text-[#fae8c8] border border-[#d4af37]/60'
+                        className={`px-3 py-1.5 rounded text-xs font-serif shrink-0 shadow transition-all ${
+                          isStamping && activeStamp?.figureId === interactingFigure.id
+                            ? 'bg-[#8b261e] text-[#fae8c8] border border-red-500 cursor-wait animate-pulse'
+                            : canAfford
+                            ? 'bg-[#8b261e] hover:bg-[#a82e25] text-[#fae8c8] border border-[#d4af37]/60 cursor-pointer active:scale-95'
                             : 'bg-[#211a16] text-[#706459] border border-[#332820] cursor-not-allowed'
                         }`}
                       >
-                        {canAfford ? '行此交往' : '条件不足'}
+                        {isStamping && activeStamp?.figureId === interactingFigure.id
+                          ? '【羁绊加深】朱印落契中...'
+                          : canAfford
+                          ? '行此交往'
+                          : '条件不足'}
                       </button>
                     </div>
+
 
                     <div className="pt-2 border-t border-[#2e2620] flex flex-wrap items-center justify-between text-[11px]">
                       <span className="text-[#e07a5f] font-mono">
@@ -1079,16 +1359,28 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#1c1815] border-2 border-[#d4af37] rounded-md max-w-md w-full p-5 shadow-2xl relative space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center space-y-1">
-              <div className="w-10 h-10 rounded-full bg-[#8b261e] border border-[#d4af37] mx-auto flex items-center justify-center text-[#fae8c8] font-calligraphy text-xl">
-                契
+              <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
+                <div className="w-11 h-11 border-2 border-red-500 bg-red-950/90 text-red-200 rounded-xs flex flex-col items-center justify-center font-calligraphy text-[11px] leading-tight shadow-[0_0_12px_rgba(220,38,38,0.7)] rotate-[-4deg]">
+                  <div className="border border-red-400/70 w-[36px] h-[36px] flex flex-col items-center justify-center p-0.5">
+                    <div className="flex gap-0.5 font-bold tracking-tighter text-red-100">
+                      <span>羁</span>
+                      <span>绊</span>
+                    </div>
+                    <div className="flex gap-0.5 font-bold tracking-tighter text-red-200 mt-0.5">
+                      <span>加</span>
+                      <span>深</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               <h3 className="font-calligraphy text-lg text-[#fae8c8] tracking-wider">
                 {interactionResult.optionTitle}
               </h3>
               <p className="text-xs text-[#a89b8d] font-serif">
-                与 {interactionResult.figureName} 坐谈良久，情意笃厚
+                与 {interactionResult.figureName} 坐谈良久，金石之契已加盖朱印
               </p>
             </div>
+
 
             {/* 名士回应引言 */}
             <div className="bg-[#14110e] border-l-2 border-[#d4af37] p-3 rounded-r text-xs font-serif text-[#fae8c8] italic leading-relaxed">
@@ -1126,9 +1418,15 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
       {celebrationBoon && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
           <div className="bg-[#1a1613] border-2 border-[#d4af37] rounded-md max-w-lg w-full p-6 shadow-2xl relative space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="text-center space-y-1.5">
-              <div className="w-12 h-12 rounded-full bg-[#8b261e] border-2 border-[#d4af37] mx-auto flex items-center justify-center text-yellow-300 font-calligraphy text-2xl shadow-lg">
-                赐
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <PixelFigureAvatar
+                  figureId={celebrationBoon.boon.figureId}
+                  name={celebrationBoon.figureName}
+                  size="lg"
+                  showCampBadge={true}
+                  showCampBorder={true}
+                />
               </div>
               <h3 className="font-calligraphy text-xl text-[#fae8c8] tracking-widest">
                 名士赐予 · 传世重宝出世

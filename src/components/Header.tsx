@@ -21,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-[#161311]/90 backdrop-blur-md border-b border-[#3d3228] px-4 md:px-8 py-3.5 transition-colors">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-8">
+      <div className="max-w-5xl lg:max-w-7xl 2xl:max-w-[1600px] mx-auto flex items-center justify-between gap-8">
         {/* Zone 1: Single text element wordmark */}
         <div className="flex items-center gap-2.5 shrink-0">
           <div className="w-8 h-8 rounded-sm bg-[#8b261e] flex items-center justify-center text-[#fae8c8] font-calligraphy text-xl shadow-md border border-[#a83228]">

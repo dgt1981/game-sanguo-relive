@@ -35,6 +35,7 @@ import { LifeObituaryModal } from './components/LifeObituaryModal';
 import { PeopleGallery } from './components/PeopleGallery';
 import { ProvincesGuide } from './components/ProvincesGuide';
 import { FiguresNetwork } from './components/FiguresNetwork';
+import { RightSidebarCompanion } from './components/RightSidebarCompanion';
 import {
   updateKnownFiguresForSeason,
   evaluateFigurePerks,
@@ -417,6 +418,7 @@ export default function App() {
       physiologicalStageName: naturalRes.stage.stageName,
       location: `${updatedProfile.commandery} · ${updatedProfile.county}`,
       occupation: updatedProfile.occupation,
+      figureDialogue: nextEvt.figureDialogue,
     };
     logEntry.tags = getEntryTags(logEntry);
     const updatedLogs = [...seasonLogs, logEntry];
@@ -829,7 +831,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6">
+      <main className="flex-1 w-full max-w-5xl lg:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6">
         {/* Birth Modal: "公元184年，你出生了。" (With Mid-Game Resume Checkpoint) */}
         {!isBorn && (
           <BirthModal
@@ -842,88 +844,208 @@ export default function App() {
 
         {/* Tab 1: Live Simulation */}
         {activeTab === 'SIMULATION' && isBorn && (
-          <div className="space-y-5">
-            {/* Mid-Game Checkpoint Bar */}
-            <div className="flex items-center justify-between text-xs text-[#a29280] px-1 font-classical">
-              <span className="flex items-center gap-1.5 text-[#10b981]">
-                <BookmarkCheck className="w-3.5 h-3.5" />
-                <span>已实时存盘 (中途退出可随时继续)</span>
-              </span>
-              <button
-                onClick={handlePauseAndExit}
-                className="px-2.5 py-1 rounded bg-[#231b15] hover:bg-[#32251c] border border-[#3e3023] text-[#dcd1c2] hover:text-[#faece0] flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
-                title="保存当前进度并退出，随时可承接前缘继续"
-              >
-                <LogOut className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>中途存盘 · 退出到卷首</span>
-              </button>
+          <div>
+            {/* 移动端/窄屏单栏模式 */}
+            <div className="lg:hidden space-y-5">
+              {/* Mid-Game Checkpoint Bar */}
+              <div className="flex items-center justify-between text-xs text-[#a29280] px-1 font-classical">
+                <span className="flex items-center gap-1.5 text-[#10b981]">
+                  <BookmarkCheck className="w-3.5 h-3.5" />
+                  <span>已实时存盘 (中途退出可随时继续)</span>
+                </span>
+                <button
+                  onClick={handlePauseAndExit}
+                  className="px-2.5 py-1 rounded bg-[#231b15] hover:bg-[#32251c] border border-[#3e3023] text-[#dcd1c2] hover:text-[#faece0] flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
+                  title="保存当前进度并退出，随时可承接前缘继续"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-[#d4af37]" />
+                  <span>中途存盘</span>
+                </button>
+              </div>
+
+              <LifeAttributeHUD
+                stats={stats}
+                profile={profile}
+                year={year}
+                season={season}
+                age={age}
+                lunarYear={currentEvent.lunarYear}
+                onNavigateToFigures={() => setActiveTab('FIGURES')}
+              />
+
+              {!isGameOver && (
+                <LifeYearCard
+                  currentEvent={currentEvent}
+                  profile={profile}
+                  stats={stats}
+                  isAutoRunning={isAutoRunning}
+                  playbackSpeed={playbackSpeed}
+                  wasAutoPausedForChoice={wasAutoPausedForChoice}
+                  onToggleAutoRun={handleToggleAutoRun}
+                  onChangeSpeed={handleChangeSpeed}
+                  onManualNextSeason={handleManualNextSeason}
+                  onSelectChoice={handleSelectChoice}
+                  isProcessing={isProcessing}
+                />
+              )}
             </div>
 
-            <LifeAttributeHUD
-              stats={stats}
-              profile={profile}
-              year={year}
-              season={season}
-              age={age}
-              lunarYear={currentEvent.lunarYear}
-              onNavigateToFigures={() => setActiveTab('FIGURES')}
-            />
+            {/* PC模式：左中右三栏式经典策略架构 */}
+            <div className="hidden lg:flex items-start gap-6 w-full">
+              {/* 左栏：角色身世、五维命盘与生理年轮 */}
+              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-20">
+                <LifeAttributeHUD
+                  stats={stats}
+                  profile={profile}
+                  year={year}
+                  season={season}
+                  age={age}
+                  lunarYear={currentEvent.lunarYear}
+                  sidebarMode={true}
+                  onExitSave={handlePauseAndExit}
+                  onNavigateToFigures={() => setActiveTab('FIGURES')}
+                />
+              </aside>
 
-            {!isGameOver && (
-              <LifeYearCard
-                currentEvent={currentEvent}
-                profile={profile}
-                stats={stats}
-                isAutoRunning={isAutoRunning}
-                playbackSpeed={playbackSpeed}
-                wasAutoPausedForChoice={wasAutoPausedForChoice}
-                onToggleAutoRun={handleToggleAutoRun}
-                onChangeSpeed={handleChangeSpeed}
-                onManualNextSeason={handleManualNextSeason}
-                onSelectChoice={handleSelectChoice}
-                isProcessing={isProcessing}
-              />
-            )}
+              {/* 中栏：核心岁月长卷、天下风云、个人生平与抉择 */}
+              <div className="flex-1 min-w-0">
+                {!isGameOver && (
+                  <LifeYearCard
+                    currentEvent={currentEvent}
+                    profile={profile}
+                    stats={stats}
+                    isAutoRunning={isAutoRunning}
+                    playbackSpeed={playbackSpeed}
+                    wasAutoPausedForChoice={wasAutoPausedForChoice}
+                    onToggleAutoRun={handleToggleAutoRun}
+                    onChangeSpeed={handleChangeSpeed}
+                    onManualNextSeason={handleManualNextSeason}
+                    onSelectChoice={handleSelectChoice}
+                    isProcessing={isProcessing}
+                  />
+                )}
+              </div>
+
+              {/* 右栏：天下人脉与名士知交、传世重宝、近期履历 */}
+              <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-20">
+                <RightSidebarCompanion
+                  knownFigures={profile.knownFigures || []}
+                  profile={profile}
+                  currentYear={year}
+                  currentSeason={season}
+                  currentStats={stats}
+                  seasonLogs={seasonLogs}
+                  onInteractFigure={() => setActiveTab('FIGURES')}
+                  onOpenFiguresTab={() => setActiveTab('FIGURES')}
+                />
+              </aside>
+            </div>
           </div>
         )}
 
         {/* Tab: Figures Network (天下名仕与人脉气运) */}
         {activeTab === 'FIGURES' && isBorn && (
-          <div className="space-y-6">
-            <LifeAttributeHUD
-              stats={stats}
-              profile={profile}
-              year={year}
-              season={season}
-              age={age}
-              lunarYear={currentEvent.lunarYear}
-              onNavigateToFigures={() => setActiveTab('FIGURES')}
-            />
-            <FiguresNetwork
-              knownFigures={profile.knownFigures || []}
-              profile={profile}
-              currentYear={year}
-              currentSeason={season}
-              currentStats={stats}
-              onInteractFigure={handleInteractFigure}
-              onClaimBoon={handleClaimBoon}
-            />
+          <div>
+            {/* 移动端平铺模式 */}
+            <div className="lg:hidden space-y-6">
+              <LifeAttributeHUD
+                stats={stats}
+                profile={profile}
+                year={year}
+                season={season}
+                age={age}
+                lunarYear={currentEvent.lunarYear}
+                onNavigateToFigures={() => setActiveTab('FIGURES')}
+              />
+              <FiguresNetwork
+                knownFigures={profile.knownFigures || []}
+                profile={profile}
+                currentYear={year}
+                currentSeason={season}
+                currentStats={stats}
+                onInteractFigure={handleInteractFigure}
+                onClaimBoon={handleClaimBoon}
+              />
+            </div>
+
+            {/* PC端左侧命盘 + 主展台结构 */}
+            <div className="hidden lg:flex items-start gap-6 w-full">
+              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-20">
+                <LifeAttributeHUD
+                  stats={stats}
+                  profile={profile}
+                  year={year}
+                  season={season}
+                  age={age}
+                  lunarYear={currentEvent.lunarYear}
+                  sidebarMode={true}
+                  onExitSave={handlePauseAndExit}
+                  onNavigateToFigures={() => setActiveTab('FIGURES')}
+                />
+              </aside>
+              <div className="flex-1 min-w-0">
+                <FiguresNetwork
+                  knownFigures={profile.knownFigures || []}
+                  profile={profile}
+                  currentYear={year}
+                  currentSeason={season}
+                  currentStats={stats}
+                  onInteractFigure={handleInteractFigure}
+                  onClaimBoon={handleClaimBoon}
+                />
+              </div>
+            </div>
           </div>
         )}
 
         {/* Tab 2: Chronicle Timeline */}
         {activeTab === 'CHRONICLE' && isBorn && (
-          <div className="space-y-6">
-            <LifeAttributeHUD
-              stats={stats}
-              profile={profile}
-              year={year}
-              season={season}
-              age={age}
-              lunarYear={currentEvent.lunarYear}
-              onNavigateToFigures={() => setActiveTab('FIGURES')}
-            />
-            <ChronicleTimeline logs={seasonLogs} characterName={profile.name} />
+          <div>
+            {/* 移动端平铺模式 */}
+            <div className="lg:hidden space-y-6">
+              <LifeAttributeHUD
+                stats={stats}
+                profile={profile}
+                year={year}
+                season={season}
+                age={age}
+                lunarYear={currentEvent.lunarYear}
+                onNavigateToFigures={() => setActiveTab('FIGURES')}
+              />
+              <ChronicleTimeline logs={seasonLogs} characterName={profile.name} />
+            </div>
+
+            {/* PC端左中右三栏式结构 */}
+            <div className="hidden lg:flex items-start gap-6 w-full">
+              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-20">
+                <LifeAttributeHUD
+                  stats={stats}
+                  profile={profile}
+                  year={year}
+                  season={season}
+                  age={age}
+                  lunarYear={currentEvent.lunarYear}
+                  sidebarMode={true}
+                  onExitSave={handlePauseAndExit}
+                  onNavigateToFigures={() => setActiveTab('FIGURES')}
+                />
+              </aside>
+              <div className="flex-1 min-w-0">
+                <ChronicleTimeline logs={seasonLogs} characterName={profile.name} />
+              </div>
+              <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-20">
+                <RightSidebarCompanion
+                  knownFigures={profile.knownFigures || []}
+                  profile={profile}
+                  currentYear={year}
+                  currentSeason={season}
+                  currentStats={stats}
+                  seasonLogs={seasonLogs}
+                  onInteractFigure={() => setActiveTab('FIGURES')}
+                  onOpenFiguresTab={() => setActiveTab('FIGURES')}
+                />
+              </aside>
+            </div>
           </div>
         )}
 
@@ -960,7 +1082,7 @@ export default function App() {
 
       {/* Classical Quiet Footer */}
       <footer className="border-t border-[#2e241b] py-6 text-center text-xs text-[#7d6e5d]">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-5xl lg:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-calligraphy text-sm text-[#b09e8b]">公元184年 · 汉末四季人生录</span>
             <span>·</span>

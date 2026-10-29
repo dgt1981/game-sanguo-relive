@@ -3,6 +3,7 @@ import { RealisticEnding, Attributes, SeasonLogEntry, SeasonIndex } from '../typ
 import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
 import { FunTitleInfo } from '../services/titleGenerator';
 import { matchHistoricalFigures, MatchedHistoricalFigure } from '../services/historicalFigures';
+import { PixelFigureAvatar } from './PixelFigureAvatar';
 import { sound } from '../services/sound';
 import { Scroll, RotateCcw, Share2, Check, BookOpen, Sparkles, Compass, UserCheck, Swords, Users, Award } from 'lucide-react';
 
@@ -226,8 +227,15 @@ ${ending.historianNote}
                     {profile.knownFigures.map((fig) => (
                       <span
                         key={fig.id}
-                        className="px-2 py-0.5 rounded bg-[#2b2016] border border-[#4d3824] text-[#faece0] text-[11px] flex items-center gap-1"
+                        className="px-2 py-0.5 rounded bg-[#2b2016] border border-[#4d3824] text-[#faece0] text-[11px] flex items-center gap-1.5"
                       >
+                        <PixelFigureAvatar
+                          figureId={fig.id}
+                          name={fig.name}
+                          camp={fig.camp}
+                          size="xs"
+                          showCampBorder={false}
+                        />
                         <span className="text-[#f59e0b] font-bold">{fig.name}</span>
                         <span className="text-[#8e7e6e]">（{fig.relation}）</span>
                       </span>
@@ -246,9 +254,15 @@ ${ending.historianNote}
                     {profile.collectedBoons.map((boon) => (
                       <span
                         key={boon.id}
-                        className="px-2 py-0.5 rounded bg-[#2c1d15] border border-[#6b4728] text-[#fcd34d] text-[11px] font-mono"
+                        className="px-2 py-0.5 rounded bg-[#2c1d15] border border-[#6b4728] text-[#fcd34d] text-[11px] font-mono flex items-center gap-1"
                       >
-                        {boon.name} · {boon.figureName}赠
+                        <PixelFigureAvatar
+                          figureId={boon.figureId}
+                          name={boon.figureName}
+                          size="xs"
+                          showCampBorder={false}
+                        />
+                        <span>{boon.name} · {boon.figureName}赠</span>
                       </span>
                     ))}
                   </div>
@@ -287,13 +301,13 @@ ${ending.historianNote}
                         sound.playPluck(520 + idx * 80);
                         setSelectedFigureIndex(idx);
                       }}
-                      className={`px-2.5 py-1 rounded text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                      className={`px-2 py-1 rounded text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                         selectedFigureIndex === idx
                           ? 'bg-[#d4af37] text-[#1a1106] font-bold shadow-md'
                           : 'bg-[#291f17] text-[#a49583] hover:text-[#faece0] border border-[#3e2e20]'
                       }`}
                     >
-                      <UserCheck className="w-3 h-3" />
+                      <PixelFigureAvatar figureId={fig.id} name={fig.name} size="xs" showCampBorder={false} />
                       <span>{fig.name}</span>
                       <span className="text-[10px] opacity-80">{fig.similarityScore}%</span>
                     </button>
@@ -303,30 +317,45 @@ ${ending.historianNote}
 
               {/* Hero Card of the selected historical figure */}
               <div className="bg-[#17110c] rounded-lg p-3.5 border border-[#3d2e1f] space-y-3">
-                {/* Name, Camp & Lifespan */}
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-calligraphy text-xl sm:text-2xl text-[#f3ece2] tracking-wider">
-                      {currentFigure.name}
-                    </span>
-                    <span className="text-xs text-[#a39482] font-classical">字 {currentFigure.courtesyName}</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded bg-[#2c1d13] text-[#e5c158] border border-[#523b26] font-classical">
-                      {currentFigure.campLabel}
-                    </span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3.5">
+                  <div className="shrink-0 flex items-center justify-center sm:justify-start">
+                    <PixelFigureAvatar
+                      figureId={currentFigure.id}
+                      name={currentFigure.name}
+                      courtesyName={currentFigure.courtesyName}
+                      camp={currentFigure.camp}
+                      size="xl"
+                      showCampBadge={true}
+                      showCampBorder={true}
+                    />
                   </div>
-                  <div className="text-xs text-[#8c7b69] font-classical">
-                    {currentFigure.historicLifespan} · {currentFigure.birthplace}
-                  </div>
-                </div>
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    {/* Name, Camp & Lifespan */}
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-calligraphy text-xl sm:text-2xl text-[#f3ece2] tracking-wider">
+                          {currentFigure.name}
+                        </span>
+                        <span className="text-xs text-[#a39482] font-classical">字 {currentFigure.courtesyName}</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-[#2c1d13] text-[#e5c158] border border-[#523b26] font-classical">
+                          {currentFigure.campLabel}
+                        </span>
+                      </div>
+                      <div className="text-xs text-[#8c7b69] font-classical">
+                        {currentFigure.historicLifespan} · {currentFigure.birthplace}
+                      </div>
+                    </div>
 
-                {/* Title tag and resonance title */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-xs text-[#d4af37] font-classical">
-                    {currentFigure.titleTag}
-                  </span>
-                  <span className="text-xs text-[#f59e0b] bg-[#2a1d12] px-2 py-0.5 rounded border border-[#4a3420] font-classical">
-                    {currentFigure.resonanceTitle}
-                  </span>
+                    {/* Title tag and resonance title */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-xs text-[#d4af37] font-classical">
+                        {currentFigure.titleTag}
+                      </span>
+                      <span className="text-xs text-[#f59e0b] bg-[#2a1d12] px-2 py-0.5 rounded border border-[#4a3420] font-classical">
+                        {currentFigure.resonanceTitle}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Resonance Reason */}
