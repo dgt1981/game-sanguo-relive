@@ -1012,7 +1012,12 @@ export default function App() {
                 lunarYear={currentEvent.lunarYear}
                 onNavigateToFigures={() => setActiveTab('FIGURES')}
               />
-              <ChronicleTimeline logs={seasonLogs} characterName={profile.name} />
+              <ChronicleTimeline
+                logs={seasonLogs}
+                characterName={profile.name}
+                gender={profile.gender}
+                camp={profile.militaryAffiliation?.camp || 'NONE'}
+              />
             </div>
 
             {/* PC端左中右三栏式结构 */}
@@ -1031,7 +1036,12 @@ export default function App() {
                 />
               </aside>
               <div className="flex-1 min-w-0">
-                <ChronicleTimeline logs={seasonLogs} characterName={profile.name} />
+                <ChronicleTimeline
+                  logs={seasonLogs}
+                  characterName={profile.name}
+                  gender={profile.gender}
+                  camp={profile.militaryAffiliation?.camp || 'NONE'}
+                />
               </div>
               <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-20">
                 <RightSidebarCompanion

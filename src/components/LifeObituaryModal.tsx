@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { RealisticEnding, Attributes, SeasonLogEntry, SeasonIndex } from '../types/game';
-import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
+import { PersonProfile, SEASONS_CONFIG, getPhysiologicalStage } from '../services/lifeSimulator';
 import { FunTitleInfo } from '../services/titleGenerator';
 import { matchHistoricalFigures, MatchedHistoricalFigure } from '../services/historicalFigures';
 import { PixelFigureAvatar } from './PixelFigureAvatar';
+import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import { sound } from '../services/sound';
 import { Scroll, RotateCcw, Share2, Check, BookOpen, Sparkles, Compass, UserCheck, Swords, Users, Award } from 'lucide-react';
 
@@ -122,16 +123,42 @@ ${ending.historianNote}
             </p>
           </div>
 
-          <div className="text-xs text-[#a29280] mt-3 flex flex-wrap items-center justify-center gap-2 font-classical">
-            <span>{profile.name}（字{profile.courtesyName}）</span>
-            <span>·</span>
-            <span>生于公元184年春</span>
-            <span>·</span>
-            <span>殁于公元{deathYear}年{seasonCfg.name}季 (享年{deathAge}岁)</span>
+          {/* 传主最终生平像素遗容与生卒年表 */}
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5 bg-[#140f0c] p-3 rounded-xl border border-[#3e2e20]">
+            <ProtagonistPixelAvatar
+              stageKey={getPhysiologicalStage(deathAge).stageKey}
+              gender={profile.gender}
+              age={deathAge}
+              camp={profile.militaryAffiliation?.camp || 'NONE'}
+              socialClass={profile.socialClass}
+              name={profile.name}
+              size="lg"
+              showAgeBadge={true}
+              showCampBorder={true}
+              isAlive={false}
+              showTooltip={true}
+            />
+            <div className="text-center sm:text-left font-classical">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <span className="font-calligraphy text-lg text-[#faece0] font-bold">
+                  {profile.name}
+                </span>
+                <span className="text-xs text-[#a29280]">字 {profile.courtesyName}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#2b1f14] text-[#d4af37] border border-[#523d29]">
+                  {getPhysiologicalStage(deathAge).stageName}
+                </span>
+              </div>
+              <div className="text-xs text-[#c5a666] mt-0.5">
+                最终仪容 · 【{getPhysiologicalStage(deathAge).tag}】
+              </div>
+              <div className="text-[11px] text-[#8e7e6e] mt-0.5">
+                公元184年孟春 — 公元{deathYear}年{seasonCfg.name}季 · 享年 {deathAge} 岁
+              </div>
+            </div>
           </div>
 
           {deathReason && (
-            <div className="mt-2 text-xs text-[#f87171] bg-[#2a1313] py-1 px-3 rounded inline-block border border-[#521c1c] font-classical">
+            <div className="mt-2.5 text-xs text-[#f87171] bg-[#2a1313] py-1 px-3 rounded inline-block border border-[#521c1c] font-classical">
               殁因：{deathReason}
             </div>
           )}

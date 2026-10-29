@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { SeasonLogEntry } from '../types/game';
-import { SEASONS_CONFIG } from '../services/lifeSimulator';
+import { SeasonLogEntry, CampType } from '../types/game';
+import { SEASONS_CONFIG, getPhysiologicalStage } from '../services/lifeSimulator';
 import { PixelFigureAvatar } from './PixelFigureAvatar';
+import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import {
   Clock,
   CheckCircle2,
@@ -21,11 +22,15 @@ import {
 interface ChronicleTimelineProps {
   logs: SeasonLogEntry[];
   characterName: string;
+  gender?: 'MALE' | 'FEMALE';
+  camp?: CampType;
 }
 
 export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
   logs,
   characterName,
+  gender = 'MALE',
+  camp = 'NONE',
 }) => {
   const [activeFilter, setActiveFilter] = useState<TimelineFilter>('ALL');
 
@@ -345,10 +350,24 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                     天下：{entry.macroHistory}
                   </div>
 
-                  {/* 个人生平实录 */}
-                  <p className="text-[#dfd5c8] leading-relaxed font-classical">
-                    {entry.storySummary}
-                  </p>
+                  {/* 个人生平实录 (附带该时期的主角像素容貌) */}
+                  <div className="flex items-start gap-2.5 pt-1">
+                    <ProtagonistPixelAvatar
+                      stageKey={getPhysiologicalStage(entry.age).stageKey}
+                      gender={gender}
+                      age={entry.age}
+                      camp={camp}
+                      name={characterName}
+                      size="sm"
+                      showAgeBadge={false}
+                      showCampBorder={true}
+                      showTooltip={true}
+                      className="shrink-0 mt-0.5"
+                    />
+                    <p className="flex-1 min-w-0 text-[#dfd5c8] leading-relaxed font-classical">
+                      {entry.storySummary}
+                    </p>
+                  </div>
 
                   {/* 生理自然生长与岁月衰老足迹 */}
                   {entry.naturalChangeNote && (

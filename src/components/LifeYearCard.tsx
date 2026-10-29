@@ -1,7 +1,8 @@
 import React from 'react';
 import { SeasonalEvent, LifeChoice, Attributes, SeasonIndex } from '../types/game';
-import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
+import { PersonProfile, SEASONS_CONFIG, getPhysiologicalStage } from '../services/lifeSimulator';
 import { PixelFigureAvatar } from './PixelFigureAvatar';
+import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import { sound } from '../services/sound';
 import {
   Flame,
@@ -50,6 +51,7 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
 }) => {
   const hasChoice = Boolean(currentEvent.choice);
   const seasonCfg = SEASONS_CONFIG[currentEvent.season];
+  const stage = getPhysiologicalStage(currentEvent.age);
 
   return (
     <div className="bg-[#1b1612] border border-[#3e3023] rounded-xl overflow-hidden shadow-2xl space-y-0">
@@ -76,10 +78,23 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
           <span className="text-[#38bdf8] font-mono font-semibold">{currentEvent.age} 岁</span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[#d4af37] font-classical">
-          <Compass className="w-3.5 h-3.5" />
-          <span>身处：{profile.commandery} · {profile.county}</span>
-          <span className="text-[#8c7b69]">({profile.occupation})</span>
+        <div className="flex items-center gap-2.5 text-[#d4af37] font-classical">
+          <ProtagonistPixelAvatar
+            stageKey={stage.stageKey}
+            gender={profile.gender}
+            age={currentEvent.age}
+            camp={profile.militaryAffiliation?.camp || 'NONE'}
+            socialClass={profile.socialClass}
+            name={profile.name}
+            size="xs"
+            showCampBorder={true}
+            showTooltip={true}
+          />
+          <div className="flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5" />
+            <span>身处：{profile.commandery} · {profile.county}</span>
+            <span className="text-[#8c7b69]">({profile.occupation})</span>
+          </div>
         </div>
       </div>
 
@@ -281,15 +296,47 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
           <p className="text-[#b9a997]">{currentEvent.regionalImpact}</p>
         </div>
 
-        {/* Personal Story (平生纪事) */}
-        <div className="bg-[#241c16] border border-[#443324] p-4 sm:p-5 rounded-lg text-sm sm:text-base text-[#f5eee4] leading-relaxed font-classical shadow-inner">
-          <div className="font-semibold text-[#faece0] mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: seasonCfg.color }} />
-            <span>【平生纪事 · {seasonCfg.name}令】</span>
+        {/* Personal Story (平生纪事 - 随人生阶段呈现专属像素容貌) */}
+        <div className="bg-[#241c16] border border-[#443324] p-4 sm:p-5 rounded-lg text-sm sm:text-base text-[#f5eee4] leading-relaxed font-classical shadow-inner space-y-3">
+          <div className="flex items-center justify-between border-b border-[#36271c] pb-2">
+            <div className="font-semibold text-[#faece0] flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: seasonCfg.color }} />
+              <span>【平生纪事 · {seasonCfg.name}令】</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[#e5a84b] font-semibold">【{stage.stageName} · {stage.tag}】</span>
+              <span className="text-[#8c7b69] font-mono">（{currentEvent.age}岁）</span>
+            </div>
           </div>
-          <p className="indent-8 text-justify tracking-wide leading-relaxed">
-            {currentEvent.personalStory}
-          </p>
+          <div className="flex items-start gap-3 sm:gap-4">
+            <ProtagonistPixelAvatar
+              stageKey={stage.stageKey}
+              gender={profile.gender}
+              age={currentEvent.age}
+              camp={profile.militaryAffiliation?.camp || 'NONE'}
+              socialClass={profile.socialClass}
+              name={profile.name}
+              size="lg"
+              showAgeBadge={true}
+              showCampBorder={true}
+              showTooltip={true}
+              className="mt-0.5"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] text-[#a89582] mb-1.5 flex items-center gap-2 flex-wrap">
+                <span className="text-[#f59e0b] font-semibold">{profile.name}</span>
+                <span>·</span>
+                <span className="text-[#c5a666]">字 {profile.courtesyName}</span>
+                <span>·</span>
+                <span className="text-[#38bdf8]">{stage.ageRange}</span>
+                <span>·</span>
+                <span className="text-[#9c8976] italic">{stage.description}</span>
+              </div>
+              <p className="text-justify tracking-wide leading-relaxed text-[#f3ece2]">
+                {currentEvent.personalStory}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Branching Choice (if any this season) */}

@@ -3,6 +3,7 @@ import { PROVINCES } from '../data/regions';
 import { ProvinceId, SocialClass } from '../types/game';
 import { PersonProfile, generateRandomBirth, SEASONS_CONFIG } from '../services/lifeSimulator';
 import { MidGameSaveData } from '../services/storage';
+import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import { sound } from '../services/sound';
 import { Compass, Dices, ArrowRight, User, Edit3, Play, RotateCcw } from 'lucide-react';
 
@@ -337,16 +338,31 @@ export const BirthModal: React.FC<BirthModalProps> = ({
             </div>
 
             {/* Physiological Starting Law Preview */}
-            <div className="bg-[#16110d] p-2.5 rounded border border-[#3b2b1e] text-[11px] font-classical text-[#ad9c8a] space-y-1">
-              <div className="text-[#e5a84b] font-semibold flex items-center justify-between">
+            <div className="bg-[#16110d] p-3 rounded-lg border border-[#3b2b1e] text-[11px] font-classical text-[#ad9c8a] space-y-2">
+              <div className="text-[#e5a84b] font-semibold flex items-center justify-between border-b border-[#2a1e15] pb-1.5">
                 <span>【初生生理法则 · 真实生命起点】</span>
-                <span className="text-[10px] text-[#8e7f6e]">0岁·襁褓幼婴</span>
+                <span className="text-[10px] text-[#38bdf8] font-mono">0岁 · 襁褓幼婴</span>
               </div>
-              <p className="leading-relaxed text-[#c7b8a7]">
-                婴儿初始：体魄弱小（16~22，易受风寒）、识见微萌（3~6）、勇略未开（1~3，肢体柔软无法直立行走）。
-              </p>
-              <div className="text-[10px] text-[#8a7a6a] italic">
-                “时间向前流逝，筋骨将在七岁后拔节抽条，青年气力大成；中年识见登峰，暮年气血自然衰老；在自然规律之上，天灾兵燹与你的抉择将进一步改写命途。”
+              <div className="flex items-center gap-3">
+                <ProtagonistPixelAvatar
+                  stageKey="INFANT"
+                  gender={gender}
+                  age={0}
+                  socialClass={profile.socialClass}
+                  name={`${surname.trim() || '李'}${givenName.trim() || '安'}`}
+                  size="md"
+                  showAgeBadge={true}
+                  showCampBorder={true}
+                  showTooltip={true}
+                />
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="leading-relaxed text-[#c7b8a7]">
+                    婴儿初始：体魄弱小（16~22，易受风寒）、识见微萌（3~6）、勇略未开（1~3，肢体软萌）。
+                  </p>
+                  <div className="text-[10px] text-[#8a7a6a] italic">
+                    “时间向前流逝，筋骨将在七岁后拔节抽条；弱冠气力鼎盛，花甲气血衰退。每个阶段你的容貌都将随岁月沉淀。”
+                  </div>
+                </div>
               </div>
             </div>
           </div>

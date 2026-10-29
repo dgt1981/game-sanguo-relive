@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { CompletedLifeRecord } from '../types/game';
 import { CommunityLifeItem, storage } from '../services/storage';
 import { PROVINCES } from '../data/regions';
+import { getPhysiologicalStage } from '../services/lifeSimulator';
 import { PixelFigureAvatar } from './PixelFigureAvatar';
+import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import { sound } from '../services/sound';
 import {
   Users,
@@ -216,23 +218,36 @@ if ($action === 'save_life') {
                     className="bg-[#221a14] border border-[#3e2f21] hover:border-[#d4af37] rounded-lg p-3.5 sm:p-4 cursor-pointer transition-all hover:shadow-md group flex flex-col justify-between"
                   >
                     <div>
-                      {/* Name & Fun Title */}
+                      {/* Name & Fun Title & Protagonist Pixel Avatar */}
                       <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-calligraphy text-lg text-[#faece0]">
-                              {item.name}
-                            </span>
-                            {item.courtesyName && (
-                              <span className="text-xs text-[#a29280]">字 {item.courtesyName}</span>
-                            )}
-                            <span className="text-xs text-[#736454]">
-                              ({item.gender === 'MALE' ? '男丁' : '女秀'})
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2.5">
+                          <ProtagonistPixelAvatar
+                            stageKey={getPhysiologicalStage(item.deathAge).stageKey}
+                            gender={item.gender}
+                            age={item.deathAge}
+                            name={item.name}
+                            size="sm"
+                            showAgeBadge={false}
+                            showCampBorder={true}
+                            isAlive={false}
+                            showTooltip={true}
+                          />
+                          <div>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="font-calligraphy text-lg text-[#faece0]">
+                                {item.name}
+                              </span>
+                              {item.courtesyName && (
+                                <span className="text-xs text-[#a29280]">字 {item.courtesyName}</span>
+                              )}
+                              <span className="text-xs text-[#736454]">
+                                ({item.gender === 'MALE' ? '男丁' : '女秀'})
+                              </span>
+                            </div>
 
-                          <div className="text-xs font-semibold text-[#f59e0b] font-classical mt-0.5">
-                            {item.primaryFunTitle || item.ending.title}
+                            <div className="text-xs font-semibold text-[#f59e0b] font-classical mt-0.5">
+                              {item.primaryFunTitle || item.ending.title}
+                            </div>
                           </div>
                         </div>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Attributes, SeasonIndex } from '../types/game';
 import { PersonProfile, SEASONS_CONFIG, getPhysiologicalStage } from '../services/lifeSimulator';
+import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import {
   Heart,
   BookOpen,
@@ -97,11 +98,20 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   if (sidebarMode) {
     return (
       <div className="bg-[#1a1612] border border-[#3e3024] rounded-xl p-4 shadow-xl space-y-4 text-xs font-classical select-none">
-        {/* 顶部身份与印契 */}
+        {/* 顶部主角像素头像与身份印契 */}
         <div className="flex items-center gap-3 pb-3 border-b border-[#33261a]">
-          <div className="w-11 h-11 rounded bg-[#2a1e15] border-2 border-[#d4af37]/80 flex items-center justify-center font-calligraphy text-2xl text-[#fcd34d] shadow-md shrink-0">
-            {profile.name.slice(0, 1)}
-          </div>
+          <ProtagonistPixelAvatar
+            stageKey={stage.stageKey}
+            gender={profile.gender}
+            age={age}
+            camp={profile.militaryAffiliation?.camp || 'NONE'}
+            socialClass={profile.socialClass}
+            name={profile.name}
+            size="lg"
+            showAgeBadge={true}
+            showCampBorder={true}
+            showTooltip={true}
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5 truncate">
               <span className="font-calligraphy text-xl text-[#faece0] font-bold">
@@ -257,9 +267,18 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
       {/* Top Identity Row */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#2e261e]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-[#2b221a] border border-[#524131] flex items-center justify-center font-calligraphy text-2xl text-[#d4af37]">
-            {profile.name.slice(0, 1)}
-          </div>
+          <ProtagonistPixelAvatar
+            stageKey={stage.stageKey}
+            gender={profile.gender}
+            age={age}
+            camp={profile.militaryAffiliation?.camp || 'NONE'}
+            socialClass={profile.socialClass}
+            name={profile.name}
+            size="md"
+            showAgeBadge={true}
+            showCampBorder={true}
+            showTooltip={true}
+          />
           <div>
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="font-calligraphy text-lg md:text-xl text-[#f3ece2]">
