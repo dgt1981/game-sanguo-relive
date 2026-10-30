@@ -48,10 +48,11 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={onRestart}
-              className="px-2.5 py-1 text-xs font-medium text-[#2a170d] bg-gradient-to-r from-[#d4af37] to-[#e6ca65] rounded transition-all shadow-sm flex items-center gap-1 font-classical cursor-pointer"
+              className="px-2 py-1 text-xs font-medium text-[#2a170d] bg-gradient-to-r from-[#d4af37] to-[#e6ca65] rounded transition-all shadow-sm flex items-center gap-1 font-classical cursor-pointer"
+              title="重新轮回"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>轮回</span>
+              <span>重新轮回</span>
             </button>
           </div>
         </div>
@@ -143,9 +144,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onRestart}
             className="px-3.5 py-1.5 text-xs md:text-sm font-medium text-[#2a170d] bg-gradient-to-r from-[#d4af37] to-[#e6ca65] hover:from-[#c5a028] hover:to-[#d8bc55] rounded-md transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0 font-classical active:scale-95 cursor-pointer"
+            title="重新轮回 · 开启一段全新人生"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>重入轮回</span>
+            <span>重新轮回</span>
           </button>
         </div>
       </div>

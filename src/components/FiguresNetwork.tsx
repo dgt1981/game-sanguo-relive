@@ -16,6 +16,8 @@ import {
   getBoonsForFigure,
   getIntimacyLevelInfo,
   canInteractThisSeason,
+  canClaimBoon,
+  MIN_INTERACTION_AGE,
   getInteractionOptions,
   getInteractionQuote,
   InteractionOption,
@@ -55,6 +57,7 @@ interface FiguresNetworkProps {
   currentYear: number;
   currentSeason: SeasonIndex;
   currentStats: Attributes;
+  age: number;
   onInteractFigure?: (
     figureId: string,
     interactionType: 'SPAR_STUDY' | 'FEAST_GIFT' | 'LETTER_GREETING',
@@ -72,6 +75,7 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
   currentYear,
   currentSeason,
   currentStats,
+  age,
   onInteractFigure,
   onClaimBoon,
 }) => {
@@ -341,6 +345,12 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
     figure: HistoricalFigureBond,
     option: InteractionOption
   ) => {
+    // 童蒙未冠 (未满14岁) 不可登门修好
+    if (age < MIN_INTERACTION_AGE) {
+      sound.playPluck(220);
+      return;
+    }
+
     // Check costs
     if (option.statCosts.health && currentStats.health < option.statCosts.health + 5) {
       sound.playPluck(220);
@@ -448,6 +458,10 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
 
   // Claim a boon
   const handleClaim = (figure: HistoricalFigureBond, boon: NobleBoon) => {
+    if (age < MIN_INTERACTION_AGE) {
+      sound.playPluck(220);
+      return;
+    }
     sound.playMilestone();
     if (onClaimBoon) {
       onClaimBoon(figure.id, boon);
@@ -801,7 +815,20 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                       {/* 互动动作触发按钮与可视化冷却倒计时 */}
                       <div className="pt-2 border-t border-[#292019] flex items-center justify-between">
                         {figure.isAlive ? (
-                          cdStatus.inCooldown ? (
+                          age < MIN_INTERACTION_AGE ? (
+                            <div className="w-full py-2 px-3 rounded bg-[#171411]/90 border border-[#4a2e22]/70 text-[#c2983b] flex items-start gap-2.5 text-xs font-serif shadow-inner">
+                              <Lock className="w-4 h-4 text-[#c2983b] shrink-0 mt-0.5" />
+                              <div className="flex-1 space-y-0.5">
+                                <div className="font-semibold text-[#fae8c8] flex items-center justify-between">
+                                  <span>【童蒙未冠 · 暂不可登门】</span>
+                                  <span className="text-[10px] text-[#9c8e80] font-mono">需年满十四岁</span>
+                                </div>
+                                <p className="text-[11px] text-[#a89b8d] leading-relaxed">
+                                  主角现年仅 {age} 岁。尚在童蒙，骨软神萌，不可私自登门切磋战法、置酒设宴或尺素传书。待及冠成丁（14岁）后方可自立游学结纳名仕。
+                                </p>
+                              </div>
+                            </div>
+                          ) : cdStatus.inCooldown ? (
                             <div className="w-full relative overflow-hidden rounded bg-[#16120f] border border-[#423328] p-2 shadow-inner space-y-1.5">
                               {/* Animated Cooldown Progress Bar Fill */}
                               <div
@@ -921,25 +948,34 @@ export const FiguresNetwork: React.FC<FiguresNetworkProps> = ({
                                 </div>
                               </div>
 
-                              <div className="shrink-0">
-                                {isClaimed ? (
-                                  <span className="px-2 py-0.5 rounded bg-[#1f2e1d] text-emerald-400 border border-[#2f4a2d] text-[11px] flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" /> 已领受
-                                  </span>
-                                ) : isLevelMet ? (
-                                  <button
-                                    onClick={() => handleClaim(figure, boon)}
-                                    className="px-2.5 py-1 rounded bg-[#8b261e] hover:bg-[#a32e24] text-[#fae8c8] border border-[#d4af37]/60 text-xs font-serif cursor-pointer shadow flex items-center gap-1 animate-pulse"
-                                  >
-                                    <Sparkles className="w-3 h-3 text-yellow-300" />
-                                    <span>领受赐予</span>
-                                  </button>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded bg-[#14110e] text-[#6b5f54] border border-[#231b15] text-[11px] flex items-center gap-1">
-                                    <Lock className="w-3 h-3" /> 未解锁
-                                  </span>
-                                )}
-                              </div>
+                                <div className="shrink-0">
+                                  {isClaimed ? (
+                                    <span className="px-2 py-0.5 rounded bg-[#1f2e1d] text-emerald-400 border border-[#2f4a2d] text-[11px] flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3" /> 已领受
+                                    </span>
+                                  ) : isLevelMet ? (
+                                    age < MIN_INTERACTION_AGE ? (
+                                      <span
+                                        className="px-2 py-0.5 rounded bg-[#16120e] text-[#c2983b] border border-[#3e2c1e] text-[11px] flex items-center gap-1"
+                                        title="年未满十四岁成丁，不可私纳名士重宝"
+                                      >
+                                        <Lock className="w-3 h-3 text-[#c2983b]" /> 需满14岁
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleClaim(figure, boon)}
+                                        className="px-2.5 py-1 rounded bg-[#8b261e] hover:bg-[#a32e24] text-[#fae8c8] border border-[#d4af37]/60 text-xs font-serif cursor-pointer shadow flex items-center gap-1 animate-pulse"
+                                      >
+                                        <Sparkles className="w-3 h-3 text-yellow-300" />
+                                        <span>领受赐予</span>
+                                      </button>
+                                    )
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded bg-[#14110e] text-[#6b5f54] border border-[#231b15] text-[11px] flex items-center gap-1">
+                                      <Lock className="w-3 h-3" /> 未解锁
+                                    </span>
+                                  )}
+                                </div>
                             </div>
                           );
                         })}

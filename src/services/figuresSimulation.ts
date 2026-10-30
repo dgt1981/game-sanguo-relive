@@ -9,6 +9,7 @@ import {
 } from '../types/game';
 import { HISTORICAL_FIGURES_CATALOG, FigureCatalogEntry } from '../data/historicalFiguresCatalog';
 import type { PersonProfile } from './lifeSimulator';
+import { MAX_STAT_LIMIT } from './lifeSimulator';
 
 /**
  * 历史名仕动态成长与属性计算
@@ -26,12 +27,12 @@ export function calculateFigureDynamicStats(
   if (age <= 15) {
     const ratio = Math.max(0.35, age / 15);
     return {
-      health: Math.round(base184.health * ratio),
-      intellect: Math.round(base184.intellect * (0.4 + ratio * 0.6)),
-      martial: Math.round(base184.martial * ratio * 0.9),
-      virtue: Math.round(base184.virtue * (0.5 + ratio * 0.5)),
-      wealth: Math.round(base184.wealth * (0.3 + ratio * 0.7)),
-      fortune: base184.fortune,
+      health: Math.min(MAX_STAT_LIMIT, Math.round(base184.health * ratio)),
+      intellect: Math.min(MAX_STAT_LIMIT, Math.round(base184.intellect * (0.4 + ratio * 0.6))),
+      martial: Math.min(MAX_STAT_LIMIT, Math.round(base184.martial * ratio * 0.9)),
+      virtue: Math.min(MAX_STAT_LIMIT, Math.round(base184.virtue * (0.5 + ratio * 0.5))),
+      wealth: Math.min(MAX_STAT_LIMIT, Math.round(base184.wealth * (0.3 + ratio * 0.7))),
+      fortune: Math.min(MAX_STAT_LIMIT, base184.fortune),
     };
   }
 
@@ -39,24 +40,24 @@ export function calculateFigureDynamicStats(
   if (age <= 30) {
     const progress = (age - 16) / 14; // 0 ~ 1.0
     return {
-      health: Math.round(base184.health + (peak.health - base184.health) * progress),
-      intellect: Math.round(base184.intellect + (peak.intellect - base184.intellect) * progress),
-      martial: Math.round(base184.martial + (peak.martial - base184.martial) * progress),
-      virtue: Math.round(base184.virtue + (peak.virtue - base184.virtue) * progress),
-      wealth: Math.round(base184.wealth + (peak.wealth - base184.wealth) * progress),
-      fortune: Math.round(base184.fortune + (peak.fortune - base184.fortune) * progress),
+      health: Math.min(MAX_STAT_LIMIT, Math.round(base184.health + (peak.health - base184.health) * progress)),
+      intellect: Math.min(MAX_STAT_LIMIT, Math.round(base184.intellect + (peak.intellect - base184.intellect) * progress)),
+      martial: Math.min(MAX_STAT_LIMIT, Math.round(base184.martial + (peak.martial - base184.martial) * progress)),
+      virtue: Math.min(MAX_STAT_LIMIT, Math.round(base184.virtue + (peak.virtue - base184.virtue) * progress)),
+      wealth: Math.min(MAX_STAT_LIMIT, Math.round(base184.wealth + (peak.wealth - base184.wealth) * progress)),
+      fortune: Math.min(MAX_STAT_LIMIT, Math.round(base184.fortune + (peak.fortune - base184.fortune) * progress)),
     };
   }
 
-  // 壮年巅峰期 (31-50岁): 维持巅峰极盛状态，识见仁厚甚至更醇厚
+  // 壮年巅峰期 (31-50岁): 维持巅峰极盛状态，识见仁厚甚至更醇厚（最高不超过MAX_STAT_LIMIT）
   if (age <= 50) {
     return {
-      health: peak.health,
-      intellect: Math.min(100, peak.intellect + Math.floor((age - 30) / 7)),
-      martial: peak.martial,
-      virtue: Math.min(100, peak.virtue + Math.floor((age - 30) / 6)),
-      wealth: Math.min(100, peak.wealth + Math.floor((age - 30) / 5)),
-      fortune: peak.fortune,
+      health: Math.min(MAX_STAT_LIMIT, peak.health),
+      intellect: Math.min(MAX_STAT_LIMIT, peak.intellect + Math.floor((age - 30) / 7)),
+      martial: Math.min(MAX_STAT_LIMIT, peak.martial),
+      virtue: Math.min(MAX_STAT_LIMIT, peak.virtue + Math.floor((age - 30) / 6)),
+      wealth: Math.min(MAX_STAT_LIMIT, peak.wealth + Math.floor((age - 30) / 5)),
+      fortune: Math.min(MAX_STAT_LIMIT, peak.fortune),
     };
   }
 
@@ -64,10 +65,10 @@ export function calculateFigureDynamicStats(
   const elderFactor = Math.min(0.3, (age - 50) * 0.015);
   return {
     health: Math.max(30, Math.round(peak.health * (1 - elderFactor * 1.5))),
-    intellect: peak.intellect,
+    intellect: Math.min(MAX_STAT_LIMIT, peak.intellect),
     martial: Math.max(30, Math.round(peak.martial * (1 - elderFactor * 1.8))),
-    virtue: Math.min(100, peak.virtue + 3),
-    wealth: peak.wealth,
+    virtue: Math.min(MAX_STAT_LIMIT, peak.virtue + 3),
+    wealth: Math.min(MAX_STAT_LIMIT, peak.wealth),
     fortune: Math.max(25, Math.round(peak.fortune * (1 - elderFactor))),
   };
 }

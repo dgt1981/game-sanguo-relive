@@ -431,13 +431,13 @@ ${ending.historianNote}
 
           <button
             onClick={() => {
-              sound.playDrum();
+              sound.playPluck(540);
               onRestart();
             }}
             className="w-full sm:w-1/2 py-2.5 text-xs sm:text-sm font-semibold text-[#1f1206] bg-gradient-to-r from-[#d4af37] via-[#e5c158] to-[#d4af37] hover:from-[#c29c26] hover:to-[#c29c26] rounded-lg shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2 font-classical cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
-            <span>重入轮回 · 降生另一段人生</span>
+            <span>重新轮回 · 降生另一段人生</span>
           </button>
         </div>
       </div>

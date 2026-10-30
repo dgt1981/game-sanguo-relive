@@ -116,75 +116,208 @@ export function generateRandomBirth(): PersonProfile {
     motherAlive: true,
     siblingCount: Math.floor(Math.random() * 4),
     childrenCount: 0,
-    knownFigures: initChildhoodBonds(provincePick.id, commanderyPick, countyPick, 184),
+    knownFigures: [],
     eventFlags: {},
   };
 }
 
 /**
+ * 属性上限极值：天下之理，水满则溢，月盈则亏。
+ * 无论何时何地，主角及各项属性绝不可出现满值（100），其最高上限为95。
+ */
+export const MAX_STAT_LIMIT = 95;
+
+/**
+ * 年龄阶段属性生理承载上限 (Age-Stage Capacity Limit)
+ * 幼童与成长阶段有其客观生理极限，绝不可出现幼童时期属性过高、背于常理的现象。
+ */
+export function getStatCapacityForAge(age: number): Record<keyof Attributes, number> {
+  if (age <= 2) {
+    // 襁褓幼婴 (0~2岁): 骨软神萌，牙牙学语，肢体尚不能奔走
+    return { health: 18, intellect: 8, martial: 3, virtue: 12, wealth: 25, fortune: 65 };
+  }
+  if (age <= 6) {
+    // 龆龀幼童 (3~6岁): 戏耍发蒙，学步奔走，心智初开
+    return { health: 28, intellect: 18, martial: 10, virtue: 22, wealth: 35, fortune: 75 };
+  }
+  if (age <= 13) {
+    // 总角成童 (7~13岁): 少年抽条，助耕拾柴，初晓大义
+    return { health: 48, intellect: 42, martial: 32, virtue: 45, wealth: 50, fortune: 85 };
+  }
+  if (age <= 19) {
+    // 及冠成丁 (14~19岁): 编入丁册，气力大成，能挽弓负犁
+    return { health: 72, intellect: 68, martial: 62, virtue: 70, wealth: 75, fortune: 90 };
+  }
+  // 壮年及以后 (20岁以上): 可达凡人极致，但不可逾越 95
+  return {
+    health: MAX_STAT_LIMIT,
+    intellect: MAX_STAT_LIMIT,
+    martial: MAX_STAT_LIMIT,
+    virtue: MAX_STAT_LIMIT,
+    wealth: MAX_STAT_LIMIT,
+    fortune: MAX_STAT_LIMIT,
+  };
+}
+
+/**
  * 依据真实生理婴儿起点，生成公元184年刚出生的婴儿初始属性
- * 刚降生的婴儿：
- * - 体魄娇弱（约16~22，受家庭抚育条件影响）；
- * - 识见微萌（约3~6，仅识双亲与啼哭感知）；
- * - 勇略近无（约1~3，肢体柔软无法直立行走）；
- * - 仁厚源自天性与门风家训（约12~18）；
- * - 家财为父母初始裹儿资粮（约6~35）；
- * - 气数来自天命造化（约45~65）。
+ * 刚降生的婴儿必须符合常理：
+ * - 体魄娇弱（8~12，极易受寒疾侵袭）；
+ * - 识见微萌（1~3，仅感知双亲抚触与啼哭）；
+ * - 勇略近无（0~1，骨软无法持物行步）；
+ * - 仁厚纯真（2~5，赤子天然无邪）；
+ * - 家财为家庭随身裹儿资粮（2~18，依出身微有差异）；
+ * - 气数来自天命造化（35~52）。
  */
 export function generateInitialAttributes(socialClass: SocialClass): Attributes {
   const base: Attributes = {
-    health: 18 + Math.floor(Math.random() * 5) - 2, // 16 ~ 21
-    intellect: 4 + Math.floor(Math.random() * 3),   // 4 ~ 6
-    martial: 2 + Math.floor(Math.random() * 2),     // 2 ~ 3
-    virtue: 14 + Math.floor(Math.random() * 5),    // 14 ~ 18
-    wealth: 12 + Math.floor(Math.random() * 6),    // 12 ~ 17
-    fortune: 50 + Math.floor(Math.random() * 15) - 7, // 43 ~ 57
+    health: 10 + Math.floor(Math.random() * 3) - 1, // 9 ~ 11
+    intellect: 2,                                   // 2
+    martial: Math.random() < 0.3 ? 1 : 0,           // 0 ~ 1
+    virtue: 3 + Math.floor(Math.random() * 3),      // 3 ~ 5
+    wealth: 3 + Math.floor(Math.random() * 3),      // 3 ~ 5
+    fortune: 42 + Math.floor(Math.random() * 11) - 5, // 37 ~ 47
   };
 
   switch (socialClass) {
     case 'PEASANT':
-      base.health += 1; // 农家耐苦
-      base.wealth = Math.max(5, base.wealth - 5);
+      base.health += 1; // 农家微耐粗砺
+      base.wealth = Math.max(2, base.wealth - 1);
       break;
     case 'TOWN_ARTISAN':
-      base.wealth += 3;
+      base.wealth += 1;
       base.intellect += 1;
       break;
     case 'FISHER_BOATMAN':
-      base.health += 2;
-      base.wealth -= 2;
+      base.health += 1;
       break;
     case 'FRONTIER_ARMY':
-      base.health += 3;
-      base.martial += 1;
+      base.health += 2;
+      base.martial = 1;
       break;
     case 'SCHOLAR_CLERK':
-      base.intellect += 3;
-      base.virtue += 4;
-      base.wealth += 6;
+      base.intellect += 1;
+      base.virtue += 2;
+      base.wealth += 2;
       break;
     case 'MERCHANT':
-      base.wealth += 14;
-      base.intellect += 2;
+      base.wealth += 5;
+      base.intellect += 1;
       break;
     case 'NOBLE_GENTRY':
-      base.wealth += 32;
-      base.intellect += 3;
-      base.virtue += 5;
-      base.health += 4;
-      base.fortune += 8;
+      base.wealth += 10;
+      base.intellect += 1;
+      base.virtue += 2;
+      base.health += 1;
+      base.fortune += 3;
       break;
   }
 
-  // Ensure reasonable realistic bounds for a newborn
-  base.health = Math.max(12, Math.min(26, base.health));
-  base.intellect = Math.max(2, Math.min(12, base.intellect));
-  base.martial = Math.max(1, Math.min(6, base.martial));
-  base.virtue = Math.max(10, Math.min(30, base.virtue));
-  base.wealth = Math.max(5, Math.min(85, base.wealth));
-  base.fortune = Math.max(35, Math.min(80, base.fortune));
+  // 严格杜绝幼童数值过高违背常理
+  base.health = Math.max(7, Math.min(14, base.health));
+  base.intellect = Math.max(1, Math.min(4, base.intellect));
+  base.martial = Math.max(0, Math.min(2, base.martial));
+  base.virtue = Math.max(2, Math.min(8, base.virtue));
+  base.wealth = Math.max(2, Math.min(18, base.wealth));
+  base.fortune = Math.max(30, Math.min(55, base.fortune));
 
   return base;
+}
+
+/**
+ * 计算平缓递减的有效属性变动，防止暴增与数值膨胀：
+ * 1. 幼童期大幅平抑；
+ * 2. 高数值边际衰减；
+ * 3. 严格受限于年龄承载上限与 MAX_STAT_LIMIT (95)。
+ */
+export function calculateEffectiveStatDelta(
+  currentStats: Attributes,
+  rawDelta: Partial<Record<keyof Attributes, number>>,
+  age: number
+): Partial<Record<keyof Attributes, number>> {
+  const effective: Partial<Record<keyof Attributes, number>> = {};
+  const capacity = getStatCapacityForAge(age);
+
+  for (const [keyStr, rawVal] of Object.entries(rawDelta)) {
+    const key = keyStr as keyof Attributes;
+    if (rawVal === undefined || rawVal === 0) continue;
+
+    if (rawVal < 0) {
+      // 减损直接生效，但保持下限为0（体魄由后续判定处理）
+      effective[key] = rawVal;
+      continue;
+    }
+
+    const cur = currentStats[key] ?? 0;
+    const cap = capacity[key] ?? MAX_STAT_LIMIT;
+
+    // 若已达当前年龄承载上限或全局极值上限（95），绝不再增加，永不满值
+    if (cur >= cap || cur >= MAX_STAT_LIMIT) {
+      effective[key] = 0;
+      continue;
+    }
+
+    // 1. 年龄阶梯增益衰减 (幼童时期绝无可能单次获得名将级爆发增长)
+    let scaledGain = rawVal;
+    if (age <= 2) {
+      scaledGain = Math.min(1, Math.max(1, Math.round(rawVal * 0.25)));
+    } else if (age <= 6) {
+      scaledGain = Math.min(2, Math.max(1, Math.round(rawVal * 0.4)));
+    } else if (age <= 13) {
+      scaledGain = Math.min(3, Math.max(1, Math.round(rawVal * 0.6)));
+    } else {
+      if (scaledGain > 5) {
+        scaledGain = 3 + Math.round((scaledGain - 5) * 0.4);
+      }
+    }
+
+    // 2. 边际递减效应 (越接近高值，精进越艰难)
+    let dimFactor = 1.0;
+    if (cur >= 85) {
+      dimFactor = 0.15;
+    } else if (cur >= 70) {
+      dimFactor = 0.35;
+    } else if (cur >= 55) {
+      dimFactor = 0.60;
+    } else if (cur >= 40) {
+      dimFactor = 0.80;
+    }
+
+    let finalGain = Math.round(scaledGain * dimFactor);
+    if (finalGain === 0 && scaledGain > 0 && cur < cap) {
+      // 适度保底1点以保留游戏反馈
+      finalGain = 1;
+    }
+
+    // 3. 严格受限于年龄承载上限与 MAX_STAT_LIMIT (95)
+    const availableRoom = Math.max(0, Math.min(cap, MAX_STAT_LIMIT) - cur);
+    effective[key] = Math.min(finalGain, availableRoom);
+  }
+
+  return effective;
+}
+
+/**
+ * 将属性变更安全施加于当前状态，严格保证绝不超上限且符合生理规律
+ */
+export function applyStatsWithLimits(
+  currentStats: Attributes,
+  delta: Partial<Record<keyof Attributes, number>>,
+  age: number
+): Attributes {
+  const effectiveDelta = calculateEffectiveStatDelta(currentStats, delta, age);
+  const next: Attributes = { ...currentStats };
+  const capacity = getStatCapacityForAge(age);
+
+  for (const key of Object.keys(next) as (keyof Attributes)[]) {
+    const change = effectiveDelta[key] || 0;
+    let newVal = next[key] + change;
+    const maxAllowed = Math.min(MAX_STAT_LIMIT, capacity[key]);
+    newVal = Math.max(0, Math.min(maxAllowed, newVal));
+    next[key] = newVal;
+  }
+
+  return next;
 }
 
 /**
@@ -198,7 +331,7 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
       tag: '骨软神萌',
       description: '初临乱世，襁褓骨弱，易染风热，全赖母乳温汤悉心护持。',
       ageRange: '0~2岁',
-      growthTrend: { health: 'GROWING_FAST', intellect: 'GROWING', martial: 'DORMANT' },
+      growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'DORMANT' },
     };
   }
   if (age <= 6) {
@@ -208,7 +341,7 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
       tag: '戏耍发蒙',
       description: '学步奔走，在田垄水洼捉虫嬉戏，识人辨物，筋骨日健。',
       ageRange: '3~6岁',
-      growthTrend: { health: 'GROWING_FAST', intellect: 'GROWING_FAST', martial: 'GROWING' },
+      growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING' },
     };
   }
   if (age <= 13) {
@@ -218,7 +351,7 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
       tag: '拔节抽条',
       description: '少年长成，拔节拔高，帮衬家计放牛拾柴，初晓是非大义。',
       ageRange: '7~13岁',
-      growthTrend: { health: 'GROWING_FAST', intellect: 'GROWING_FAST', martial: 'GROWING_FAST' },
+      growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING' },
     };
   }
   if (age <= 19) {
@@ -228,7 +361,7 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
       tag: '气力大成',
       description: '束发成丁，编入官府丁册。能荷重犁挽硬弓，自立生计以养家。',
       ageRange: '14~19岁',
-      growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING_FAST' },
+      growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING' },
     };
   }
   if (age <= 35) {
@@ -258,7 +391,7 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
       tag: '气血渐衰',
       description: '两鬓苍苍，自然衰老。气力难挽强弓，而德厚名重，尊为乡老。',
       ageRange: '51~65岁',
-      growthTrend: { health: 'DECLINING', intellect: 'STABLE', martial: 'DECLINING_FAST' },
+      growthTrend: { health: 'DECLINING', intellect: 'STABLE', martial: 'DECLINING' },
     };
   }
   return {
@@ -279,7 +412,10 @@ export interface NaturalChangeResult {
 
 /**
  * 随生理年龄与四季自然更迭的生理成长与衰老动力学系统
- * 先行计算身体自然规律的变化，而后再叠加事件和玩家抉择的二次冲击
+ * 严格调整流转节奏：
+ * - 避免四季每一季均暴增数值；
+ * - 生长主要循着孟春阳和生发与秋收沉淀缓慢推进；
+ * - 绝不在幼童阶段产生非人超常数值。
  */
 export function calculateNaturalPhysiologicalChange(
   age: number,
@@ -290,160 +426,126 @@ export function calculateNaturalPhysiologicalChange(
   const delta: Partial<Record<keyof Attributes, number>> = {};
   let naturalNote: string | undefined = undefined;
 
-  // 1. 襁褓期 (0~2岁) - 婴儿自然成长
+  // 1. 襁褓期 (0~2岁) - 婴儿自然温养，极其娇弱缓慢
   if (stage.stageKey === 'INFANT') {
     if (season === 0) {
-      delta.health = 2;
-      delta.intellect = 1;
-      naturalNote = '【生理生发】孟春和风，幼体舒展，骨肉日丰。体魄+2，识见+1。';
-    } else if (season === 1) {
       delta.health = 1;
-      naturalNote = '【生理调护】度过苦夏热暑，咿呀学语。体魄+1。';
+      naturalNote = '【生理生发】孟春阳和，襁褓温养，骨肉微丰。体魄+1。';
     } else if (season === 2) {
-      delta.health = 1;
-      delta.virtue = 1;
-      naturalNote = '【生理拔节】认得双亲慈容，啼笑自如。体魄+1，仁厚+1。';
+      delta.intellect = 1;
+      naturalNote = '【心智微萌】识得双亲慈容，咿呀学语。识见+1。';
     } else if (season === 3) {
-      if (currentStats.wealth < 8) {
+      if (currentStats.wealth < 4) {
         delta.health = -1;
         naturalNote = '【生理风寒】岁暮苦寒屋漏，受了些许风霜。体魄-1。';
-      } else {
-        delta.health = 1;
-        naturalNote = '【生理避寒】炭火暖卧，安度严冬。体魄+1。';
       }
     }
   }
-  // 2. 幼童期 (3~6岁) - 奔跑跳跃、心智初开
+  // 2. 幼童期 (3~6岁) - 奔跑跳跃、学步识物，平缓发蒙
   else if (stage.stageKey === 'CHILD') {
     if (season === 0) {
-      delta.health = 2;
-      delta.martial = 1;
-      naturalNote = '【自然拔节】春日田埂奔跑戏蝶，小腿结实有力。体魄+2，勇略+1。';
-    } else if (season === 1) {
-      delta.intellect = 2;
       delta.health = 1;
-      naturalNote = '【心智发蒙】学认山川禽畜，言语清晰。体魄+1，识见+2。';
+      naturalNote = '【自然拔节】春日田埂嬉玩，筋骨渐韧。体魄+1。';
+    } else if (season === 1) {
+      delta.intellect = 1;
+      naturalNote = '【心智发蒙】学认鸟兽草木，言语清晰。识见+1。';
     } else if (season === 2) {
       delta.martial = 1;
-      delta.virtue = 1;
-      naturalNote = '【童心纯良】帮父母递水拾穗，深得邻舍夸赞。勇略+1，仁厚+1。';
+      naturalNote = '【跑跳玩闹】追逐鸡犬捉蜻蜓，腿脚利落。勇略+1。';
     } else if (season === 3) {
-      delta.intellect = 1;
-      naturalNote = '【冬夜听古】围炉听长辈讲述古时兵祸故事。识见+1。';
+      delta.virtue = 1;
+      naturalNote = '【童心纯良】帮父母做些轻快家务，受邻人夸赞。仁厚+1。';
     }
   }
-  // 3. 成童总角期 (7~13岁) - 少年抽条拔节快速成长！
+  // 3. 成童总角期 (7~13岁) - 少年抽条拔节，按年逐步长成
   else if (stage.stageKey === 'YOUTH') {
     if (season === 0) {
-      delta.health = 3;
-      delta.martial = 2;
-      naturalNote = '【骨骼抽条】春耕放牛割草，身形窜高半尺，气力大长。体魄+3，勇略+2。';
+      delta.health = 1;
+      delta.martial = 1;
+      naturalNote = '【骨骼抽条】春耕放牛拾柴，身形抽条拔节。体魄+1，勇略+1。';
     } else if (season === 1) {
-      delta.martial = 2;
-      delta.intellect = 1;
-      naturalNote = '【筋骨锻炼】下河泅水摸鱼，烈日下晒得黝黑健硕。勇略+2，识见+1。';
+      delta.martial = 1;
+      naturalNote = '【少年筋骨】下河泅水摸鱼，体格黝黑健朗。勇略+1。';
     } else if (season === 2) {
-      delta.health = 2;
-      delta.intellect = 2;
+      delta.intellect = 1;
       delta.wealth = 1;
-      naturalNote = '【勤劳助耕】分担秋收力气活，熟知稼穑勤苦。体魄+2，识见+2，家资+1。';
+      naturalNote = '【帮衬家计】分担秋收稼穑，初知柴米艰辛。识见+1，家资+1。';
     } else if (season === 3) {
       delta.virtue = 1;
-      delta.intellect = 1;
-      naturalNote = '【知晓孝悌】冬日孝敬父母，修治粗简农具。识见+1，仁厚+1。';
+      naturalNote = '【知晓孝悌】冬日敬奉长辈，初晓乡邻人情。仁厚+1。';
     }
   }
-  // 4. 及冠成丁期 (14~19岁) - 筋骨定型自立养家！
+  // 4. 及冠成丁期 (14~19岁) - 筋骨定型自立养家
   else if (stage.stageKey === 'ADULT') {
     if (season === 0) {
-      delta.health = 2;
-      delta.martial = 3;
-      naturalNote = '【成丁强健】束发立丁，筋骨强劲，能负重致远。体魄+2，勇略+3。';
-    } else if (season === 1) {
-      delta.martial = 2;
-      delta.wealth = 1;
-      naturalNote = '【出力谋生】自食其力受雇做工，体魄如铁。勇略+2，家资+1。';
-    } else if (season === 2) {
-      delta.intellect = 2;
-      delta.wealth = 2;
-      naturalNote = '【秋获立业】秋粮到手，在乡里已有自立声名。识见+2，家资+2。';
-    } else if (season === 3) {
-      delta.virtue = 1;
       delta.health = 1;
-      naturalNote = '【气盛御寒】青年气血充盈，无惧朔风大雪。体魄+1，仁厚+1。';
-    }
-  }
-  // 5. 弱冠壮盛期 (20~35岁) - 人生鼎盛黄金巅峰！
-  else if (stage.stageKey === 'PRIME') {
-    if (season === 0) {
-      if (currentStats.health < 85) delta.health = 1;
-      if (currentStats.martial < 85) delta.martial = 1;
+      delta.martial = 1;
+      naturalNote = '【束发成丁】束发成丁编入赋籍，力能挽弓扶犁。体魄+1，勇略+1。';
     } else if (season === 2) {
-      delta.wealth = 2;
       delta.intellect = 1;
-      naturalNote = '【壮年经营】精力正旺，田亩产出充裕，家道稳固。家资+2，识见+1。';
+      delta.wealth = 1;
+      naturalNote = '【自立谋生】秋收营生有度，在乡里立身自足。识见+1，家资+1。';
     } else if (season === 3) {
       delta.virtue = 1;
+      naturalNote = '【立身扬名】处事沉稳守分，受乡邻称道。仁厚+1。';
     }
   }
-  // 6. 不惑知命期 (36~50岁) - 识见登峰，体力平稳微沉！
+  // 5. 弱冠壮盛期 (20~35岁) - 人生鼎盛黄金巅峰，属性平稳
+  else if (stage.stageKey === 'PRIME') {
+    if (season === 0 && currentStats.health < 65) {
+      delta.health = 1;
+      naturalNote = '【盛年气血】春回大地，气血调达。体魄+1。';
+    } else if (season === 2 && currentStats.wealth < 70) {
+      delta.wealth = 1;
+      naturalNote = '【壮岁立业】年富力强，田园营生有度。家资+1。';
+    }
+  }
+  // 6. 不惑知命期 (36~50岁) - 识见登峰，体力平稳微沉
   else if (stage.stageKey === 'MIDDLE') {
-    if (season === 0) {
-      delta.intellect = 2;
-      delta.virtue = 1;
-      naturalNote = '【老成睿智】历尽世事沧桑，见识深邃洞彻。识见+2，仁厚+1。';
-    } else if (season === 1) {
-      if (currentStats.martial > 65) {
-        delta.martial = -1;
-        naturalNote = '【体力微损】旧疾偶现，气力略不如二十岁年轻之时。勇略-1。';
-      }
+    if (season === 0 && currentStats.intellect < 80) {
+      delta.intellect = 1;
+      naturalNote = '【沉潜睿智】历尽世事沧桑，洞悉人事机微。识见+1。';
+    } else if (season === 1 && currentStats.martial > 55) {
+      delta.martial = -1;
+      naturalNote = '【旧伤微显】气力不及初冠之时，骨节偶感酸楚。勇略-1。';
     } else if (season === 2) {
-      delta.wealth = 2;
       delta.virtue = 1;
-      naturalNote = '【德隆望重】处事稳健公允，受全村敬服。仁厚+1，家资+2。';
-    } else if (season === 3) {
-      if (currentStats.health > 75) {
-        delta.health = -1;
-      }
+      naturalNote = '【德隆望重】处事持重端正，渐成乡党主心骨。仁厚+1。';
+    } else if (season === 3 && currentStats.health > 70) {
+      delta.health = -1;
     }
   }
-  // 7. 花甲耳顺期 (51~65岁) - 自然衰老降临！
+  // 7. 花甲耳顺期 (51~65岁) - 自然平缓衰老
   else if (stage.stageKey === 'ELDER') {
     if (season === 0) {
-      delta.virtue = 2;
-      delta.intellect = 1;
-      naturalNote = '【乡党尊长】年逾花甲，晚辈遇事皆来拜见请益。仁厚+2，识见+1。';
+      delta.virtue = 1;
+      naturalNote = '【耆老尊长】年届花甲，晚生后辈皆尊为长者。仁厚+1。';
     } else if (season === 1) {
-      delta.health = -1;
       delta.martial = -1;
-      naturalNote = '【气血渐虚】苦夏溽热，食欲不振，筋骨渐疲。体魄-1，勇略-1。';
+      naturalNote = '【气力稍逊】步履渐缓，难挽硬弓重兵。勇略-1。';
     } else if (season === 2) {
-      delta.martial = -2;
-      naturalNote = '【筋骨发僵】秋风萧瑟，步履渐缓，难持重兵。勇略-2。';
+      delta.health = -1;
+      naturalNote = '【筋骨渐衰】秋风萧瑟，步履微迟。体魄-1。';
     } else if (season === 3) {
-      delta.health = -2;
-      delta.wealth = -1;
-      naturalNote = '【老骨畏寒】隆冬大雪天寒地冻，围炉耗柴吃药。体魄-2，家资-1。';
+      delta.health = -1;
+      naturalNote = '【岁暮畏寒】大雪天寒，围炉避冻。体魄-1。';
     }
   }
-  // 8. 古稀耄耋期 (66岁以上) - 暮景祥瑞，听天由命！
+  // 8. 古稀耄耋期 (66岁以上) - 暮景祥瑞，听天由命
   else {
     if (season === 0) {
-      delta.virtue = 3;
+      delta.virtue = 1;
       delta.fortune = 1;
-      naturalNote = '【乱世人瑞】历遍甲子大乱而得享高寿，里邻奉为神明福星。仁厚+3，气数+1。';
+      naturalNote = '【乱世人瑞】历经两甲子乱世而得享古稀，被奉为祥瑞长者。仁厚+1，气数+1。';
     } else if (season === 1) {
-      delta.health = -2;
-      delta.martial = -2;
-      naturalNote = '【老迈虚喘】溽热难耐，卧榻休养。体魄-2，勇略-2。';
+      delta.martial = -1;
+      naturalNote = '【筋力消退】耳目渐花，行动需人搀扶。勇略-1。';
     } else if (season === 2) {
-      delta.health = -2;
-      delta.martial = -2;
-      naturalNote = '【秋风催老】秋风落叶，耳目渐昏，气力所剩无几。体魄-2，勇略-2。';
+      delta.health = -1;
+      naturalNote = '【秋凉畏冷】气血渐衰，卧榻歇息。体魄-1。';
     } else if (season === 3) {
-      delta.health = -3;
-      delta.wealth = -2;
-      naturalNote = '【岁暮严寒】天寒地冻彻骨，子孙床前侍奉汤药。体魄-3，家资-2。';
+      delta.health = -1;
+      naturalNote = '【风雪残年】朔风彻骨，子孙端奉热汤。体魄-1。';
     }
   }
 

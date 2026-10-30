@@ -1,6 +1,6 @@
 import React from 'react';
 import { Attributes, SeasonIndex } from '../types/game';
-import { PersonProfile, SEASONS_CONFIG, getPhysiologicalStage } from '../services/lifeSimulator';
+import { PersonProfile, SEASONS_CONFIG, getPhysiologicalStage, MAX_STAT_LIMIT } from '../services/lifeSimulator';
 import { ProtagonistPixelAvatar } from './ProtagonistPixelAvatar';
 import {
   Heart,
@@ -180,12 +180,14 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
         <div className="space-y-2">
           <div className="text-[11px] text-[#8e7e6e] flex items-center justify-between">
             <span>身家五维与气数命盘</span>
-            <span className="text-[10px] text-[#6b5b4c]">满值 100</span>
+            <span className="text-[10px] text-[#c5a666]" title="天道忌盈，人无完人，属性永不满百，最高极境为95">
+              极境 95 · 永不满百
+            </span>
           </div>
 
           <div className="space-y-1.5">
             {statConfig.map(({ key, label, icon, color }) => {
-              const val = Math.max(0, Math.min(100, stats[key]));
+              const val = Math.max(0, Math.min(MAX_STAT_LIMIT, stats[key]));
               const trend = getStatTrend(key);
 
               return (
@@ -339,14 +341,14 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
           <span className="italic">{stage.description}</span>
         </div>
         <div className="text-[10px] text-[#8e7e6e]">
-          注：随年龄推移自然成长与衰老，事件与抉择在此基础上叠加
+          注：天道忌盈，属性永不满百（极境95）；幼童平缓发蒙，成长循序渐进
         </div>
       </div>
 
       {/* 6 Core Stats with Physiological Trend Badges */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {statConfig.map(({ key, label, icon, color }) => {
-          const val = Math.max(0, Math.min(100, stats[key]));
+          const val = Math.max(0, Math.min(MAX_STAT_LIMIT, stats[key]));
           const trend = getStatTrend(key);
 
           return (

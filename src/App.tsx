@@ -20,6 +20,9 @@ import {
   SEASONS_CONFIG,
   calculateNaturalPhysiologicalChange,
   getPhysiologicalStage,
+  MAX_STAT_LIMIT,
+  applyStatsWithLimits,
+  calculateEffectiveStatDelta,
 } from './services/lifeSimulator';
 import { PROVINCES } from './data/regions';
 import { sound } from './services/sound';
@@ -37,6 +40,7 @@ import { PeopleGallery } from './components/PeopleGallery';
 import { ProvincesGuide } from './components/ProvincesGuide';
 import { FiguresNetwork } from './components/FiguresNetwork';
 import { RightSidebarCompanion } from './components/RightSidebarCompanion';
+import { RestartConfirmModal } from './components/RestartConfirmModal';
 import {
   updateKnownFiguresForSeason,
   evaluateFigurePerks,
@@ -257,6 +261,44 @@ export default function App() {
     setActiveTab('SIMULATION');
   };
 
+  // Restart Confirmation Modal State
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  const [restartConfirmPendingAction, setRestartConfirmPendingAction] = useState<(() => void) | null>(null);
+  const [restartConfirmCustomMessage, setRestartConfirmCustomMessage] = useState<string | undefined>(undefined);
+
+  // Request Restart Life with Confirmation Modal
+  const handleRequestRestartLife = (customAction?: () => void, customMsg?: string) => {
+    // If the player hasn't even been born yet (e.g. still in BirthModal), restart directly
+    if (!isBorn) {
+      if (customAction) customAction();
+      else handleRestartLife();
+      return;
+    }
+
+    sound.playPluck(440);
+    if (isAutoRunning) {
+      setIsAutoRunning(false);
+    }
+
+    setRestartConfirmPendingAction(() => customAction || handleRestartLife);
+    setRestartConfirmCustomMessage(customMsg);
+    setShowRestartConfirm(true);
+  };
+
+  const handleConfirmRestart = () => {
+    setShowRestartConfirm(false);
+    const action = restartConfirmPendingAction || handleRestartLife;
+    setRestartConfirmPendingAction(null);
+    setRestartConfirmCustomMessage(undefined);
+    action();
+  };
+
+  const handleCancelRestart = () => {
+    setShowRestartConfirm(false);
+    setRestartConfirmPendingAction(null);
+    setRestartConfirmCustomMessage(undefined);
+  };
+
   // Resume mid-game progress
   const handleResumeProgress = () => {
     const save = storage.loadMidGameProgress();
@@ -327,21 +369,17 @@ export default function App() {
 
     // 1. 先行计算并施加生理年龄与季节自然更迭的基础变化 (Natural Growth & Senescence)
     const naturalRes = calculateNaturalPhysiologicalChange(nextAge, nextSeason, stats);
-    const updatedStats: Attributes = { ...stats };
+    let updatedStats: Attributes = { ...stats };
 
-    if (naturalRes.delta) {
-      Object.entries(naturalRes.delta).forEach(([k, v]) => {
-        const key = k as keyof Attributes;
-        updatedStats[key] = Math.max(0, Math.min(100, updatedStats[key] + (v as number)));
-      });
+    if (naturalRes.delta && Object.keys(naturalRes.delta).length > 0) {
+      updatedStats = applyStatsWithLimits(updatedStats, naturalRes.delta, nextAge);
     }
 
     // 2. 然后在自然生长的基础上，叠加重大事件发生与玩家自主抉择的影响 (Event Choices & Consequences)
-    if (statDelta) {
-      Object.entries(statDelta).forEach(([k, v]) => {
-        const key = k as keyof Attributes;
-        updatedStats[key] = Math.max(0, Math.min(100, updatedStats[key] + (v as number)));
-      });
+    let appliedStatDelta: Partial<Record<keyof Attributes, number>> | undefined = undefined;
+    if (statDelta && Object.keys(statDelta).length > 0) {
+      appliedStatDelta = calculateEffectiveStatDelta(updatedStats, statDelta, nextAge);
+      updatedStats = applyStatsWithLimits(updatedStats, statDelta, nextAge);
     }
 
     // Dynamic Occupation changes according to physiological age and social standing
@@ -364,9 +402,9 @@ export default function App() {
     const evolvedFigures = updateKnownFiguresForSeason(currentProf.knownFigures || [], nextYear);
     const perks = evaluateFigurePerks(evolvedFigures);
 
-    // 巨贾岁末商道接济
+    // 巨贾岁末商道接济 (严格遵循极值上限)
     if (nextSeason === 3 && perks.seasonalWealthYield > 0) {
-      updatedStats.wealth = Math.min(100, updatedStats.wealth + perks.seasonalWealthYield);
+      updatedStats = applyStatsWithLimits(updatedStats, { wealth: Math.min(2, perks.seasonalWealthYield) }, nextAge);
     }
 
     const updatedProfile: PersonProfile = {
@@ -413,7 +451,7 @@ export default function App() {
       macroHistory: nextEvt.macroHistory,
       storySummary: nextEvt.personalStory,
       choiceMade: customChoiceMade,
-      statChanges: statDelta,
+      statChanges: appliedStatDelta || statDelta,
       naturalChanges: naturalRes.delta,
       naturalChangeNote: naturalRes.naturalNote,
       physiologicalStageName: naturalRes.stage.stageName,
@@ -605,11 +643,7 @@ export default function App() {
     // 6. 若存在临场生死抉择 (如被俘后是否归降、下野或就义)，留在当前季节供玩家做二次裁决！
     if (choice.followUpChoice) {
       sound.playMilestone();
-      const updatedStats: Attributes = { ...stats };
-      Object.entries(choice.statChanges).forEach(([k, v]) => {
-        const key = k as keyof Attributes;
-        updatedStats[key] = Math.max(0, Math.min(100, updatedStats[key] + (v as number)));
-      });
+      const updatedStats = applyStatsWithLimits(stats, choice.statChanges, age);
       setStats(updatedStats);
 
       setCurrentEvent((prev) => ({
@@ -652,15 +686,28 @@ export default function App() {
 
   // Province rebirth selection
   const handleSelectProvinceToReborn = (provId: ProvinceId) => {
-    const rolled = generateRandomBirth();
     const p = PROVINCES.find((prov) => prov.id === provId);
-    if (p) {
-      rolled.birthProvince = p.id;
-      rolled.currentProvince = p.id;
-      rolled.commandery = p.commanderies[Math.floor(Math.random() * p.commanderies.length)];
-      rolled.county = p.counties[Math.floor(Math.random() * p.counties.length)];
+    const provName = p?.provinceName || '所选州郡';
+
+    const doReborn = () => {
+      const rolled = generateRandomBirth();
+      if (p) {
+        rolled.birthProvince = p.id;
+        rolled.currentProvince = p.id;
+        rolled.commandery = p.commanderies[Math.floor(Math.random() * p.commanderies.length)];
+        rolled.county = p.counties[Math.floor(Math.random() * p.counties.length)];
+      }
+      handleStartLife(rolled);
+    };
+
+    if (isBorn && !isGameOver) {
+      handleRequestRestartLife(
+        doReborn,
+        `当前传主【${profile.name}】（现年 ${age} 岁）正历经公元 ${year} 年风云。若转生投胎至【${provName}】，当前人生进度将立即作结并开启全新世。`
+      );
+    } else {
+      doReborn();
     }
-    handleStartLife(rolled);
   };
 
   // 名士每季主动互动 (消耗体魄或家财，增进羁绊与自身五维)
@@ -672,6 +719,9 @@ export default function App() {
     statGains: Partial<Record<keyof Attributes, number>>,
     intimacyGain: number
   ) => {
+    // 未满14岁束发成丁，不可私自拜谒名士
+    if (age < 14) return;
+
     const figureIndex = (profile.knownFigures || []).findIndex((f) => f.id === figureId);
     if (figureIndex === -1) return;
 
@@ -696,18 +746,15 @@ export default function App() {
     const nextKnownFigures = [...profile.knownFigures];
     nextKnownFigures[figureIndex] = updatedFigure;
 
-    // Apply stat changes (deduct costs, add gains)
-    const nextStats = { ...stats };
+    // Apply stat changes (deduct costs, add gains through applyStatsWithLimits)
+    let nextStats = { ...stats };
     if (statCosts.health) {
       nextStats.health = Math.max(1, nextStats.health - statCosts.health);
     }
     if (statCosts.wealth) {
       nextStats.wealth = Math.max(0, nextStats.wealth - statCosts.wealth);
     }
-    Object.entries(statGains).forEach(([k, v]) => {
-      const key = k as keyof Attributes;
-      nextStats[key] = Math.max(0, Math.min(100, nextStats[key] + (v as number)));
-    });
+    nextStats = applyStatsWithLimits(nextStats, statGains, age);
 
     const updatedProfile: PersonProfile = {
       ...profile,
@@ -753,6 +800,9 @@ export default function App() {
 
   // 领受名士赐予 (如名剑、秘籍或战略情报)
   const handleClaimBoon = (figureId: string, boon: NobleBoon) => {
+    // 未满14岁束发及冠，不可领受名仕重宝
+    if (age < 14) return;
+
     const figureIndex = (profile.knownFigures || []).findIndex((f) => f.id === figureId);
     if (figureIndex === -1) return;
 
@@ -769,12 +819,8 @@ export default function App() {
     const nextKnownFigures = [...profile.knownFigures];
     nextKnownFigures[figureIndex] = updatedFigure;
 
-    // Apply boon's stat bonuses to player
-    const nextStats = { ...stats };
-    Object.entries(boon.statBonus).forEach(([k, v]) => {
-      const key = k as keyof Attributes;
-      nextStats[key] = Math.max(0, Math.min(100, nextStats[key] + (v as number)));
-    });
+    // Apply boon's stat bonuses to player through applyStatsWithLimits
+    const nextStats = applyStatsWithLimits(stats, boon.statBonus, age);
 
     const claimedBoonRecord: NobleBoon = {
       ...boon,
@@ -826,7 +872,7 @@ export default function App() {
         <Header
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          onRestart={handleRestartLife}
+          onRestart={() => handleRequestRestartLife()}
           isMuted={isMuted}
           onToggleSound={handleToggleSound}
           knownFiguresCount={profile.knownFigures?.length || 0}
@@ -966,6 +1012,7 @@ export default function App() {
                   currentYear={year}
                   currentSeason={season}
                   currentStats={stats}
+                  age={age}
                   seasonLogs={seasonLogs}
                   onInteractFigure={() => setActiveTab('FIGURES')}
                   onOpenFiguresTab={() => setActiveTab('FIGURES')}
@@ -996,6 +1043,7 @@ export default function App() {
                 currentYear={year}
                 currentSeason={season}
                 currentStats={stats}
+                age={age}
                 onInteractFigure={handleInteractFigure}
                 onClaimBoon={handleClaimBoon}
               />
@@ -1023,6 +1071,7 @@ export default function App() {
                   currentYear={year}
                   currentSeason={season}
                   currentStats={stats}
+                  age={age}
                   onInteractFigure={handleInteractFigure}
                   onClaimBoon={handleClaimBoon}
                 />
@@ -1083,6 +1132,7 @@ export default function App() {
                   currentYear={year}
                   currentSeason={season}
                   currentStats={stats}
+                  age={age}
                   seasonLogs={seasonLogs}
                   onInteractFigure={() => setActiveTab('FIGURES')}
                   onOpenFiguresTab={() => setActiveTab('FIGURES')}
@@ -1119,9 +1169,22 @@ export default function App() {
               generateFunTitles(profile, stats, age, year, season, deathReason)
             }
             matchedFigures={matchedFigures}
-            onRestart={handleRestartLife}
+            onRestart={() => handleRequestRestartLife()}
           />
         )}
+
+        {/* Reincarnation / Restart Confirmation Modal */}
+        <RestartConfirmModal
+          isOpen={showRestartConfirm}
+          onConfirm={handleConfirmRestart}
+          onCancel={handleCancelRestart}
+          profile={profile}
+          age={age}
+          year={year}
+          season={season}
+          isGameOver={isGameOver}
+          customMessage={restartConfirmCustomMessage}
+        />
       </main>
 
       {/* Classical Quiet Footer */}

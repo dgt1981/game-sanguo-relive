@@ -7,7 +7,7 @@ import {
 } from '../types/game';
 import { PersonProfile, SEASONS_CONFIG } from '../services/lifeSimulator';
 import { PixelFigureAvatar } from './PixelFigureAvatar';
-import { getIntimacyLevelInfo } from '../services/nobleInteraction';
+import { getIntimacyLevelInfo, MIN_INTERACTION_AGE } from '../services/nobleInteraction';
 import { sound } from '../services/sound';
 import {
   Users,
@@ -17,6 +17,7 @@ import {
   Send,
   Hourglass,
   ScrollText,
+  Lock,
 } from 'lucide-react';
 
 interface RightSidebarCompanionProps {
@@ -25,6 +26,7 @@ interface RightSidebarCompanionProps {
   currentYear: number;
   currentSeason: SeasonIndex;
   currentStats: Attributes;
+  age: number;
   seasonLogs: SeasonLogEntry[];
   onInteractFigure?: (figure: HistoricalFigureBond) => void;
   onOpenFiguresTab: () => void;
@@ -36,6 +38,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
   profile,
   currentYear,
   currentSeason,
+  age,
   seasonLogs,
   onInteractFigure,
   onOpenFiguresTab,
@@ -181,31 +184,41 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
                       </span>
 
                       {onInteractFigure && (
-                        <button
-                          onClick={() => {
-                            sound.playPluck(580);
-                            onInteractFigure(fig);
-                          }}
-                          disabled={isCooldownThisSeason}
-                          className={`px-2 py-0.5 rounded text-[10px] font-classical flex items-center gap-1 transition-all shrink-0 cursor-pointer ${
-                            isCooldownThisSeason
-                              ? 'bg-[#1e1712] text-[#6d5d4e] border border-[#2f2217] cursor-not-allowed'
-                              : 'bg-[#8b261e] hover:bg-[#a32e25] text-[#faece0] border border-[#c4382c] shadow-xs active:scale-95'
-                          }`}
-                          title={isCooldownThisSeason ? '本季已拜谒修好，下季方可再访' : '过访修好'}
-                        >
-                          {isCooldownThisSeason ? (
-                            <>
-                              <Hourglass className="w-2.5 h-2.5" />
-                              <span>已访</span>
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-2.5 h-2.5" />
-                              <span>过访</span>
-                            </>
-                          )}
-                        </button>
+                        age < MIN_INTERACTION_AGE ? (
+                          <span
+                            className="px-2 py-0.5 rounded text-[10px] font-classical flex items-center gap-1 bg-[#1a1410] text-[#8c7456] border border-[#2e2218] cursor-not-allowed shrink-0"
+                            title={`主角现年仅${age}岁，未满十四岁束发及冠，不可私自登门拜会`}
+                          >
+                            <Lock className="w-2.5 h-2.5 text-[#8c7456]" />
+                            <span>童蒙未冠</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              sound.playPluck(580);
+                              onInteractFigure(fig);
+                            }}
+                            disabled={isCooldownThisSeason}
+                            className={`px-2 py-0.5 rounded text-[10px] font-classical flex items-center gap-1 transition-all shrink-0 cursor-pointer ${
+                              isCooldownThisSeason
+                                ? 'bg-[#1e1712] text-[#6d5d4e] border border-[#2f2217] cursor-not-allowed'
+                                : 'bg-[#8b261e] hover:bg-[#a32e25] text-[#faece0] border border-[#c4382c] shadow-xs active:scale-95'
+                            }`}
+                            title={isCooldownThisSeason ? '本季已拜谒修好，下季方可再访' : '过访修好'}
+                          >
+                            {isCooldownThisSeason ? (
+                              <>
+                                <Hourglass className="w-2.5 h-2.5" />
+                                <span>已访</span>
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-2.5 h-2.5" />
+                                <span>过访</span>
+                              </>
+                            )}
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
