@@ -362,6 +362,7 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                       showAgeBadge={false}
                       showCampBorder={true}
                       showTooltip={true}
+                      tooltipPlacement="bottom-start"
                       className="shrink-0 mt-0.5"
                     />
                     <p className="flex-1 min-w-0 text-[#dfd5c8] leading-relaxed font-classical">

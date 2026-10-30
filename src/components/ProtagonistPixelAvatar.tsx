@@ -3,6 +3,16 @@ import { CampType, PhysiologicalStage, SocialClass } from '../types/game';
 import { getProtagonistPixelData, ProtagonistPixelData } from '../data/protagonistPixelData';
 
 export type ProtagonistAvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+export type ProtagonistTooltipPlacement =
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end'
+  | 'bottom-center'
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'top-center'
+  | 'right';
 
 interface ProtagonistPixelAvatarProps {
   stageKey: PhysiologicalStage['stageKey'];
@@ -16,6 +26,7 @@ interface ProtagonistPixelAvatarProps {
   showStageBadge?: boolean;
   showCampBorder?: boolean;
   showTooltip?: boolean;
+  tooltipPlacement?: ProtagonistTooltipPlacement;
   isAlive?: boolean;
   className?: string;
   onClick?: () => void;
@@ -43,6 +54,7 @@ export const ProtagonistPixelAvatar: React.FC<ProtagonistPixelAvatarProps> = ({
   showStageBadge = false,
   showCampBorder = true,
   showTooltip = false,
+  tooltipPlacement = 'bottom-start',
   isAlive = true,
   className = '',
   onClick,
@@ -116,6 +128,54 @@ export const ProtagonistPixelAvatar: React.FC<ProtagonistPixelAvatarProps> = ({
 
   const defaultTitle = `${name || '你'}（${pixelData.stageName} · ${age !== undefined ? `${age}岁` : pixelData.ageRange}）`;
 
+  // 计算悬停浮窗的位置类名与指引小箭头
+  const placementStyle = useMemo(() => {
+    switch (tooltipPlacement) {
+      case 'bottom':
+      case 'bottom-start':
+        return {
+          wrapper: 'top-full left-0 mt-2.5',
+          arrow: '-top-1.5 left-4 border-t border-l border-[#d4af37]',
+        };
+      case 'bottom-end':
+        return {
+          wrapper: 'top-full right-0 mt-2.5',
+          arrow: '-top-1.5 right-4 border-t border-l border-[#d4af37]',
+        };
+      case 'bottom-center':
+        return {
+          wrapper: 'top-full left-1/2 -translate-x-1/2 mt-2.5',
+          arrow: '-top-1.5 left-1/2 -translate-x-1/2 border-t border-l border-[#d4af37]',
+        };
+      case 'top':
+      case 'top-start':
+        return {
+          wrapper: 'bottom-full left-0 mb-2.5',
+          arrow: '-bottom-1.5 left-4 border-b border-r border-[#d4af37]',
+        };
+      case 'top-end':
+        return {
+          wrapper: 'bottom-full right-0 mb-2.5',
+          arrow: '-bottom-1.5 right-4 border-b border-r border-[#d4af37]',
+        };
+      case 'top-center':
+        return {
+          wrapper: 'bottom-full left-1/2 -translate-x-1/2 mb-2.5',
+          arrow: '-bottom-1.5 left-1/2 -translate-x-1/2 border-b border-r border-[#d4af37]',
+        };
+      case 'right':
+        return {
+          wrapper: 'top-0 left-full ml-2.5',
+          arrow: '-left-1.5 top-3.5 border-b border-l border-[#d4af37]',
+        };
+      default:
+        return {
+          wrapper: 'top-full left-0 mt-2.5',
+          arrow: '-top-1.5 left-4 border-t border-l border-[#d4af37]',
+        };
+    }
+  }, [tooltipPlacement]);
+
   return (
     <div
       className={`relative inline-block select-none shrink-0 group ${className} ${
@@ -180,26 +240,41 @@ export const ProtagonistPixelAvatar: React.FC<ProtagonistPixelAvatarProps> = ({
         </span>
       )}
 
-      {/* 悬停详情浮窗 (Tooltips) */}
+      {/* 悬停详情浮窗 (Tooltips) - 避免左/上侧视口截断 */}
       {showTooltip && isHovered && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 rounded-lg bg-[#140f0c] border border-[#d4af37] text-white shadow-2xl z-50 pointer-events-none text-left font-classical">
-          <div className="flex items-center justify-between border-b border-[#33261a] pb-1 mb-1.5">
-            <span className="font-calligraphy text-sm font-bold text-[#faece0]">
+        <div
+          className={`absolute ${placementStyle.wrapper} w-60 p-3 rounded-lg bg-[#140f0c]/98 border border-[#d4af37] text-white shadow-2xl z-50 pointer-events-none text-left font-classical backdrop-blur-md`}
+        >
+          {/* 指引小箭头 */}
+          <div
+            className={`absolute w-2.5 h-2.5 bg-[#140f0c] rotate-45 z-10 ${placementStyle.arrow}`}
+          />
+
+          <div className="flex items-center justify-between border-b border-[#33261a] pb-1.5 mb-1.5 relative z-20">
+            <span className="font-calligraphy text-base font-bold text-[#faece0]">
               {name || '你'}
             </span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#2b1f14] text-[#d4af37] border border-[#523d29]">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-[#2b1f14] text-[#d4af37] border border-[#523d29]">
               {pixelData.stageName}
             </span>
           </div>
-          <div className="text-[11px] text-[#f59e0b] font-semibold mb-0.5">
-            {pixelData.titleTag}
+
+          <div className="text-xs text-[#f59e0b] font-semibold mb-1 relative z-20 flex items-center justify-between">
+            <span>{pixelData.titleTag}</span>
+            {age !== undefined && (
+              <span className="text-[10px] text-[#38bdf8] font-mono">{age} 岁</span>
+            )}
           </div>
-          <div className="text-[10px] text-[#bdae9c] leading-relaxed">
+
+          <div className="text-[11px] text-[#c9bbae] leading-relaxed relative z-20 mb-1.5">
             {pixelData.appearanceNote}
           </div>
-          <div className="mt-1 pt-1 border-t border-[#2a1e15] flex items-center justify-between text-[10px] text-[#8e7e6e]">
-            <span>周期：{pixelData.ageRange}</span>
-            <span className="text-[#38bdf8]">{age !== undefined ? `${age} 岁` : ''}</span>
+
+          <div className="pt-1.5 border-t border-[#2a1e15] flex items-center justify-between text-[10px] text-[#8e7e6e] relative z-20">
+            <span>生长周期：{pixelData.ageRange}</span>
+            <span className={isAlive ? 'text-[#4ade80]' : 'text-[#9ca3af]'}>
+              {isAlive ? '在世存续' : '已归道山'}
+            </span>
           </div>
         </div>
       )}

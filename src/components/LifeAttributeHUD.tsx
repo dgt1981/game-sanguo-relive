@@ -97,7 +97,7 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   // ----------------------------------------------------
   if (sidebarMode) {
     return (
-      <div className="bg-[#1a1612] border border-[#3e3024] rounded-xl p-4 shadow-xl space-y-4 text-xs font-classical select-none">
+      <div className="bg-[#1a1612] border border-[#3e3024] rounded-xl p-4 shadow-xl space-y-4 text-xs font-classical select-none relative z-20">
         {/* 顶部主角像素头像与身份印契 */}
         <div className="flex items-center gap-3 pb-3 border-b border-[#33261a]">
           <ProtagonistPixelAvatar
@@ -111,6 +111,7 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
             showAgeBadge={true}
             showCampBorder={true}
             showTooltip={true}
+            tooltipPlacement="bottom-start"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5 truncate">
@@ -263,7 +264,7 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   // 移动端或顶部平铺模式 (Horizontal Mode)
   // ----------------------------------------------------
   return (
-    <div className="bg-[#1c1815] border border-[#3b3026] rounded-lg p-3 md:p-4 shadow-lg text-[#e6ded5] space-y-3">
+    <div className="bg-[#1c1815] border border-[#3b3026] rounded-lg p-3 md:p-4 shadow-lg text-[#e6ded5] space-y-3 relative z-20">
       {/* Top Identity Row */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#2e261e]">
         <div className="flex items-center gap-3">
@@ -278,6 +279,7 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
             showAgeBadge={true}
             showCampBorder={true}
             showTooltip={true}
+            tooltipPlacement="bottom-start"
           />
           <div>
             <div className="flex items-baseline gap-2 flex-wrap">

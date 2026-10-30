@@ -27,6 +27,7 @@ import { FunTitleInfo, generateFunTitles } from './services/titleGenerator';
 import { matchHistoricalFigures, MatchedHistoricalFigure } from './services/historicalFigures';
 import { storage, MidGameSaveData } from './services/storage';
 import { Header } from './components/Header';
+import { TimeFlowControlBar } from './components/TimeFlowControlBar';
 import { LifeAttributeHUD } from './components/LifeAttributeHUD';
 import { LifeYearCard } from './components/LifeYearCard';
 import { ChronicleTimeline } from './components/ChronicleTimeline';
@@ -820,15 +821,46 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#120f0c] text-[#e8ded2] flex flex-col font-classical paper-pattern selection:bg-[#d4af37] selection:text-[#19130d]">
-      {/* Header */}
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onRestart={handleRestartLife}
-        isMuted={isMuted}
-        onToggleSound={handleToggleSound}
-        knownFiguresCount={profile.knownFigures?.length || 0}
-      />
+      {/* Sticky Navigation & Global Time Flow Control Bar */}
+      <div className="sticky top-0 z-40 bg-[#161311]/95 backdrop-blur-md shadow-lg border-b border-[#3b2b1d]">
+        <Header
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onRestart={handleRestartLife}
+          isMuted={isMuted}
+          onToggleSound={handleToggleSound}
+          knownFiguresCount={profile.knownFigures?.length || 0}
+        />
+
+        {/* Global Time Flow Control Bar - persists and controls time progression across ALL views */}
+        {isBorn && !isGameOver && (
+          <TimeFlowControlBar
+            year={year}
+            season={season}
+            age={age}
+            lunarYear={currentEvent.lunarYear}
+            seasonMonths={currentEvent.seasonMonths}
+            profile={profile}
+            isAutoRunning={isAutoRunning}
+            playbackSpeed={playbackSpeed}
+            hasChoice={Boolean(currentEvent.choice)}
+            pendingChoiceTitle={
+              currentEvent.choice
+                ? currentEvent.campaignName
+                  ? `【${currentEvent.campaignName}】`
+                  : undefined
+                : undefined
+            }
+            pendingChoicePrompt={currentEvent.choice?.prompt}
+            isProcessing={isProcessing}
+            onToggleAutoRun={handleToggleAutoRun}
+            onChangeSpeed={handleChangeSpeed}
+            onManualNextSeason={handleManualNextSeason}
+            activeTab={activeTab}
+            onNavigateToSimulation={() => setActiveTab('SIMULATION')}
+          />
+        )}
+      </div>
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-5xl lg:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6">
@@ -893,7 +925,7 @@ export default function App() {
             {/* PC模式：左中右三栏式经典策略架构 */}
             <div className="hidden lg:flex items-start gap-6 w-full">
               {/* 左栏：角色身世、五维命盘与生理年轮 */}
-              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-20">
+              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-28 xl:top-32">
                 <LifeAttributeHUD
                   stats={stats}
                   profile={profile}
@@ -927,7 +959,7 @@ export default function App() {
               </div>
 
               {/* 右栏：天下人脉与名士知交、传世重宝、近期履历 */}
-              <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-20">
+              <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-28 xl:top-32">
                 <RightSidebarCompanion
                   knownFigures={profile.knownFigures || []}
                   profile={profile}
@@ -937,6 +969,7 @@ export default function App() {
                   seasonLogs={seasonLogs}
                   onInteractFigure={() => setActiveTab('FIGURES')}
                   onOpenFiguresTab={() => setActiveTab('FIGURES')}
+                  onOpenChronicleTab={() => setActiveTab('CHRONICLE')}
                 />
               </aside>
             </div>
@@ -970,7 +1003,7 @@ export default function App() {
 
             {/* PC端左侧命盘 + 主展台结构 */}
             <div className="hidden lg:flex items-start gap-6 w-full">
-              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-20">
+              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-28 xl:top-32">
                 <LifeAttributeHUD
                   stats={stats}
                   profile={profile}
@@ -1022,7 +1055,7 @@ export default function App() {
 
             {/* PC端左中右三栏式结构 */}
             <div className="hidden lg:flex items-start gap-6 w-full">
-              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-20">
+              <aside className="w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-28 xl:top-32 z-20">
                 <LifeAttributeHUD
                   stats={stats}
                   profile={profile}
@@ -1043,7 +1076,7 @@ export default function App() {
                   camp={profile.militaryAffiliation?.camp || 'NONE'}
                 />
               </div>
-              <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-20">
+              <aside className="w-[310px] xl:w-[330px] 2xl:w-[350px] shrink-0 sticky top-28 xl:top-32">
                 <RightSidebarCompanion
                   knownFigures={profile.knownFigures || []}
                   profile={profile}
@@ -1053,13 +1086,14 @@ export default function App() {
                   seasonLogs={seasonLogs}
                   onInteractFigure={() => setActiveTab('FIGURES')}
                   onOpenFiguresTab={() => setActiveTab('FIGURES')}
+                  onOpenChronicleTab={() => setActiveTab('CHRONICLE')}
                 />
               </aside>
             </div>
           </div>
         )}
 
-        {/* Tab 3: People Gallery (万民谱牒 & PHP+MySQL架构) */}
+        {/* Tab 3: People Gallery (万民谱牒) */}
         {activeTab === 'PEOPLE_GALLERY' && (
           <PeopleGallery records={records} onClearRecords={() => setRecords([])} />
         )}
