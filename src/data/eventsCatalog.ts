@@ -103,15 +103,15 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
       `冬至大如年，乡里杀猪宰羊祭祖。里正分给各家一升骨汤，母亲${profile.motherName}用布巾蘸热汤为你揉擦冻红的脚趾与耳朵。窗外北风呼号，全家在暖融融的土炕上平安迎来了新岁。`,
   },
 
-  // --- 1岁：周岁抓周礼与蹒跚学步 ---
+  // --- 1岁：周岁抓周礼、盛夏学语、金秋学步与岁暮围炉 ---
   {
     id: 'evt_toddler_1_zhuazhou',
     category: 'INFANT_SURVIVAL',
     title: '周岁晬盘 · 抓周试儿',
     priority: 90,
-    conditions: { minYear: 185, maxYear: 185, seasons: [0, 1], minAge: 1, maxAge: 1 },
+    conditions: { minYear: 185, maxYear: 185, seasons: [0], minAge: 1, maxAge: 1 },
     storyText:
-      '公元185年中平二年，你满周岁了！按汉家习俗，父母在红漆案几上设下“晬盘”，陈列各色物件。长辈笑吟吟地将你放在桌前，看你稚嫩的小手抓向何方。',
+      '公元185年中平二年孟春，你满周岁了！按汉家习俗，父母在红漆案几上设下“晬盘”，陈列各色物件。长辈笑吟吟地将你放在桌前，看你稚嫩的小手抓向何方。',
     choice: {
       prompt: '周岁试儿，红案上琳琅满目，你牙牙学语爬上前去，一把抓住了什么？',
       options: [
@@ -159,11 +159,20 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
     },
   },
   {
+    id: 'evt_toddler_1_summer_words',
+    category: 'INFANT_SURVIVAL',
+    title: '槐荫语暖 · 呀呀发蒙',
+    priority: 85,
+    conditions: { minYear: 185, maxYear: 185, seasons: [1], minAge: 1, maxAge: 1 },
+    storyText: (profile) =>
+      `公元185年盛夏，庭院老槐绿荫匝地。你扶着青砖墙学走得稳当了些，指着枝头的黄鹂鸟，口齿不清地咿呀唤着母亲${profile.motherName}。全家人在兵荒马乱的岁月里难得露出欣慰笑颜。体魄+1，仁厚+1。`,
+  },
+  {
     id: 'evt_toddler_1_first_steps',
     category: 'INFANT_SURVIVAL',
     title: '蹒跚学步 · 踉跄向阳',
     priority: 80,
-    conditions: { minYear: 185, maxYear: 185, seasons: [2, 3], minAge: 1, maxAge: 1 },
+    conditions: { minYear: 185, maxYear: 185, seasons: [2], minAge: 1, maxAge: 1 },
     storyText: '深秋阳光晒得土院暖洋洋的。你扶着斑驳的泥墙，晃晃悠悠迈开了人生最初的几个独立步伐。',
     choice: {
       prompt: '你摇晃着小身板在院中迈步，突然身子一歪要摔倒，你作何反应？',
@@ -200,6 +209,15 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
         },
       ],
     },
+  },
+  {
+    id: 'evt_toddler_1_winter_hearth',
+    category: 'INFANT_SURVIVAL',
+    title: '岁暮围炉 · 换牙发萌',
+    priority: 85,
+    conditions: { minYear: 185, maxYear: 185, seasons: [3], minAge: 1, maxAge: 1 },
+    storyText: (profile) =>
+      `公元185年岁暮，天降大雪，河冰封冻。全家围坐在土灶前烤着热腾腾的干苞谷，你嘴里冒出了第一颗乳牙，靠在父亲${profile.fatherName}膝头听着风雪声沉沉睡去。体魄+1，识见+1。`,
   },
 
   // --- 2~3岁：孩提童趣与乡里见闻 ---
@@ -288,6 +306,24 @@ export const EVENTS_DATA_TABLE: EventTableRow[] = [
         },
       ],
     },
+  },
+  {
+    id: 'evt_toddler_2_autumn_harvest',
+    category: 'INFANT_SURVIVAL',
+    title: '金秋打谷 · 黍堆翻滚',
+    priority: 80,
+    conditions: { minYear: 186, maxYear: 186, seasons: [2], minAge: 2, maxAge: 2 },
+    storyText: (profile) =>
+      `两岁金秋，村东打谷场上黍麦堆积如山。你和小伙伴在晒热的谷草垛里翻滚捉迷藏，沾了满头满身的草屑，笑声传遍了整个里社。体魄+1，气数+1。`,
+  },
+  {
+    id: 'evt_toddler_2_winter_snow',
+    category: 'INFANT_SURVIVAL',
+    title: '隆冬初雪 · 陶碗雪球',
+    priority: 80,
+    conditions: { minYear: 186, maxYear: 186, seasons: [3], minAge: 2, maxAge: 2 },
+    storyText: (profile) =>
+      `两岁之冬，朔风吹雪覆瓦三寸。母亲${profile.motherName}给你裹上新翻的粗麻小棉袄，你踩在松软的积雪上咯吱作响，用粗陶碗舀起一把干净新雪兴奋地捧给父母看。仁厚+1，体魄+1。`,
   },
   {
     id: 'evt_toddler_3_mudfish',

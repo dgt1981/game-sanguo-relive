@@ -522,8 +522,12 @@ export default function App() {
 
   // Choice Selection
   const handleSelectChoice = (choice: LifeChoice) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
     // 1. 直接战死/就义判定 (如誓死不降或冲锋阵亡)
     if (choice.isDirectFatal) {
+      setIsProcessing(false);
       triggerDeath(choice.fatalDeathReason || '血战沙场，力竭阵亡。', age, year, season, stats);
       return;
     }
@@ -532,6 +536,7 @@ export default function App() {
     if (choice.fatalCheck) {
       const check = choice.fatalCheck(stats);
       if (check && check.isFatal) {
+        setIsProcessing(false);
         triggerDeath(check.deathReason, age, year, season, stats);
         return;
       }
@@ -653,6 +658,7 @@ export default function App() {
       }));
       setIsAutoRunning(false);
       setWasAutoPausedForChoice(true);
+      setIsProcessing(false);
       return;
     }
 
@@ -664,6 +670,7 @@ export default function App() {
       setIsAutoRunning(true);
       setWasAutoPausedForChoice(false);
     }
+    setIsProcessing(false);
   };
 
   // Toggle Auto Run

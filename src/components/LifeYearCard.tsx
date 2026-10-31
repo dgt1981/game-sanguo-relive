@@ -209,11 +209,13 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
                 return (
                   <button
                     key={opt.id}
+                    disabled={isProcessing}
                     onClick={() => {
+                      if (isProcessing) return;
                       sound.playDrum();
                       onSelectChoice(opt);
                     }}
-                    className="w-full text-left p-3.5 sm:p-4 rounded-lg bg-[#221a14] border border-[#443324] hover:bg-[#2c2119] hover:border-[#d4af37] transition-all cursor-pointer group flex flex-col justify-between"
+                    className="w-full text-left p-3.5 sm:p-4 rounded-lg bg-[#221a14] border border-[#443324] hover:bg-[#2c2119] hover:border-[#d4af37] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer group flex flex-col justify-between"
                   >
                     <div className="flex items-start justify-between gap-3 mb-1">
                       <div className="flex items-center gap-2 flex-wrap">
