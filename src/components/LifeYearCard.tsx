@@ -107,12 +107,12 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
                   </div>
                   <div className="text-[11px] text-[#9c8976] flex items-center gap-1 font-classical mt-0.5">
                     <MessageSquare className="w-3 h-3 text-[#d4af37]" />
-                    <span>同郡知交 · 驿道会面</span>
+                    <span>同乡相识 · 碰巧遇见</span>
                   </div>
                 </div>
               </div>
               <span className="text-xs text-[#d4af37] font-classical hidden sm:inline">
-                【名士引路】
+                【结识名人】
               </span>
             </div>
 
@@ -130,7 +130,7 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5 font-semibold text-[#d4af37] font-classical">
               <Flame className="w-3.5 h-3.5 text-[#f59e0b]" />
-              <span>【天下大势 · {seasonCfg.name}季】</span>
+              <span>【天下大事 · {seasonCfg.name}季】</span>
             </div>
             <span className="text-[11px] text-[#7a6a59] font-classical">
               {seasonCfg.solarTerm}
@@ -142,7 +142,7 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
         {/* Regional Impact (本地风物) */}
         <div className="bg-[#201813] border border-[#3b2c1e] p-3.5 sm:p-4 rounded-lg text-xs sm:text-sm leading-relaxed space-y-1">
           <div className="font-semibold text-[#c5a666] font-classical">
-            【郡县风物 · {profile.commandery}】
+            【老家近况 · {profile.commandery}】
           </div>
           <p className="text-[#b9a997]">{currentEvent.regionalImpact}</p>
         </div>
@@ -152,7 +152,7 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
           <div className="flex items-center justify-between border-b border-[#36271c] pb-2">
             <div className="font-semibold text-[#faece0] flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: seasonCfg.color }} />
-              <span>【平生纪事 · {seasonCfg.name}令】</span>
+              <span>【个人经历 · {seasonCfg.name}季】</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
               <span className="text-[#e5a84b] font-semibold">【{stage.stageName} · {stage.tag}】</span>
@@ -200,7 +200,7 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
               </h3>
               <div className="flex items-center gap-1 text-[11px] text-[#a89582] font-classical">
                 <EyeOff className="w-3.5 h-3.5 text-[#e5a84b]" />
-                <span>暗投决断 · 影响值已隐藏（抉择后将于年谱显现）</span>
+                <span>凭直觉选 · 属性影响选完后揭晓</span>
               </div>
             </div>
 
@@ -246,9 +246,9 @@ export const LifeYearCard: React.FC<LifeYearCardProps> = ({
                           <span>{opt.requirementHint}</span>
                         </span>
                       ) : (
-                        <span className="text-[#786959]">祸福唯心 · 顺逆由命</span>
+                        <span className="text-[#786959]">顺其自然</span>
                       )}
-                      <span className="text-[10px] text-[#6b5d4e]">听凭本心立决</span>
+                      <span className="text-[10px] text-[#6b5d4e]">按直觉选择</span>
                     </div>
                   </button>
                 );

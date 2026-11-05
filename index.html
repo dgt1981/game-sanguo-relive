@@ -3,6 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // 防御浏览器第三方插件（如 Phantom/MetaMask 等钱包插件）注入 ethereum 时抛出的 "Cannot redefine property: ethereum" 异常
+      (function() {
+        let _eth = window.ethereum;
+        try {
+          Object.defineProperty(window, 'ethereum', {
+            configurable: true,
+            enumerable: true,
+            get: function() { return _eth; },
+            set: function(val) { _eth = val; }
+          });
+        } catch (_) {}
+
+        window.addEventListener('error', function(event) {
+          if (
+            (event.filename && (
+              event.filename.startsWith('chrome-extension://') ||
+              event.filename.startsWith('moz-extension://') ||
+              event.filename.includes('evmAsk')
+            )) ||
+            (event.message && (
+              event.message.includes('Cannot redefine property: ethereum') ||
+              event.message.includes('evmAsk')
+            ))
+          ) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (
+            event.reason &&
+            typeof event.reason.message === 'string' &&
+            event.reason.message.includes('Cannot redefine property: ethereum')
+          ) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+          }
+        }, true);
+      })();
+    </script>
     <title>公元184年，你出生了 · 汉末人生录 (八十亿分之一人生)</title>
     <meta name="description" content="公元184年，你出生了，然后让时间自己向前走。你可能出生在洛阳、颍川、徐州、幽州、并州、冀州、凉州或交州。体验东汉末年最真实的一段草民人生。" />
     <meta property="og:title" content="公元184年，你出生了 · 汉末人生录" />

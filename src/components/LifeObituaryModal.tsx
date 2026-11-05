@@ -57,23 +57,23 @@ export const LifeObituaryModal: React.FC<LifeObituaryModalProps> = ({
   const currentFigure = matchedFigures[selectedFigureIndex] || matchedFigures[0];
 
   const handleCopy = () => {
-    const text = `【汉末草民实录 · 八十亿分之一人生】
-传主：${profile.name}（字${profile.courtesyName} · ${profile.gender === 'MALE' ? '男丁' : '女秀'}）
-生卒：公元184年孟春 — 公元${deathYear}年${seasonCfg.name}季（享年${deathAge}岁）
+    const text = `【三国人生模拟 · 一生总结】
+名字：${profile.name}（字${profile.courtesyName} · ${profile.gender === 'MALE' ? '男' : '女'}）
+生卒：公元184年春 — 公元${deathYear}年${seasonCfg.name}季（活了${deathAge}岁）
 籍贯：${profile.commandery} · ${profile.county}
-身前身份：${profile.occupation}
+生前身份：${profile.occupation}
 结局称号：${ending.title}
 趣味称号：${funTitles.primaryTitle}（${funTitles.folkNickname}）
 趣味标签：${funTitles.badges.join(' / ')}
-幽默评注：${funTitles.humorousQuote}
+幽默评价：${funTitles.humorousQuote}
 
-【宿命映照历史人物】：${currentFigure ? `${currentFigure.name}（字${currentFigure.courtesyName} · 契合度 ${currentFigure.similarityScore}% · ${currentFigure.titleTag}）` : '无'}
-【宿命同道评述】：${currentFigure ? currentFigure.resonanceReason : ''}
+【性格最像的三国人物】：${currentFigure ? `${currentFigure.name}（字${currentFigure.courtesyName} · 相似度 ${currentFigure.similarityScore}% · ${currentFigure.titleTag}）` : '无'}
+【相像原因】：${currentFigure ? currentFigure.resonanceReason : ''}
 
-【平生总叙】
+【这辈子回顾】
 ${ending.summary}
 
-【史家注脚】
+【后人评价】
 ${ending.historianNote}
 `;
     navigator.clipboard.writeText(text).then(() => {
@@ -149,17 +149,17 @@ ${ending.historianNote}
                 </span>
               </div>
               <div className="text-xs text-[#c5a666] mt-0.5">
-                最终仪容 · 【{getPhysiologicalStage(deathAge).tag}】
+                最终样貌 · 【{getPhysiologicalStage(deathAge).tag}】
               </div>
               <div className="text-[11px] text-[#8e7e6e] mt-0.5">
-                公元184年孟春 — 公元{deathYear}年{seasonCfg.name}季 · 享年 {deathAge} 岁
+                公元184年春 — 公元${deathYear}年{seasonCfg.name}季 · 活了 {deathAge} 岁
               </div>
             </div>
           </div>
 
           {deathReason && (
             <div className="mt-2.5 text-xs text-[#f87171] bg-[#2a1313] py-1 px-3 rounded inline-block border border-[#521c1c] font-classical">
-              殁因：{deathReason}
+              死因：{deathReason}
             </div>
           )}
         </div>
@@ -170,7 +170,7 @@ ${ending.historianNote}
           <div className="bg-[#221a14] border border-[#3f3022] rounded-lg p-4 space-y-2">
             <div className="font-semibold text-[#c5a666] flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5" />
-              <span>【平生总叙】</span>
+              <span>【这辈子回顾】</span>
             </div>
             <p className="text-[#ded4c6] leading-relaxed indent-6">
               {ending.summary}
@@ -181,7 +181,7 @@ ${ending.historianNote}
           <div className="bg-[#241c16] border border-[#483726] rounded-lg p-4 space-y-2">
             <div className="font-semibold text-[#d4af37] flex items-center gap-1.5">
               <Scroll className="w-3.5 h-3.5" />
-              <span>【史家赞曰】</span>
+              <span>【后人评价】</span>
             </div>
             <p className="text-[#ddd0c0] leading-relaxed italic indent-6">
               {ending.historianNote}
@@ -190,7 +190,7 @@ ${ending.historianNote}
 
           {/* Stats at death */}
           <div className="bg-[#1f1712] border border-[#362719] rounded-lg p-3">
-            <span className="text-xs text-[#9d8d7b] block mb-1.5">平生终局风貌：</span>
+            <span className="text-xs text-[#9d8d7b] block mb-1.5">生前最终属性：</span>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs font-mono">
               <div className="bg-[#16100c] p-1.5 rounded border border-[#2d1f14]">
                 <div className="text-[#10b981] text-[10px]">体魄</div>
@@ -248,7 +248,7 @@ ${ending.historianNote}
                 <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[#2e2218]">
                   <div className="flex items-center gap-1.5 text-[#d4af37]">
                     <Users className="w-3.5 h-3.5" />
-                    <span>【平生知交】：</span>
+                    <span>【结识的名人】：</span>
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {profile.knownFigures.map((fig) => (
@@ -275,7 +275,7 @@ ${ending.historianNote}
                 <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[#2e2218]">
                   <div className="flex items-center gap-1.5 text-amber-300">
                     <Award className="w-3.5 h-3.5" />
-                    <span>【名士重赐】：</span>
+                    <span>【收到的礼物】：</span>
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {profile.collectedBoons.map((boon) => (
@@ -305,11 +305,11 @@ ${ending.historianNote}
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#e5c158]" />
                   <span className="font-calligraphy text-base sm:text-lg text-[#faece0] tracking-wider">
-                    宿命映照 · 三国历史同道
+                    性格最像的三国人物
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-[#9c8b7a] font-classical">天命契合指数：</span>
+                  <span className="text-[11px] text-[#9c8b7a] font-classical">性格相似度：</span>
                   <span className="font-mono font-bold text-sm sm:text-base text-[#f59e0b] px-2 py-0.5 rounded bg-[#2b2016] border border-[#5a422a]">
                     {currentFigure.similarityScore}%
                   </span>
@@ -319,7 +319,7 @@ ${ending.historianNote}
               {/* Selector tabs if multiple matched figures */}
               {matchedFigures.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                  <span className="text-[#8e7e6e] text-[11px] shrink-0 font-classical">神思相契人物：</span>
+                  <span className="text-[#8e7e6e] text-[11px] shrink-0 font-classical">相像人物候选：</span>
                   {matchedFigures.map((fig, idx) => (
                     <button
                       key={fig.id}

@@ -48,10 +48,10 @@ export const SEASONS_CONFIG: {
   solarTerm: string;
   color: string;
 }[] = [
-  { name: '春', fullName: '春季', months: '孟春·正月至季春·三月', solarTerm: '立春 · 雨水 · 惊蛰 · 清明', color: '#4ade80' },
-  { name: '夏', fullName: '夏季', months: '孟夏·四月至季夏·六月', solarTerm: '立夏 · 小满 · 芒种 · 夏至', color: '#f87171' },
-  { name: '秋', fullName: '秋季', months: '孟秋·七月至季秋·九月', solarTerm: '立秋 · 处暑 · 白露 · 霜降', color: '#fbbf24' },
-  { name: '冬', fullName: '冬季', months: '孟冬·十月至季冬·十二月', solarTerm: '立冬 · 小雪 · 大雪 · 岁除', color: '#38bdf8' },
+  { name: '春', fullName: '春季', months: '1~3月', solarTerm: '立春 · 清明', color: '#4ade80' },
+  { name: '夏', fullName: '夏季', months: '4~6月', solarTerm: '立夏 · 夏至', color: '#f87171' },
+  { name: '秋', fullName: '秋季', months: '7~9月', solarTerm: '立秋 · 霜降', color: '#fbbf24' },
+  { name: '冬', fullName: '冬季', months: '10~12月', solarTerm: '立冬 · 岁末', color: '#38bdf8' },
 ];
 
 export function generateRandomBirth(): PersonProfile {
@@ -109,8 +109,8 @@ export function generateRandomBirth(): PersonProfile {
     commandery: commanderyPick,
     county: countyPick,
     socialClass,
-    occupation: '襁褓幼童',
-    fatherName: `${surname}大郎`,
+    occupation: '吃奶娃娃',
+    fatherName: `${surname}老汉`,
     fatherAlive: true,
     motherName: '陈氏',
     motherAlive: true,
@@ -327,9 +327,9 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 2) {
     return {
       stageKey: 'INFANT',
-      stageName: '襁褓幼婴',
-      tag: '骨软神萌',
-      description: '初临乱世，襁褓骨弱，易染风热，全赖母乳温汤悉心护持。',
+      stageName: '婴儿期',
+      tag: '牙牙学语',
+      description: '刚来到乱世，身子骨还软得很，全靠爹娘一口米汤一口奶把你拉扯大。',
       ageRange: '0~2岁',
       growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'DORMANT' },
     };
@@ -337,9 +337,9 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 6) {
     return {
       stageKey: 'CHILD',
-      stageName: '龆龀幼童',
-      tag: '戏耍发蒙',
-      description: '学步奔走，在田垄水洼捉虫嬉戏，识人辨物，筋骨日健。',
+      stageName: '幼儿期',
+      tag: '到处撒欢',
+      description: '学会了满地乱跑，在泥坑里玩泥巴抓小虫，慢慢能听懂大人的话了。',
       ageRange: '3~6岁',
       growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING' },
     };
@@ -347,9 +347,9 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 13) {
     return {
       stageKey: 'YOUTH',
-      stageName: '总角成童',
-      tag: '拔节抽条',
-      description: '少年长成，拔节拔高，帮衬家计放牛拾柴，初晓是非大义。',
+      stageName: '少年期',
+      tag: '个头猛蹿',
+      description: '个头蹿得飞快，开始懂事了，帮家里放牛割草捡柴火，分担家务。',
       ageRange: '7~13岁',
       growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING' },
     };
@@ -357,9 +357,9 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 19) {
     return {
       stageKey: 'ADULT',
-      stageName: '及冠成丁',
-      tag: '气力大成',
-      description: '束发成丁，编入官府丁册。能荷重犁挽硬弓，自立生计以养家。',
+      stageName: '青年期',
+      tag: '独当一面',
+      description: '长成结实的大小伙/大姑娘了，力气变大，能干重活，开始自力更生。',
       ageRange: '14~19岁',
       growthTrend: { health: 'GROWING', intellect: 'GROWING', martial: 'GROWING' },
     };
@@ -367,9 +367,9 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 35) {
     return {
       stageKey: 'PRIME',
-      stageName: '弱冠壮盛',
-      tag: '鼎盛春秋',
-      description: '气血方刚，体力武略正值人生峰顶。生儿育女，奋力拼搏安家。',
+      stageName: '壮年期',
+      tag: '身强力壮',
+      description: '人生最好的年纪，有使不完的劲儿，成家立业，为了过上好日子拼命干。',
       ageRange: '20~35岁',
       growthTrend: { health: 'PEAK', intellect: 'GROWING', martial: 'PEAK' },
     };
@@ -377,9 +377,9 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 50) {
     return {
       stageKey: 'MIDDLE',
-      stageName: '不惑知命',
-      tag: '沉潜厚重',
-      description: '筋骨渐定，世事洞明。处事老练持重，受后生敬仰，家资沉淀。',
+      stageName: '中年期',
+      tag: '成熟稳重',
+      description: '人情世故全摸透了，处事沉稳，受村里后生晚辈的尊重，手里也有了点积蓄。',
       ageRange: '36~50岁',
       growthTrend: { health: 'PEAK', intellect: 'PEAK', martial: 'DECLINING' },
     };
@@ -387,18 +387,18 @@ export function getPhysiologicalStage(age: number): PhysiologicalStage {
   if (age <= 65) {
     return {
       stageKey: 'ELDER',
-      stageName: '花甲耳顺',
-      tag: '气血渐衰',
-      description: '两鬓苍苍，自然衰老。气力难挽强弓，而德厚名重，尊为乡老。',
+      stageName: '老年期',
+      tag: '白发渐生',
+      description: '头发花白，身子骨不如从前硬朗了，拉不动硬弓，成了村里的老长辈。',
       ageRange: '51~65岁',
       growthTrend: { health: 'DECLINING', intellect: 'STABLE', martial: 'DECLINING' },
     };
   }
   return {
     stageKey: 'VENERABLE',
-    stageName: '古稀耄耋',
-    tag: '桑榆暮年',
-    description: '见汉家四百年倾覆与天下三分，寿考人瑞。听天安命，子孙绕膝。',
+    stageName: '高寿暮年',
+    tag: '见惯风浪',
+    description: '活过了一辈子大风大浪，见证了天下分分合合，儿孙绕膝，听天由命。',
     ageRange: '66岁以上',
     growthTrend: { health: 'DECLINING_FAST', intellect: 'STABLE', martial: 'DECLINING_FAST' },
   };
@@ -412,10 +412,6 @@ export interface NaturalChangeResult {
 
 /**
  * 随生理年龄与四季自然更迭的生理成长与衰老动力学系统
- * 严格调整流转节奏：
- * - 避免四季每一季均暴增数值；
- * - 生长主要循着孟春阳和生发与秋收沉淀缓慢推进；
- * - 绝不在幼童阶段产生非人超常数值。
  */
 export function calculateNaturalPhysiologicalChange(
   age: number,
@@ -426,126 +422,126 @@ export function calculateNaturalPhysiologicalChange(
   const delta: Partial<Record<keyof Attributes, number>> = {};
   let naturalNote: string | undefined = undefined;
 
-  // 1. 襁褓期 (0~2岁) - 婴儿自然温养，极其娇弱缓慢
+  // 1. 婴儿期 (0~2岁)
   if (stage.stageKey === 'INFANT') {
     if (season === 0) {
       delta.health = 1;
-      naturalNote = '【生理生发】孟春阳和，襁褓温养，骨肉微丰。体魄+1。';
+      naturalNote = '【慢慢长个】春天天气暖和了，被窝里温温热热，你长胖了一点。体魄+1。';
     } else if (season === 2) {
       delta.intellect = 1;
-      naturalNote = '【心智微萌】识得双亲慈容，咿呀学语。识见+1。';
+      naturalNote = '【学会认人】认得爹娘的脸了，嘴里开始咿呀学语。识见+1。';
     } else if (season === 3) {
       if (currentStats.wealth < 4) {
         delta.health = -1;
-        naturalNote = '【生理风寒】岁暮苦寒屋漏，受了些许风霜。体魄-1。';
+        naturalNote = '【着凉感冒】大冬天屋里漏风又缺柴火，受了点风寒流鼻涕。体魄-1。';
       }
     }
   }
-  // 2. 幼童期 (3~6岁) - 奔跑跳跃、学步识物，平缓发蒙
+  // 2. 幼儿期 (3~6岁)
   else if (stage.stageKey === 'CHILD') {
     if (season === 0) {
       delta.health = 1;
-      naturalNote = '【自然拔节】春日田埂嬉玩，筋骨渐韧。体魄+1。';
+      naturalNote = '【春天撒欢】在田埂上跑来跑去，手脚越来越利索了。体魄+1。';
     } else if (season === 1) {
       delta.intellect = 1;
-      naturalNote = '【心智发蒙】学认鸟兽草木，言语清晰。识见+1。';
+      naturalNote = '【聪明懂事】开始认识身边的花鸟虫草，说话也利索了。识见+1。';
     } else if (season === 2) {
       delta.martial = 1;
-      naturalNote = '【跑跳玩闹】追逐鸡犬捉蜻蜓，腿脚利落。勇略+1。';
+      naturalNote = '【追鸡逗狗】追着院里的小鸡小狗到处跑，动作挺敏捷。勇略+1。';
     } else if (season === 3) {
       delta.virtue = 1;
-      naturalNote = '【童心纯良】帮父母做些轻快家务，受邻人夸赞。仁厚+1。';
+      naturalNote = '【乖巧懂事】主动帮爹娘干点轻快活，街坊邻居都夸乖。仁厚+1。';
     }
   }
-  // 3. 成童总角期 (7~13岁) - 少年抽条拔节，按年逐步长成
+  // 3. 少年期 (7~13岁)
   else if (stage.stageKey === 'YOUTH') {
     if (season === 0) {
       delta.health = 1;
       delta.martial = 1;
-      naturalNote = '【骨骼抽条】春耕放牛拾柴，身形抽条拔节。体魄+1，勇略+1。';
+      naturalNote = '【个头猛蹿】开春帮着放牛割草，个子蹿高了一截，越来越结实。体魄+1，勇略+1。';
     } else if (season === 1) {
       delta.martial = 1;
-      naturalNote = '【少年筋骨】下河泅水摸鱼，体格黝黑健朗。勇略+1。';
+      naturalNote = '【下河摸鱼】夏天跳进河里游泳摸鱼，晒出一身黝黑皮肉。勇略+1。';
     } else if (season === 2) {
       delta.intellect = 1;
       delta.wealth = 1;
-      naturalNote = '【帮衬家计】分担秋收稼穑，初知柴米艰辛。识见+1，家资+1。';
+      naturalNote = '【帮衬家里】帮着家里秋收搬粮食，体会到了柴米油盐不容易。识见+1，家资+1。';
     } else if (season === 3) {
       delta.virtue = 1;
-      naturalNote = '【知晓孝悌】冬日敬奉长辈，初晓乡邻人情。仁厚+1。';
+      naturalNote = '【孝顺长辈】大冬天给爹娘暖被窝倒热水，懂得体贴人了。仁厚+1。';
     }
   }
-  // 4. 及冠成丁期 (14~19岁) - 筋骨定型自立养家
+  // 4. 青年期 (14~19岁)
   else if (stage.stageKey === 'ADULT') {
     if (season === 0) {
       delta.health = 1;
       delta.martial = 1;
-      naturalNote = '【束发成丁】束发成丁编入赋籍，力能挽弓扶犁。体魄+1，勇略+1。';
+      naturalNote = '【成大小伙】力气大增，能下地扶犁干重农活了。体魄+1，勇略+1。';
     } else if (season === 2) {
       delta.intellect = 1;
       delta.wealth = 1;
-      naturalNote = '【自立谋生】秋收营生有度，在乡里立身自足。识见+1，家资+1。';
+      naturalNote = '【自力更生】秋天干零工赚了点铜钱，能自己养活自己了。识见+1，家资+1。';
     } else if (season === 3) {
       delta.virtue = 1;
-      naturalNote = '【立身扬名】处事沉稳守分，受乡邻称道。仁厚+1。';
+      naturalNote = '【讲信守义】帮邻里修屋扫雪，在村里落了个好名声。仁厚+1。';
     }
   }
-  // 5. 弱冠壮盛期 (20~35岁) - 人生鼎盛黄金巅峰，属性平稳
+  // 5. 壮年期 (20~35岁)
   else if (stage.stageKey === 'PRIME') {
     if (season === 0 && currentStats.health < 65) {
       delta.health = 1;
-      naturalNote = '【盛年气血】春回大地，气血调达。体魄+1。';
+      naturalNote = '【身强体壮】春天万物复苏，身上有使不完的力气。体魄+1。';
     } else if (season === 2 && currentStats.wealth < 70) {
       delta.wealth = 1;
-      naturalNote = '【壮岁立业】年富力强，田园营生有度。家资+1。';
+      naturalNote = '【勤劳致富】年轻肯吃苦，秋收后家里存粮多了不少。家资+1。';
     }
   }
-  // 6. 不惑知命期 (36~50岁) - 识见登峰，体力平稳微沉
+  // 6. 中年期 (36~50岁)
   else if (stage.stageKey === 'MIDDLE') {
     if (season === 0 && currentStats.intellect < 80) {
       delta.intellect = 1;
-      naturalNote = '【沉潜睿智】历尽世事沧桑，洞悉人事机微。识见+1。';
+      naturalNote = '【见多识广】人到中年，各种人情世故全看透了。识见+1。';
     } else if (season === 1 && currentStats.martial > 55) {
       delta.martial = -1;
-      naturalNote = '【旧伤微显】气力不及初冠之时，骨节偶感酸楚。勇略-1。';
+      naturalNote = '【体力下降】力气不如小伙子那会儿了，腰腿偶尔发酸。勇略-1。';
     } else if (season === 2) {
       delta.virtue = 1;
-      naturalNote = '【德隆望重】处事持重端正，渐成乡党主心骨。仁厚+1。';
+      naturalNote = '【德高望重】办事公道稳重，成了村里主心骨。仁厚+1。';
     } else if (season === 3 && currentStats.health > 70) {
       delta.health = -1;
     }
   }
-  // 7. 花甲耳顺期 (51~65岁) - 自然平缓衰老
+  // 7. 老年期 (51~65岁)
   else if (stage.stageKey === 'ELDER') {
     if (season === 0) {
       delta.virtue = 1;
-      naturalNote = '【耆老尊长】年届花甲，晚生后辈皆尊为长者。仁厚+1。';
+      naturalNote = '【受人尊敬】年过半百，村里后生晚辈见到都客客气气打招呼。仁厚+1。';
     } else if (season === 1) {
       delta.martial = -1;
-      naturalNote = '【气力稍逊】步履渐缓，难挽硬弓重兵。勇略-1。';
+      naturalNote = '【腿脚变慢】走路没年轻时快了，拿不动太重的东西。勇略-1。';
     } else if (season === 2) {
       delta.health = -1;
-      naturalNote = '【筋骨渐衰】秋风萧瑟，步履微迟。体魄-1。';
+      naturalNote = '【秋凉畏冷】秋风一吹身上有点发虚，容易咳嗽。体魄-1。';
     } else if (season === 3) {
       delta.health = -1;
-      naturalNote = '【岁暮畏寒】大雪天寒，围炉避冻。体魄-1。';
+      naturalNote = '【冬天猫冬】大雪天怕冷，大部分时间缩在屋里烤火。体魄-1。';
     }
   }
-  // 8. 古稀耄耋期 (66岁以上) - 暮景祥瑞，听天由命
+  // 8. 高寿暮年 (66岁以上)
   else {
     if (season === 0) {
       delta.virtue = 1;
       delta.fortune = 1;
-      naturalNote = '【乱世人瑞】历经两甲子乱世而得享古稀，被奉为祥瑞长者。仁厚+1，气数+1。';
+      naturalNote = '【村里老寿星】乱世里活过花甲古稀，全村都把你当成有福气的老宝贝。仁厚+1，气数+1。';
     } else if (season === 1) {
       delta.martial = -1;
-      naturalNote = '【筋力消退】耳目渐花，行动需人搀扶。勇略-1。';
+      naturalNote = '【行动迟缓】眼神有些花了，走远路需要拐杖或儿孙搀扶。勇略-1。';
     } else if (season === 2) {
       delta.health = -1;
-      naturalNote = '【秋凉畏冷】气血渐衰，卧榻歇息。体魄-1。';
+      naturalNote = '【年老体衰】年纪大了，吃得少睡得多，多在榻上歇息。体魄-1。';
     } else if (season === 3) {
       delta.health = -1;
-      naturalNote = '【风雪残年】朔风彻骨，子孙端奉热汤。体魄-1。';
+      naturalNote = '【安享晚年】风雪漫天，儿孙端来热汤饭伺候在床前。体魄-1。';
     }
   }
 
@@ -604,81 +600,81 @@ export function getLunarYearName(year: number): string {
 /**
  * Seasonal Macro Three Kingdoms Historical Database
  */
-const SEASONAL_MACRO_EVENTS: Record<string, string> = {
-  // 184 Yellow Turban Rebellion
-  '184-0': '巨鹿张角传道十载，门徒唐周洛阳首告，大将军何进搜捕马元义斩于洛阳。张角星夜飞敕三十六方提前反汉，三十余万众同日举事，海内震动。',
-  '184-1': '四月皇甫嵩、朱儁兵发颍川讨黄巾，波才败朱儁并围皇甫嵩于长社。五月长社大风，皇甫嵩夜半纵火，曹操引飞骑夹击，大破黄巾贼数万。',
-  '184-2': '北中郎将卢植围张角于广宗。中常侍左丰索贿未遂诬奏卢植，槛车征卢植下狱。朝廷改派董卓代领，董卓兵败。八月张角病殁于广宗。',
-  '184-3': '皇甫嵩接掌北军，十月夜袭广宗斩张梁，十一月斩张宝于曲阳，筑京观于城西。主力略平，然黑山、白波诸盗四起，天下凋敝。',
+export const SEASONAL_MACRO_EVENTS: Record<string, string> = {
+  // 184 Yellow Turban
+  '184-0': '巨鹿的张角创立太平道，三十多万人头裹黄巾同时起义造反，天下震动。朝廷大将军何进紧急搜捕叛党，各地官府乱成一团。',
+  '184-1': '朝廷派皇甫嵩、朱儁带兵讨伐黄巾军，在长社被黄巾大将波才包围。皇甫嵩趁着夜半大风放火烧营，曹操率骑兵杀出，大破黄巾军。',
+  '184-2': '朝廷大将卢植把张角围在广宗，却因没给宦官塞钱被诬陷打入死牢。朝廷改派董卓领兵却吃了败仗。八月张角在广宗病死。',
+  '184-3': '皇甫嵩接管大军，攻破广宗和曲阳，杀掉了张角的弟弟张梁、张宝。黄巾主力虽然被打散，但各地小股叛军依然四处抢劫。',
 
   // 189 Dong Zhuo Enter Capital
-  '189-0': '汉灵帝病笃于洛阳南宫嘉德殿。蹇硕欲谋杀何进未果，大将军何进掌握禁军，两宫宿卫甲兵森严。',
-  '189-1': '四月灵帝驾崩，皇子辩即位为少帝。何进与袁绍密谋诛灭中官，何太后不许，何进阴召西凉刺史董卓引兵逼京。',
-  '189-2': '八月何进伏诛于长乐宫，袁绍袁术引禁军尽杀宦官二千人，宫室大火。董卓率三千西凉飞熊铁骑趁夜入洛阳，并吞何进部曲。',
-  '189-3': '董卓专权，废少帝封弘农王，立九岁陈留王为汉献帝。夜宿龙床，鸩杀何太后，毒杀弘农王，西凉兵劫掠洛阳士庶。',
+  '189-0': '汉灵帝病重快不行了，宦官蹇硕想暗杀何进没成功。大将军何进调动禁军守住皇宫，洛阳城里剑拔弩张。',
+  '189-1': '汉灵帝去世，少帝即位。大将军何进想彻底除掉宦官，太后不答应，何进便暗中招引西凉的董卓带大军进京逼宫。',
+  '189-2': '宦官设伏杀了何进，袁绍、袁术兄弟立刻率兵杀进皇宫，诛杀了上千名宦官。董卓趁着混乱带三千西凉铁骑开进洛阳，接管了兵权。',
+  '189-3': '董卓独揽大权，废掉少帝改立九岁的汉献帝，还毒死了太后。西凉兵在洛阳街头横行霸道，到处抢夺百姓钱财。',
 
   // 190 Coalition against Dong
-  '190-0': '关东州郡起兵讨董，袁绍为盟主，曹操、孙坚等十八路诸侯歃血结盟，分屯酸枣、河内。董卓部将华雄迎战诸侯。',
-  '190-1': '二月董卓惧关东兵锋，纵火焚烧洛阳两百里宫阙陵墓，悉发数百万百姓西迁长安，老弱相践踏于道，号泣震天。',
-  '190-2': '诸侯进军迟疑，唯曹操引兵西追，于荥阳汴水遇董卓大将徐荣伏击，兵败中箭，为曹洪让马救脱。酸枣大营日日高会置酒，貌合神离。',
-  '190-3': '孙坚率江东孤军破梁县斩华雄，率先收复洛阳废墟，扫除汉家宗庙，于建章殿残井中得传国玉玺。',
+  '190-0': '关东各州郡起兵讨伐董卓，推举袁绍当盟主，曹操、孙坚等十八路诸侯歃血为盟。董卓大将华雄带兵迎战诸侯联军。',
+  '190-1': '董卓害怕诸侯联军，竟然放火烧毁了整个洛阳城，强行把几百万老百姓迁往长安，路上死伤踩踏无数，哭声震天。',
+  '190-2': '关东诸侯天天在营地喝酒扯皮没人敢上，只有曹操带兵追击，结果在荥阳中了埋伏大败，曹洪让马才救出曹操一命。',
+  '190-3': '孙坚带着江东部队猛冲猛打，斩杀了华雄，率先杀进烧成废墟的洛阳，在水井里意外打捞出了汉家的传国玉玺。',
 
   // 192 Lu Bu kills Dong Zhuo & Chang'an Chaos
-  '192-0': '孙坚跨江攻刘表，于岘山被黄祖部将流矢射杀。袁术与袁绍兄弟反目，天下诸侯各起兵吞并。',
-  '192-1': '四月司徒王允与吕布设连环计，在未央宫斩杀董卓，弃尸于市，万民点灯相庆。贾诩献策于李傕郭汜，凉州大军反扑长安。',
-  '192-2': '六月李傕郭汜破长安，杀王允，吕布东奔。凉州乱兵纵火劫掠公卿百官，关中大饥，死者数十万，白骨蔽野，人相食。',
-  '192-3': '曹操在兖州收编青州百万黄巾余部，择其精锐号为“青州兵”，威镇中原。',
+  '192-0': '孙坚渡江攻打刘表，在岘山中了黄祖手下的冷箭阵亡。袁术和袁绍兄弟翻脸，天下各路诸侯开始互相攻打兼并。',
+  '192-1': '王允和吕布暗中联手，在未央宫设计刺杀了董卓，百姓欢天喜地。随后贾诩给李傕、郭汜出主意，西凉大军反扑长安。',
+  '192-2': '李傕、郭汜攻破长安，杀了王允，吕布被迫逃出关东。乱兵在长安四处洗劫，关中发生大饥荒，几十万人饿死。',
+  '192-3': '曹操在兖州收服了百多万青州黄巾降兵，挑选其中的精壮汉子编成“青州兵”，在中原站稳了脚跟。',
 
   // 193-194 Cao Cao conquest of Xuzhou & Yan famine
-  '193-2': '曹操因父曹嵩遇害于徐州，引大军大举东征陶谦，攻拔十余城，坑杀男女数十万人于泗水，泗水为之断流，鸡犬亦尽。',
-  '194-1': '陈宫、张邈反曹操，迎吕布袭据兖州，曹操仅余甄城、范县、东阿三县。夏秋飞蝗蔽天，食草木叶俱尽，中原人相食。',
-  '194-3': '陶谦病笃，临终三让徐州于平原相刘备，刘备领徐州牧。',
+  '193-2': '曹操因为父亲在徐州被杀，带大军大举进攻陶谦，一路攻城掠地，沿途百姓死伤无数，泗水河道都被尸体堵塞断流。',
+  '194-1': '陈宫和张邈背叛曹操，迎请吕布偷袭夺走了兖州，曹操只剩三座县城。夏秋时分飞蝗遮天蔽日，把草木啃得精光，中原百姓断粮。',
+  '194-3': '徐州陶谦病重快不行了，临终前三次劝说刘备接管徐州，刘备最终接下徐州大印成了徐州牧。',
 
   // 196 Emperor to Xuchang
-  '196-2': '汉献帝历尽千辛万苦自长安乱军中东归洛阳，宫室尽毁，百官食野草。曹操依荀彧“奉天子以从民望”之计，亲引大军迎驾迁都许县。',
-  '196-3': '曹操颁布“屯田令”，召集流民耕种许昌荒田，农官分岁收，数年中公私丰足，中原军民免于饥馑。',
+  '196-2': '汉献帝历经千难万险从长安乱军中逃回洛阳，宫殿早已被烧毁，百官只能吃野草度日。曹操听从谋士荀彧的建议，派大军把皇帝迎到了许县。',
+  '196-3': '曹操在许昌颁布“屯田令”，召集逃难的流民开垦荒地种粮，产出的粮食公私分成，几年下来军粮充足，百姓也免于挨饿。',
 
   // 198 Fall of Lu Bu
-  '198-3': '曹操围吕布于下邳，决泗水、沂水灌城月余。部将宋宪魏续缚陈宫降曹，吕布白门楼受缢。张辽降曹，徐州底定。',
+  '198-3': '曹操把吕布团团围在下邳城，引泗水和沂水淹城一个多月。部下叛变绑了陈宫投降，吕布在白门楼被绞死，张辽归降曹操。',
 
   // 200 Battle of Guandu
-  '200-0': '董承等衣带诏事泄被族诛。曹操亲征刘备，刘备奔邺城投袁绍，关羽下邳被围，为保二嫂暂降曹操。',
-  '200-1': '白马之战，关羽策赤兔马冲阵，斩颜良于万众之中；延津之战曹操以诱饵计阵斩文丑。关羽挂印封金，千里走单骑寻刘备。',
-  '200-2': '八月袁绍进逼官渡，筑土楼俯射曹营，曹军造发石霹雳车摧毁敌楼。两军堑壕相持，曹军粮少兵疲，危在旦夕。',
-  '200-3': '十月袁绍谋士许攸叛降，曹操跣足相迎。曹操亲引五千精骑夜袭乌巢，放火焚尽万车军粮。袁军十万土崩瓦解，河北霸业尽付尘土。',
+  '200-0': '董承策划除掉曹操的衣带诏密谋泄露，全家被处死。曹操亲征刘备，刘备大败投奔袁绍，关羽在下邳被围，为保全两位嫂子暂时归降曹操。',
+  '200-1': '白马之战关羽策马突击，一刀刺死袁绍大将颜良；随后曹操又在延津用诱饵计斩了文丑。关羽挂印封金，护送二位嫂嫂千里寻刘备。',
+  '200-2': '袁绍十万大军逼近官渡，筑起高台俯身放箭射曹营，曹军造出发石霹雳车砸毁敌楼。双方挖战壕死守，曹操快断粮了。',
+  '200-3': '袁绍谋士许攸投奔曹操，曹操光着脚跑出来迎接。曹操亲自带领五千骑兵夜袭乌巢，一把火烧光了袁军所有粮食，袁绍大军彻底崩盘。',
 
   // 208 Red Cliffs
-  '208-2': '秋七月曹操引兵大举南征荆州，八月刘表卒，九月刘琮降曹。刘备携十万襄樊百姓南渡汉水，赵云当阳单骑救幼主，张飞断后当阳桥。',
-  '208-3': '冬十一月孙刘联军定苦肉计、借东风。黄盖引二十艘蒙冲火船突撞曹军水寨，长江烈焰八百里，曹操溃败华容道，天下三分之势成型。',
+  '208-2': '曹操带几十万大军南下荆州，刘琮直接举城投降。刘备带着十万荆襄百姓逃难，赵云在当阳长坂坡单骑救下阿斗，张飞在当阳桥喝退曹兵。',
+  '208-3': '孙权与刘备联合抵抗曹操。黄盖用火船点燃曹操战船，长江上烈火连天烧成一片，曹操败走华容道，天下三分的局面由此奠定。',
 
   // 214 Liu Bei enters Chengdu
-  '214-1': '庞统落凤坡阵亡，诸葛亮、张飞、赵云溯江西进。刘备大军合围成都数十日，刘璋开门降汉，刘备自此据有益州天府之国。',
+  '214-1': '庞统在落凤坡不幸中箭阵亡，诸葛亮、张飞带兵入川支援。刘备大军包围成都，刘璋开城投降，刘备正式占领益州天府之国。',
 
   // 217 Jian'an Great Epidemic
-  '217-3': '建安二十二年冬，中原伤寒大疫暴发，家家有僵尸之痛，室室有号泣之哀。建安七子中徐干、陈琳、应玚、刘桢同卒于疫。',
+  '217-3': '中原爆发罕见的恶性伤寒大瘟疫，成千上万的老百姓病倒死去，很多名士文学家也在这一年染病离世，家家户户都在哭泣。',
 
   // 219 Guan Yu flood & Fall of Jingzhou
-  '219-2': '秋八月霖雨暴溢，关羽水淹于禁七军，擒于禁，斩庞德，降卒三万，威震华夏，曹操欲迁都避其锋芒。',
-  '219-3': '冬十月孙权使吕蒙身着白衣伪装商船偷袭荆州，糜芳傅士仁降吴。关羽回师被断，败走麦城突围中伏遇害。',
+  '219-2': '秋天大雨连绵，关羽水淹于禁七军，活捉于禁、斩杀庞德，威震华夏，曹操一度打算迁都暂避关羽锋芒。',
+  '219-3': '孙权派吕蒙伪装成商船白衣渡江偷袭荆州，糜芳投降。关羽被断了后路，败退麦城突围时中伏遇害。',
 
   // 220 Han Dynasty Ends
-  '220-0': '正月魏王曹操卒于洛阳，享年六十六岁。曹丕嗣位为魏王丞相。',
-  '220-3': '冬十月汉献帝于繁阳受禅台禅位，曹丕即位皇帝，改国号为魏，黄初改元。四百年大汉天下正式告终。',
+  '220-0': '魏王曹操在洛阳病逝，享年六十六岁。儿子曹丕继承魏王和丞相之位。',
+  '220-3': '汉献帝在许昌被迫禅位，曹丕登基称帝建立魏国，四百多年的大汉天下正式画上句号。',
 
   // 222 Battle of Yiling
-  '222-1': '章武二年盛夏，刘备伐吴连营七百里。吴大都督陆逊坚壁清野，夜半顺风纵火，蜀汉大军瓦解，先主败退白帝城。',
+  '222-1': '刘备为了给关羽报仇出兵伐吴，几十里连营扎在山林里。东吴大都督陆逊看准时机顺风放火，蜀汉大军损失惨重，刘备退守白帝城。',
 
   // 223 Liu Bei passes at Baidi
-  '223-0': '夏四月汉昭烈帝刘备病笃于永安宫，召丞相诸葛亮托孤：“君才十倍曹丕，必能安国，若嗣子可辅，辅之；如其不才，君可自取。”',
+  '223-0': '刘备在白帝城永安宫病危，把后事托付给诸葛亮：“你的才能远胜曹丕，若阿斗能辅佐就辅佐，若不成器你可自行作主。”诸葛亮泣不成声发誓效忠到底。',
 
   // 228 Zhuge Liang Northern Expedition
-  '228-0': '建兴六年春，诸葛亮上一出师表率军出祁山，天水姜维归汉。张郃拔街亭，马谡违节失道，孔明拔西县民还汉中，挥泪斩马谡。',
+  '228-0': '诸葛亮第一次北伐出祁山，天水姜维归顺蜀汉。马谡违背军令在街亭大败失守，诸葛亮只得把西县百姓迁回汉中，挥泪斩了马谡。',
 
   // 234 Wuzhang Plains
-  '234-2': '秋八月，诸葛亮第五次北伐相持于五丈原百余日，积劳成疾。陨星如斗坠于蜀营，武乡侯病殁五丈原，蜀军从容退回汉中。',
+  '234-2': '诸葛亮第五次北伐，在五丈原与司马懿对峙了一百多天，终因积劳成疾在军营中病逝，蜀军井然有序退回汉中。',
 
   // 249 Gaoping Tomb Incident
-  '249-0': '正月初六，魏少帝曹芳谒高平陵，大将军曹爽兄弟皆从。太傅司马懿称病发难，闭洛阳城门指洛水为誓，旋即夷曹爽三族，魏柄尽归司马。',
+  '249-0': '曹魏小皇帝曹芳出城扫墓，大将军曹爽跟着一同出行。太傅司马懿趁机装病起事，封锁洛阳城门，逼得曹爽交权，随后诛灭曹爽三族，魏国大权尽归司马家。',
 };
 
 export function getSeasonalEvent(
@@ -708,10 +704,10 @@ export function generateRealisticEnding(
 
   if (deathAge <= 3) {
     return {
-      title: `${profile.county}殇子 · 享年${deathAge}岁`,
-      epitaphTitle: '中平襁褓孤魂',
-      summary: `生于公元184年汉季大乱之始，殁于公元${deathYear}年。因${deathReason || '寒冬恶疾'}夭折于襁褓。母亲将其葬于村后老榆树下，岁岁清明以野花为祭。`,
-      historianNote: '汉季大乱，户口减耗十之八九。襁褓之殇，不绝于道，斯民之苦，何其极也！',
+      title: `${profile.county}夭折孩童 · 活了${deathAge}岁`,
+      epitaphTitle: '匆匆一瞥的小生命',
+      summary: `出生在公元184年天下大乱的时候，只活到了公元${deathYear}年。因为${deathReason || '大冬天受凉得病'}，没能长大成人。母亲把你埋在村后的大榆树下，每年春天都会摘几朵野花放在坟前。`,
+      historianNote: '汉末动乱年代，很多小娃娃还没来得及长大就离开人世。在那个缺医少药的乱世里，能平平安安活下来已是不易。',
       tier: 'TRAGIC',
     };
   }
@@ -721,58 +717,58 @@ export function generateRealisticEnding(
     const isJustMartyr = deathReason.includes('就义') || deathReason.includes('不降');
     return {
       title: isWuchao
-        ? `${profile.county}阵亡将士 · 享年${deathAge}岁`
+        ? `${profile.county}官渡阵亡小兵 · 活了${deathAge}岁`
         : isJustMartyr
-        ? `${profile.county}不屈忠烈 · 享年${deathAge}岁`
-        : `${profile.county}随军戍卒 · 享年${deathAge}岁`,
+        ? `${profile.county}宁死不屈的好汉 · 活了${deathAge}岁`
+        : `${profile.county}沙场从军戍卒 · 活了${deathAge}岁`,
       epitaphTitle: isWuchao
-        ? '官渡烈火 · 残甲浩气'
+        ? '战死在官渡前线'
         : isJustMartyr
-        ? '慷慨就义 · 气节凛然'
-        : '乱世白骨 · 沙场裹尸',
-      summary: `从军入伍，转战中原，于公元${deathYear}年${deathReason}。死时怀中尚揣着一包未寄出的故乡泥土与母亲缝制的旧布鞋底。生平虽短，其气魄与忠烈令后人唏嘘。`,
+        ? '硬骨头 · 临死不服软'
+        : '马革裹尸的普通兵卒',
+      summary: `应征入伍当了兵，跟着队伍南征北战，在公元${deathYear}年${deathReason}。走的时候，怀里还揣着一包没来得及寄回家的故乡泥土，还有母亲亲手纳的旧布鞋底。虽然生平短暂，但也是一条响当当的热血汉子。`,
       historianNote: isJustMartyr
-        ? '宁死不失大节，杀身以成仁。汉末草芥之躯，亦有千秋烈士之风骨！'
-        : '可怜无定河边骨，犹是春闺梦里人。横槊之雄今安在，枯骨荒草伴残阳。',
+        ? '刀架在脖子上也不肯低头。乱世里哪怕只是个普通小兵，骨头也是硬邦邦的！'
+        : '王侯将相为了争夺地盘打得天翻地覆，最终倒在荒野战场上的，都是普通人家的儿女。',
       tier: 'TRAGIC',
     };
   }
 
   if (deathAge < 30) {
     return {
-      title: `${profile.county}短折良民 · 享年${deathAge}岁`,
-      epitaphTitle: '荒岁悲歌',
-      summary: `勤劳朴实，孝悌著于里闾。然兵灾疫病无常，于公元${deathYear}年因${deathReason || '疫病饥寒'}离世。乡邻合力将其殡葬。`,
-      historianNote: '天地不仁，以万物为刍狗。在东汉建安的巨浪之下，一个普通生灵的陨落，悄无声息。',
+      title: `${profile.county}英年早逝的年轻人 · 活了${deathAge}岁` ,
+      epitaphTitle: '荒乱岁月的叹息',
+      summary: `平日里勤劳朴实，对父母孝顺，对乡邻和气。可惜战乱和灾荒无常，在公元${deathYear}年因为${deathReason || '得病挨饿'}匆匆离世。同村的老少爷们合力把你妥善安葬了。`,
+      historianNote: '天下大乱的时候，普通老百姓的生活脆弱得像一片树叶。平平安安过好一生，在那个年代是多么奢侈的愿望。',
       tier: 'COMMON',
     };
   }
 
   if (deathAge >= 60) {
     return {
-      title: `${profile.county}寿考耆宿 · 享年${deathAge}岁`,
-      epitaphTitle: '乱世人瑞 · 乡党长者',
-      summary: `生于公元184年黄巾初起之时，历经董卓乱政、官渡赤壁与天下鼎分。一介布衣，凭勤勉谨慎与仁德保全一家老小。殁于公元${deathYear}年，子孙满堂，寿终正寝。`,
-      historianNote: '大乱之世，公以匹夫之身全生保家，寿越花甲，见三国盛衰，其坚韧胜过万乘之尊！',
+      title: `${profile.county}长寿长者 · 活了${deathAge}岁`,
+      epitaphTitle: '熬过乱世的老人',
+      summary: `出生在公元184年黄巾起义的时候，一路经历董卓进京、官渡之战、赤壁大火，见证了天下三分。靠着勤快、谨慎和本分，硬是保全了一家老小的性命。活到公元${deathYear}年，儿孙满堂，安安稳稳地在自家床上寿终正寝。`,
+      historianNote: '在到处都在打仗吃人的年代，一个普通人能保全一家老小、安稳活到六十多岁，这份坚韧和生活智慧，绝不比那些争霸天下的诸侯逊色！',
       tier: 'RESILIENT',
     };
   }
 
   if (stats.wealth >= 65) {
     return {
-      title: `${province.provinceName}丰家业户 · 享年${deathAge}岁`,
-      epitaphTitle: '守业勤民',
-      summary: `以市井小本或农桑起家，积攒田地屋舍数处。兵荒马乱之际常借粮救济饥民，善名远播，安然长逝于自家榻上。`,
-      historianNote: '不为王侯驱驰，自守一亩三分。输财济邻，虽无青史功名，而乡民永怀其德。',
+      title: `${province.provinceName}殷实户掌柜 · 活了${deathAge}岁`,
+      epitaphTitle: '日子红火的本分人',
+      summary: `从小做小买卖或起早贪黑种地积攒家底，在城里乡下置办了田产和大瓦房。遇到兵荒马乱的大饥荒年份，还常常开仓借粮食救济穷苦乡亲，名声非常好，走的时候体面又安详。`,
+      historianNote: '不求当官发大财，踏踏实实过好自己的小日子。遇到困难还愿意拉邻居一把，邻里乡亲都会长久记着你的好。',
       tier: 'RESILIENT',
     };
   }
 
   return {
-    title: `${profile.county}田舍耕夫 · 享年${deathAge}岁`,
-    epitaphTitle: '汉末平凡春秋',
-    summary: `生于汉季，耕于乡野。一辈子没有见过天子与曹刘名将，只识春耕夏耘、秋收冬藏。在战火波及的缝隙里，顽强地活过了${deathAge}个春秋，给后代留下了熟田瓦舍。`,
-    historianNote: '太史公书多记将相王侯，然支撑这万里山河与四百年汉家天下的，正是无数如他这般默默耕耘的无名草木。',
+    title: `${profile.county}庄稼汉 · 活了${deathAge}岁`,
+    epitaphTitle: '平凡普通的一生',
+    summary: `生在汉末乱世，在乡下老老实实种了一辈子地。没见过皇帝，也没见过曹操刘备这些大人物，一辈子只操心每年春天下不下雨、秋天能收多少粮食。在战乱频发的年代里，靠自己的双手顽强活了${deathAge}个年头，给儿女留下了能遮风挡雨的泥瓦房。`,
+    historianNote: '史书上写的都是王侯将相，但真正撑起这片土地的，是无数像他这样面朝黄土背朝天、默默耕耘的普通老百姓。',
     tier: 'COMMON',
   };
 }

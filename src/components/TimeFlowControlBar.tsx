@@ -127,10 +127,10 @@ export const TimeFlowControlBar: React.FC<TimeFlowControlBarProps> = ({
             disabled={hasChoice || isProcessing}
             title={
               hasChoice
-                ? '临大事要冲，需定夺抉择方可继续'
+                ? '面临选择，做出抉择后才能继续'
                 : isAutoRunning
-                ? '点击暂停岁月流转 (空格键)'
-                : '点击开启四季自动流转 (空格键)'
+                ? '点击暂停 (空格键)'
+                : '点击开启自动前进 (空格键)'
             }
             className={`px-3 py-1.5 rounded-md text-xs font-classical flex items-center gap-1.5 transition-all shadow-sm cursor-pointer select-none active:scale-95 ${
               hasChoice
@@ -143,12 +143,12 @@ export const TimeFlowControlBar: React.FC<TimeFlowControlBarProps> = ({
             {isAutoRunning ? (
               <>
                 <Pause className="w-3.5 h-3.5 fill-current" />
-                <span className="font-semibold">暂停岁月</span>
+                <span className="font-semibold">暂停</span>
               </>
             ) : (
               <>
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span className="font-semibold">自动流转</span>
+                <span className="font-semibold">自动前进</span>
               </>
             )}
           </button>
@@ -162,10 +162,10 @@ export const TimeFlowControlBar: React.FC<TimeFlowControlBarProps> = ({
             disabled={hasChoice || isAutoRunning || isProcessing}
             title={
               hasChoice
-                ? '需先完成当前大事抉择'
+                ? '请先完成当前的选择'
                 : isAutoRunning
-                ? '当前正自动流转中，暂停后可单季步进'
-                : '手动推进一季 (3个月)'
+                ? '正在自动前进中，暂停后可手动前进'
+                : '前进一季 (3个月)'
             }
             className={`px-2.5 py-1.5 rounded-md text-xs font-classical flex items-center gap-1 transition-colors border select-none ${
               hasChoice || isAutoRunning
@@ -180,7 +180,7 @@ export const TimeFlowControlBar: React.FC<TimeFlowControlBarProps> = ({
           {/* Speed Selector (1x, 2x, 4x, 8x) */}
           <div className="flex items-center gap-1 bg-[#1e1712] p-0.5 rounded-lg border border-[#3a2c1e]">
             <span className="text-[10px] text-[#8e7f6e] font-classical px-1.5 hidden xl:inline">
-              流速：
+              速度：
             </span>
             {([1, 2, 4, 8] as const).map((spd) => {
               const isActive = playbackSpeed === spd;
@@ -191,15 +191,7 @@ export const TimeFlowControlBar: React.FC<TimeFlowControlBarProps> = ({
                     sound.playPluck(400 + spd * 60);
                     onChangeSpeed(spd);
                   }}
-                  title={`设为 ${spd}× 倍速 (${
-                    spd === 1
-                      ? '约4.4秒/年, 细品岁月'
-                      : spd === 2
-                      ? '约2.2秒/年, 畅快流转'
-                      : spd === 4
-                      ? '约1.1秒/年, 疾速如梭'
-                      : '约0.5秒/年, 极速沧海'
-                  })`}
+                  title={`设为 ${spd}× 倍速`}
                   className={`px-2 py-1 text-xs font-mono font-semibold rounded transition-all cursor-pointer select-none ${
                     isActive
                       ? 'bg-[#d4af37] text-[#1c1208] shadow-sm scale-105'

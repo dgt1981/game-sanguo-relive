@@ -15,10 +15,10 @@ export const ProvincesGuide: React.FC<ProvincesGuideProps> = ({
     <div className="bg-[#1b1612] border border-[#3e3023] rounded-xl p-4 sm:p-6 shadow-xl space-y-5">
       <div className="pb-4 border-b border-[#2e2319]">
         <h2 className="text-lg md:text-xl font-calligraphy text-[#faece0] tracking-wider">
-          东汉十四州风物舆地考
+          三国十三州地理图志
         </h2>
         <p className="text-xs text-[#a29280] mt-1 font-classical">
-          幅员万里，天命殊途。你可能出生在帝都洛阳，也可能出生在荒陬塞北或烟雨江南，甚至一个在史书上只出现过一次的小县。
+          天下辽阔，出生地各有不同。你可能出生在繁华的洛阳，也可能出生在边陲塞北或烟雨江南，不同的出生地会带来不同的际遇。
         </p>
       </div>
 
@@ -42,13 +42,13 @@ export const ProvincesGuide: React.FC<ProvincesGuideProps> = ({
                     }}
                     className="text-xs text-[#d4af37] hover:text-[#fde68a] flex items-center gap-1 font-classical cursor-pointer"
                   >
-                    <span>投胎此州</span>
+                    <span>出生在此州</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 <div className="text-xs text-[#9c8b78] mb-2 font-classical">
-                  领属郡国：{prov.commanderies.join('、')}
+                  下辖郡国：{prov.commanderies.join('、')}
                 </div>
 
                 <div className="text-xs text-[#baa996] mb-3 leading-relaxed font-classical italic">
@@ -56,7 +56,7 @@ export const ProvincesGuide: React.FC<ProvincesGuideProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-[#2e2217] text-[11px] text-[#7d6e5d]">
-                  辖下代表县邑：{prov.counties.join(' · ')}
+                  主要县城：{prov.counties.join(' · ')}
                 </div>
               </div>
             </div>

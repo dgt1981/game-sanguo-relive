@@ -47,40 +47,40 @@ export const LifeAttributeHUD: React.FC<LifeAttributeHUDProps> = ({
   // Dynamic growth trend label per stat
   const getStatTrend = (key: keyof Attributes): { text: string; color: string } => {
     if (key === 'health') {
-      if (age <= 2) return { text: '脆弱萌生 ↑', color: '#38bdf8' };
-      if (age <= 13) return { text: '自然抽条 ↑', color: '#4ade80' };
-      if (age <= 35) return { text: '筋骨正盛 ★', color: '#10b981' };
-      if (age <= 50) return { text: '体魄平稳 ≈', color: '#eab308' };
-      if (age <= 65) return { text: '气血渐衰 ↓', color: '#f97316' };
-      return { text: '岁暮残喘 ↓', color: '#ef4444' };
+      if (age <= 2) return { text: '娇嫩脆弱 ↑', color: '#38bdf8' };
+      if (age <= 13) return { text: '抽条长个 ↑', color: '#4ade80' };
+      if (age <= 35) return { text: '体力充沛 ★', color: '#10b981' };
+      if (age <= 50) return { text: '身体平稳 ≈', color: '#eab308' };
+      if (age <= 65) return { text: '体力下滑 ↓', color: '#f97316' };
+      return { text: '年老体弱 ↓', color: '#ef4444' };
     }
     if (key === 'martial') {
-      if (age <= 2) return { text: '骨软未行 💤', color: '#9ca3af' };
-      if (age <= 6) return { text: '嬉闹微萌 ↑', color: '#a78bfa' };
-      if (age <= 19) return { text: '气力大成 ↑', color: '#4ade80' };
-      if (age <= 35) return { text: '武略鼎盛 ★', color: '#ea580c' };
-      if (age <= 50) return { text: '旧伤微敛 ≈', color: '#ca8a04' };
-      return { text: '筋骨退化 ↓', color: '#f97316' };
+      if (age <= 2) return { text: '还不会走 💤', color: '#9ca3af' };
+      if (age <= 6) return { text: '到处跑跳 ↑', color: '#a78bfa' };
+      if (age <= 19) return { text: '力气渐长 ↑', color: '#4ade80' };
+      if (age <= 35) return { text: '身手敏捷 ★', color: '#ea580c' };
+      if (age <= 50) return { text: '身手沉稳 ≈', color: '#ca8a04' };
+      return { text: '手脚变慢 ↓', color: '#f97316' };
     }
     if (key === 'intellect') {
-      if (age <= 2) return { text: '咿呀学语 🌱', color: '#9ca3af' };
-      if (age <= 13) return { text: '发蒙启智 ↑', color: '#38bdf8' };
-      if (age <= 35) return { text: '自立历练 ↑', color: '#60a5fa' };
-      return { text: '老成洞明 ★', color: '#0284c7' };
+      if (age <= 2) return { text: '学说话 🌱', color: '#9ca3af' };
+      if (age <= 13) return { text: '开始懂事 ↑', color: '#38bdf8' };
+      if (age <= 35) return { text: '见识增长 ↑', color: '#60a5fa' };
+      return { text: '经验老道 ★', color: '#0284c7' };
     }
     if (key === 'virtue') {
       if (age <= 6) return { text: '纯真天性', color: '#9ca3af' };
-      if (age <= 35) return { text: '立德修身 ↑', color: '#ca8a04' };
-      return { text: '乡党宗崇 ★', color: '#f59e0b' };
+      if (age <= 35) return { text: '为人厚道 ↑', color: '#ca8a04' };
+      return { text: '邻里敬重 ★', color: '#f59e0b' };
     }
     if (key === 'wealth') {
-      if (age <= 6) return { text: '父母口粮', color: '#9ca3af' };
-      if (age <= 19) return { text: '做工助耕 ↑', color: '#38bdf8' };
-      if (age <= 50) return { text: '积粮置田 ↑', color: '#eab308' };
-      return { text: '子孙守成', color: '#ca8a04' };
+      if (age <= 6) return { text: '靠父母养', color: '#9ca3af' };
+      if (age <= 19) return { text: '打工帮家里 ↑', color: '#38bdf8' };
+      if (age <= 50) return { text: '攒钱置业 ↑', color: '#eab308' };
+      return { text: '家境殷实', color: '#ca8a04' };
     }
     // fortune
-    return { text: '天命机缘', color: '#c084fc' };
+    return { text: '看运气', color: '#c084fc' };
   };
 
   const statConfig: { key: keyof Attributes; label: string; icon: React.ReactNode; color: string }[] = [

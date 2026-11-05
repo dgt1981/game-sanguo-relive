@@ -57,7 +57,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
           <div className="flex items-center gap-1.5">
             <Users className="w-4 h-4 text-[#d4af37]" />
             <span className="font-calligraphy text-base text-[#faece0] tracking-wider">
-              天下人脉与知交
+              结识的三国名人
             </span>
             <span className="text-[11px] font-mono text-[#f59e0b] px-1.5 py-0.2 rounded bg-[#2a1e15] border border-[#4d3723]">
               {knownFigures.length} 位
@@ -69,9 +69,9 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
               onOpenFiguresTab();
             }}
             className="text-[11px] text-[#d4af37] hover:text-[#fde68a] flex items-center gap-0.5 cursor-pointer transition-colors"
-            title="打开群雄谱全屏大卷"
+            title="打开三国名人全屏大卷"
           >
-            <span>群雄谱</span>
+            <span>名人录</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -87,7 +87,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
             }`}
           >
             <Users className="w-3 h-3 text-[#d4af37]" />
-            <span>知交 ({knownFigures.length})</span>
+            <span>名人 ({knownFigures.length})</span>
           </button>
           <button
             onClick={() => setActiveSideTab('BOONS')}
@@ -98,7 +98,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
             }`}
           >
             <Award className="w-3 h-3 text-amber-300" />
-            <span>重宝 ({collectedBoons.length})</span>
+            <span>礼物 ({collectedBoons.length})</span>
           </button>
         </div>
 
@@ -108,9 +108,9 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
             {knownFigures.length === 0 ? (
               <div className="p-4 rounded-lg bg-[#14100c] border border-[#2b2016] text-center space-y-2">
                 <Users className="w-6 h-6 mx-auto text-[#5a4635]" />
-                <p className="text-xs text-[#b8a794]">尚未结识历史名士</p>
+                <p className="text-xs text-[#b8a794]">还没有结识三国名人</p>
                 <p className="text-[11px] text-[#7d6c5c] leading-relaxed">
-                  随四季流转出游、从军或游历郡县，自会与赵云、关羽、华佗、诸葛亮等当世豪杰偶遇结交。
+                  随着年纪增长，出游、从军或打工时，有机会遇到赵云、关羽、华佗、诸葛亮等三国人物。
                 </p>
               </div>
             ) : (
@@ -177,7 +177,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
                       </div>
                     </div>
 
-                    {/* 特权与快速拜谒 */}
+                    {/* 技能加成与快速拜访 */}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#2d2217] text-[11px]">
                       <span className="text-[#e5c158] truncate text-[10px]" title={fig.perkEffect}>
                         {fig.perkTitle}
@@ -187,10 +187,10 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
                         age < MIN_INTERACTION_AGE ? (
                           <span
                             className="px-2 py-0.5 rounded text-[10px] font-classical flex items-center gap-1 bg-[#1a1410] text-[#8c7456] border border-[#2e2218] cursor-not-allowed shrink-0"
-                            title={`主角现年仅${age}岁，未满十四岁束发及冠，不可私自登门拜会`}
+                            title={`主角现在才${age}岁，未满14岁还不便独自出门拜访名人`}
                           >
                             <Lock className="w-2.5 h-2.5 text-[#8c7456]" />
-                            <span>童蒙未冠</span>
+                            <span>年纪尚小</span>
                           </span>
                         ) : (
                           <button
@@ -204,17 +204,17 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
                                 ? 'bg-[#1e1712] text-[#6d5d4e] border border-[#2f2217] cursor-not-allowed'
                                 : 'bg-[#8b261e] hover:bg-[#a32e25] text-[#faece0] border border-[#c4382c] shadow-xs active:scale-95'
                             }`}
-                            title={isCooldownThisSeason ? '本季已拜谒修好，下季方可再访' : '过访修好'}
+                            title={isCooldownThisSeason ? '这季度已经拜访过了，下个季度才能再去' : '前去拜访'}
                           >
                             {isCooldownThisSeason ? (
                               <>
                                 <Hourglass className="w-2.5 h-2.5" />
-                                <span>已访</span>
+                                <span>本季已访</span>
                               </>
                             ) : (
                               <>
                                 <Send className="w-2.5 h-2.5" />
-                                <span>过访</span>
+                                <span>拜访</span>
                               </>
                             )}
                           </button>
@@ -228,15 +228,15 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
           </div>
         )}
 
-        {/* 重宝列表 */}
+        {/* 礼物道具列表 */}
         {activeSideTab === 'BOONS' && (
           <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
             {collectedBoons.length === 0 ? (
               <div className="p-4 rounded-lg bg-[#14100c] border border-[#2b2016] text-center space-y-2">
                 <Award className="w-6 h-6 mx-auto text-[#5a4635]" />
-                <p className="text-xs text-[#b8a794]">行囊尚无传世重宝</p>
+                <p className="text-xs text-[#b8a794]">目前还没有收到名人礼物</p>
                 <p className="text-[11px] text-[#7d6c5c] leading-relaxed">
-                  与名士结交至【莫逆同道】（60点）或【生死托付】（90点），便可获赠青釭剑、八阵图、伤寒经方等重宝。
+                  与三国名人搞好关系，好感度达到【知心好友】（60点）或【生死之交】（90点）后，就会收到他们赠送的宝物道具。
                 </p>
               </div>
             ) : (
@@ -262,7 +262,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
                         </span>
                       </div>
                       <div className="text-[10px] text-[#a89b8d]">
-                        {boon.figureName} 赠
+                        {boon.figureName} 赠送
                       </div>
                     </div>
                   </div>
@@ -276,16 +276,16 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
         )}
       </div>
 
-      {/* 模块二：平生近事（原“近事”独立移至下方空白板块） */}
+      {/* 模块二：最近经历 */}
       <div className="bg-[#1a1612] border border-[#3e3024] rounded-xl p-4 shadow-xl space-y-3">
         <div className="flex items-center justify-between border-b border-[#33261a] pb-2.5">
           <div className="flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-[#38bdf8]" />
             <span className="font-calligraphy text-base text-[#faece0] tracking-wider">
-              平生近事
+              最近经历
             </span>
             <span className="text-[10px] text-[#8c7b6a] font-classical px-1.5 py-0.2 rounded bg-[#1f1812] border border-[#36271a]">
-              近历岁时
+              最新动态
             </span>
           </div>
 
@@ -296,10 +296,10 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
                 onOpenChronicleTab();
               }}
               className="text-[11px] text-[#38bdf8] hover:text-[#7dd3fc] flex items-center gap-0.5 cursor-pointer transition-colors"
-              title="打开完整平生编年史卷"
+              title="打开完整生平记录"
             >
               <ScrollText className="w-3 h-3" />
-              <span>编年史</span>
+              <span>生平记录</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
@@ -309,7 +309,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
         <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
           {recentLogs.length === 0 ? (
             <div className="p-4 rounded-lg bg-[#14100c] border border-[#2b2016] text-center text-xs text-[#7d6c5c]">
-              岁月方兴，长卷待书。
+              日子才刚开始，往后经历会实时记录在这里。
             </div>
           ) : (
             recentLogs.map((log, idx) => {
@@ -340,7 +340,7 @@ export const RightSidebarCompanion: React.FC<RightSidebarCompanionProps> = ({
 
                   {log.choiceMade && (
                     <div className="text-[10px] text-[#e5c158] truncate pt-1 border-t border-[#2e2216] flex items-center gap-1">
-                      <span className="text-[#a4917d]">决断：</span>
+                      <span className="text-[#a4917d]">选择：</span>
                       <span className="font-medium text-[#f6d88a]">{log.choiceMade}</span>
                     </div>
                   )}

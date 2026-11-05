@@ -12,9 +12,12 @@ export type EventCategory =
   | 'INFANT_SURVIVAL'   // 0~2岁 襁褓婴儿存续
   | 'CHILDHOOD'         // 3~13岁 成童与启蒙教育
   | 'RITE_OF_PASSAGE'   // 14~19岁 束发成丁与行当抉择
+  | 'ADULT_VOCATION'    // 成年谋生与营生抉择
   | 'HISTORICAL_CAMPAIGN' // 190~265年 重大编年演义战役与行伍从军
+  | 'MILITARY_AFFILIATION' // 阵营投效与从军抉择
   | 'FIGURE_ENCOUNTER'  // 同郡名士结交会面与对话
   | 'CRISIS_ORDEAL'     // 伤寒大疫、灾荒、流民乱世
+  | 'CRISIS_EPIDEMIC'   // 伤寒与疫病危机
   | 'CIVILIAN_DAILY'    // 市井百业与耕织四季风貌
   | 'MATURE_SENIOR';    // 40~80岁 乡党长者、花甲见证、归真岁月
 

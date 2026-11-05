@@ -65,21 +65,21 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
     return (
       <div className="bg-[#1b1612] border border-[#3e3023] rounded-xl p-8 text-center text-[#9c8b78]">
         <Clock className="w-8 h-8 mx-auto mb-2 text-[#786958]" />
-        <p className="font-classical text-sm">初生之时，岁月长卷正待书写。</p>
+        <p className="font-classical text-sm">刚刚出生，生平记录还没有开始。</p>
         <p className="text-xs text-[#6e6052] mt-1">
-          四季流转，平生春秋与天下纪事将在此沉淀汇编。
+          随着时间推进，经历的事件与天下大事都会记录在这里。
         </p>
       </div>
     );
   }
 
   const statLabelMap: Record<string, string> = {
-    health: '体魄',
-    intellect: '识见',
-    martial: '勇略',
-    virtue: '仁厚',
-    wealth: '家财',
-    fortune: '气数',
+    health: '健康',
+    intellect: '智谋',
+    martial: '武力',
+    virtue: '德行',
+    wealth: '家产',
+    fortune: '运气',
   };
 
   const filterConfigs: {
@@ -94,8 +94,8 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
   }[] = [
     {
       key: 'ALL',
-      label: '全部生平',
-      sublabel: '编年总览',
+      label: '全部记录',
+      sublabel: '生平总览',
       icon: BookOpen,
       count: counts.all,
       activeClass:
@@ -106,8 +106,8 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
     },
     {
       key: 'MILITARY',
-      label: '军事',
-      sublabel: '行伍战阵',
+      label: '军事战事',
+      sublabel: '行军打仗',
       icon: Swords,
       count: counts.military,
       activeClass:
@@ -118,20 +118,20 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
     },
     {
       key: 'AGRICULTURE',
-      label: '农耕',
-      sublabel: '田亩稼穑',
+      label: '农耕生产',
+      sublabel: '种田经营',
       icon: Wheat,
       count: counts.agriculture,
       activeClass:
-        'bg-[#122b18] text-[#bbf7d0] border-[#16a34a] shadow-[0_0_12px_rgba(22,163,74,0.25)]',
+        'bg-[#122b18] text-[#bbf7d0] border-[#16a34a] shadow-[0_0_12px_rgba(220,163,74,0.25)]',
       inactiveClass:
         'bg-[#1e1712] text-[#a49381] border-[#3a2c20] hover:border-[#14532d] hover:text-[#86efac]',
       badgeClass: 'bg-[#0f2314] text-[#4ade80] border-[#1f4a29]',
     },
     {
       key: 'ENCOUNTER',
-      label: '奇遇',
-      sublabel: '名士机缘',
+      label: '奇遇结识',
+      sublabel: '结识名人',
       icon: Sparkles,
       count: counts.encounter,
       activeClass:
@@ -148,14 +148,14 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#2e2319] gap-3">
         <div>
           <h2 className="text-lg md:text-xl font-calligraphy text-[#faece0] tracking-wider">
-            {characterName} · 四季编年录
+            {characterName} · 一生四季记录
           </h2>
           <span className="text-xs text-[#a29280]">
-            已亲历 {logs.length} 季之春秋风霜 · 录此生喜怒悲欢
+            已经度过了 {logs.length} 个季度
           </span>
         </div>
         <div className="text-xs text-[#d4af37] font-classical self-start sm:self-auto bg-[#241a13] px-3 py-1 rounded-full border border-[#4a3826]">
-          【汉末草民实录】
+          【一生经历实录】
         </div>
       </div>
 
@@ -164,7 +164,7 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
         <div className="flex items-center justify-between mb-2 px-1">
           <div className="flex items-center gap-1.5 text-xs text-[#d4af37] font-classical font-semibold">
             <Filter className="w-3.5 h-3.5 text-[#e5a84b]" />
-            <span>轨迹分类筛选</span>
+            <span>经历分类</span>
           </div>
           {activeFilter !== 'ALL' && (
             <button
@@ -172,7 +172,7 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
               className="text-[11px] text-[#f59e0b] hover:text-[#fde68a] flex items-center gap-1 cursor-pointer transition-colors"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>显示全部轨迹</span>
+              <span>显示全部</span>
             </button>
           )}
         </div>
@@ -246,23 +246,23 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
             {activeFilter === 'ENCOUNTER' && <Sparkles className="w-6 h-6 text-[#a855f7]" />}
           </div>
           <h3 className="font-calligraphy text-base text-[#faece0]">
-            {activeFilter === 'MILITARY' && '过往岁月，未染兵戈征尘'}
-            {activeFilter === 'AGRICULTURE' && '过往岁月，未有农桑稼穑之迹'}
-            {activeFilter === 'ENCOUNTER' && '岁月静好，暂未逢名士奇遇'}
+            {activeFilter === 'MILITARY' && '过往岁月中，未曾参与打仗战事'}
+            {activeFilter === 'AGRICULTURE' && '过往岁月中，未曾参与农耕种田'}
+            {activeFilter === 'ENCOUNTER' && '岁月安好，暂未遇到三国名人'}
           </h3>
           <p className="text-xs text-[#a29280] font-classical max-w-sm mx-auto leading-relaxed">
             {activeFilter === 'MILITARY' &&
-              '平生远离乱世杀伐，隐于乡野市井，虽未建功沙场，亦是一番难得的平淡清安。待及冠成丁或战乱骤起，或将投效行伍。'}
+              '平日里安居乐业，没有经历过军旅战事。往后若遇战乱或主动从军，会在这里记录。'}
             {activeFilter === 'AGRICULTURE' &&
-              '此生未曾执犁荷锄躬耕南亩，更多岁月流转于市井营生、行伍征途或求道远游。'}
+              '这辈子还没下地种过庄稼或经营过田产，主要忙于其他营生。'}
             {activeFilter === 'ENCOUNTER' &&
-              '天命机缘尚待时日。多往四方郡县游历，或寻访名山大川，自有机缘偶遇当世豪杰与名家宿学。'}
+              '缘分还没到。多到其他州郡转转，或者等年龄大一些，自然能结识当世豪杰与三国名人。'}
           </p>
           <button
             onClick={() => setActiveFilter('ALL')}
             className="px-4 py-1.5 text-xs rounded-lg bg-[#332215] hover:bg-[#4a3220] border border-[#5c4028] text-[#e5c158] font-classical transition-colors cursor-pointer"
           >
-            返回查看全部四季编年
+            返回查看全部生平记录
           </button>
         </div>
       )}
@@ -409,7 +409,7 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                   {entry.choiceMade && (
                     <div className="text-[#d4af37] pt-1 border-t border-[#2d2218] flex items-center gap-1 font-classical">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#e5c158]" />
-                      <span>当年抉择：{entry.choiceMade}</span>
+                      <span>当时选择：{entry.choiceMade}</span>
                     </div>
                   )}
 
@@ -417,7 +417,7 @@ export const ChronicleTimeline: React.FC<ChronicleTimelineProps> = ({
                   {entry.statChanges && Object.keys(entry.statChanges).length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 pt-0.5 font-mono text-[11px] tabular-nums">
                       <span className="text-[10px] text-[#baa996] font-classical">
-                        【抉择影响】
+                        【属性变化】
                       </span>
                       {Object.entries(entry.statChanges).map(([k, v]) => {
                         if (!v) return null;

@@ -96,7 +96,7 @@ export function generateFunTitles(
   // Deduplicate and cap badges
   const uniqueBadges = Array.from(new Set(badges)).slice(0, 4);
   if (uniqueBadges.length === 0) {
-    uniqueBadges.push('汉季草民', '岁月静好', '人间过客');
+    uniqueBadges.push('普通百姓', '平平安安', '人间过客');
   }
 
   return {

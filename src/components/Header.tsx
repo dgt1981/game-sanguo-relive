@@ -49,10 +49,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onRestart}
               className="px-2 py-1 text-xs font-medium text-[#2a170d] bg-gradient-to-r from-[#d4af37] to-[#e6ca65] rounded transition-all shadow-sm flex items-center gap-1 font-classical cursor-pointer"
-              title="重新轮回"
+              title="重开一生"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>重新轮回</span>
+              <span>重开一生</span>
             </button>
           </div>
         </div>
@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'border-transparent'
             }`}
           >
-            岁月流转
+            人生历程
           </button>
           <button
             onClick={() => {
@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'border-transparent'
             }`}
           >
-            <span>天下名仕</span>
+            <span>三国名人</span>
             {knownFiguresCount > 0 && (
               <span className="text-[10px] px-1.5 py-0.2 bg-[#8b261e] text-[#fae8c8] rounded-full border border-[#d4af37]/40 font-mono">
                 {knownFiguresCount}
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'border-transparent'
             }`}
           >
-            平生编年
+            生平记录
           </button>
           <button
             onClick={() => {
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'border-transparent'
             }`}
           >
-            万民谱牒
+            历代名册
           </button>
           <button
             onClick={() => {
@@ -127,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'border-transparent'
             }`}
           >
-            十四州舆地
+            天下州郡
           </button>
         </nav>
 
@@ -144,10 +144,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onRestart}
             className="px-3.5 py-1.5 text-xs md:text-sm font-medium text-[#2a170d] bg-gradient-to-r from-[#d4af37] to-[#e6ca65] hover:from-[#c5a028] hover:to-[#d8bc55] rounded-md transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0 font-classical active:scale-95 cursor-pointer"
-            title="重新轮回 · 开启一段全新人生"
+            title="重开一生 · 开始一段全新人生"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>重新轮回</span>
+            <span>重开一生</span>
           </button>
         </div>
       </div>

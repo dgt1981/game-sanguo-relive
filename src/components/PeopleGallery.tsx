@@ -120,9 +120,9 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
             </h2>
           </div>
           <p className="text-xs text-[#a29280] font-classical leading-relaxed">
-            青史不仅录将相公卿，亦载黎民百态。此间已汇聚{' '}
+            这里记录了大家的每一次转世人生。已经汇聚了{' '}
             <span className="text-[#f59e0b] font-mono font-semibold">{communityLives.length}</span>{' '}
-            位天下先贤生平纪传，皆具其名讳、寿夭与宿命注脚。
+            条平民与英雄的生平记录，记录了每个人叫什么、活了多久、怎么过完这一生。
           </p>
         </div>
 
@@ -138,19 +138,19 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>{showPersonalOnly ? '查看全天下众生' : `只看我的一生 (${records.length})`}</span>
+              <span>{showPersonalOnly ? '查看全部人生' : `只看我的一生 (${records.length})`}</span>
             </button>
           )}
 
           {records.length > 0 && showPersonalOnly && (
             <button
               onClick={() => {
-                if (window.confirm('确定要清空自己历次转世的本地谱牒记录吗？此举不可逆。')) {
+                if (window.confirm('确定要清空自己的转世历史记录吗？清空后无法找回。')) {
                   onClearRecords();
                 }
               }}
               className="p-1.5 text-xs text-[#786959] hover:text-[#ef4444] rounded bg-[#221a14] border border-[#382b1f] hover:border-[#ef4444]/40 transition-colors cursor-pointer"
-              title="清空私家转世记录"
+              title="清空转世记录"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -166,7 +166,7 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
             type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="搜索姓名、表字、称谓或籍贯..."
+            placeholder="搜索姓名、字号、称号或出生地..."
             className="w-full bg-[#201813] border border-[#3e2e21] rounded-lg pl-8 pr-3 py-2 text-xs text-[#f5eee4] placeholder-[#736353] focus:outline-none focus:border-[#d4af37]"
           />
         </div>
@@ -177,7 +177,7 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
             onChange={(e) => setSelectedProvince(e.target.value)}
             className="w-full bg-[#201813] border border-[#3e2e21] rounded-lg px-3 py-2 text-xs text-[#dcd1c2] focus:outline-none focus:border-[#d4af37] font-classical cursor-pointer"
           >
-            <option value="ALL">全天下十四州域</option>
+            <option value="ALL">全部州郡</option>
             {PROVINCES.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.provinceName}
@@ -193,10 +193,10 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
               onChange={(e) => setSortOption(e.target.value as SortOption)}
               className="w-full bg-[#201813] border border-[#3e2e21] rounded-lg px-3 py-2 text-xs text-[#e5c158] focus:outline-none focus:border-[#d4af37] font-classical cursor-pointer"
             >
-              <option value="NEWEST">排序：按入牒时序</option>
-              <option value="LIKES">排序：按斟酒祭奠 (热度)</option>
-              <option value="AGE_DESC">排序：按寿算享年 (高寿)</option>
-              <option value="AGE_ASC">排序：按寿算享年 (短折)</option>
+              <option value="NEWEST">排序：按最新时间</option>
+              <option value="LIKES">排序：按点赞热度</option>
+              <option value="AGE_DESC">排序：按寿命从高到低</option>
+              <option value="AGE_ASC">排序：按寿命从低到高</option>
             </select>
           </div>
         </div>
@@ -206,9 +206,9 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
       {filteredLives.length === 0 ? (
         <div className="py-16 text-center text-xs text-[#8c7b69] font-classical bg-[#15110e] rounded-lg border border-[#2b2118] space-y-2">
           <Users className="w-8 h-8 text-[#544335] mx-auto" />
-          <p>暂未检索到符合条件的汉末先贤记录。</p>
+          <p>没有找到符合条件的人生记录。</p>
           <span className="text-[11px] text-[#695a4c] block">
-            可尝试清除搜索词或切换州郡重新查阅
+            可以尝试清空搜索框或切换州郡看看
           </span>
         </div>
       ) : (
@@ -248,7 +248,7 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                             <span className="text-xs text-[#a29280]">字 {item.courtesyName}</span>
                           )}
                           <span className="text-xs text-[#736454]">
-                            ({item.gender === 'MALE' ? '男丁' : '女秀'})
+                            ({item.gender === 'MALE' ? '男' : '女'})
                           </span>
                         </div>
 
@@ -258,11 +258,11 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                       </div>
                     </div>
 
-                    {/* 斟酒祭奠按钮 */}
+                    {/* 敬酒点赞按钮 */}
                     <button
                       onClick={(e) => handleLike(e, item.id)}
                       className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-[#2a1d15] hover:bg-[#3d2719] border border-[#483424] hover:border-[#ef4444]/60 text-[#fca5a5] transition-colors cursor-pointer shrink-0"
-                      title="为这位乱世先贤斟浊酒一杯（祭奠）"
+                      title="给这位乱世人物点个赞"
                     >
                       <Wine className="w-3.5 h-3.5 text-[#ef4444]" />
                       <span className="font-mono font-semibold">{item.likesCount || 0}</span>
@@ -287,7 +287,7 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                   <div className="text-xs text-[#8c7b69] flex items-center justify-between gap-1 mb-2">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3 text-[#d4af37]" />
-                      <span>{item.birthplace} · 享年 {item.deathAge} 岁</span>
+                      <span>{item.birthplace} · 活了 {item.deathAge} 岁</span>
                     </span>
                     {item.militaryCamp && item.militaryCamp !== '乡野布衣' && (
                       <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#2e1d13] text-[#f59e0b] border border-[#523820]">
@@ -301,11 +301,11 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                     <div className="mb-2 flex items-center justify-between text-[11px] bg-[#1e1610] px-2 py-1 rounded border border-[#3d2c1d] text-[#e5c158] font-classical">
                       <span className="flex items-center gap-1.5">
                         <PixelFigureAvatar name={item.matchedFigureName} size="xs" showCampBorder={false} />
-                        <span>宿命同道：{item.matchedFigureName}</span>
+                        <span>性格最像：{item.matchedFigureName}</span>
                       </span>
                       {item.matchedFigureSimilarity && (
                         <span className="text-[10px] text-[#f59e0b] font-mono">
-                          {item.matchedFigureSimilarity}% 契合
+                          {item.matchedFigureSimilarity}% 相似
                         </span>
                       )}
                     </div>
@@ -320,7 +320,7 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                 <div className="flex items-center justify-between text-[11px] text-[#786959] mt-3 pt-2 border-t border-[#2e2319]">
                   <span>公元184年春 — 公元{item.deathYear}年{item.deathSeason || ''}</span>
                   <span className="text-[#d4af37] group-hover:translate-x-1 transition-transform flex items-center font-classical">
-                    查阅传记 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                    查看生平 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                   </span>
                 </div>
               </div>
@@ -346,14 +346,14 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                   {selectedRecord.primaryFunTitle} ({selectedRecord.folkNickname})
                 </div>
                 <span className="text-xs text-[#a29280] block mt-0.5">
-                  生于公元184年春 · 殁于公元{selectedRecord.deathYear}年{selectedRecord.deathSeason || ''} · 籍贯【{selectedRecord.birthplace}】
+                  生于公元184年春 · 去世于公元{selectedRecord.deathYear}年{selectedRecord.deathSeason || ''} · 出生地【{selectedRecord.birthplace}】
                 </span>
               </div>
               <button
                 onClick={() => setSelectedRecord(null)}
                 className="text-xs text-[#a29280] hover:text-[#faece0] px-2.5 py-1.5 bg-[#261f18] rounded border border-[#3e3023] hover:border-[#d4af37] cursor-pointer transition-colors"
               >
-                卷毕闭阖
+                关闭
               </button>
             </div>
 
@@ -369,55 +369,55 @@ export const PeopleGallery: React.FC<PeopleGalleryProps> = ({
                       showCampBorder={true}
                     />
                     <span className="text-xs text-[#dcd1c2]">
-                      宿命映照三国历史同道：<strong className="text-[#faece0] text-sm">{selectedRecord.matchedFigureName}</strong>{' '}
+                      性格最像的三国人物：<strong className="text-[#faece0] text-sm">{selectedRecord.matchedFigureName}</strong>{' '}
                       <span className="text-[#d4af37] text-xs font-semibold">{selectedRecord.matchedFigureTitle || ''}</span>
                     </span>
                   </div>
                   {selectedRecord.matchedFigureSimilarity && (
                     <span className="text-xs px-2 py-0.5 rounded bg-[#17110c] text-[#f59e0b] font-mono border border-[#483422] shrink-0">
-                      {selectedRecord.matchedFigureSimilarity}% 契合
+                      {selectedRecord.matchedFigureSimilarity}% 相似
                     </span>
                   )}
                 </div>
               )}
 
-              {/* 平生小传 */}
+              {/* 一生简评 */}
               <div className="bg-[#221a14] p-3.5 rounded border border-[#3f3022]">
-                <div className="text-[#d4af37] font-semibold mb-1">【平生小传】</div>
+                <div className="text-[#d4af37] font-semibold mb-1">【一生简评】</div>
                 <p className="leading-relaxed text-[#ddd2c4]">
                   {selectedRecord.ending.summary}
                 </p>
               </div>
 
-              {/* 史家注脚 */}
+              {/* 后人评价 */}
               <div className="bg-[#221a14] p-3.5 rounded border border-[#3f3022]">
-                <div className="text-[#d4af37] font-semibold mb-1">【史家注脚】</div>
+                <div className="text-[#d4af37] font-semibold mb-1">【后人评价】</div>
                 <p className="leading-relaxed text-[#ddd2c4] italic">
                   {selectedRecord.ending.historianNote}
                 </p>
               </div>
 
-              {/* 民间生平趣评 */}
+              {/* 民间风评 */}
               {selectedRecord.humorousQuote && (
                 <div className="bg-[#221a14] p-3.5 rounded border border-[#3f3022]">
-                  <div className="text-[#f59e0b] font-semibold mb-1">【民间生平趣评】</div>
+                  <div className="text-[#f59e0b] font-semibold mb-1">【民间风评】</div>
                   <p className="leading-relaxed text-[#ddd2c4] italic">
                     {selectedRecord.humorousQuote}
                   </p>
                 </div>
               )}
 
-              {/* 斟酒致敬交互区 */}
+              {/* 敬酒致敬交互区 */}
               <div className="pt-2 flex items-center justify-between bg-[#1f1712] p-3 rounded border border-[#392b1e]">
                 <span className="text-xs text-[#9d8d7b]">
-                  已得天下后人斟酒祭奠：<strong className="text-[#fca5a5] font-mono">{selectedRecord.likesCount || 0}</strong> 杯
+                  已收到点赞：<strong className="text-[#fca5a5] font-mono">{selectedRecord.likesCount || 0}</strong> 次
                 </span>
                 <button
                   onClick={(e) => handleLike(e, selectedRecord.id)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#8b261e] hover:bg-[#a83228] text-[#fef08a] font-classical text-xs border border-[#b91c1c] transition-colors cursor-pointer"
                 >
                   <Wine className="w-3.5 h-3.5" />
-                  <span>斟浊酒祭奠</span>
+                  <span>敬酒点赞</span>
                 </button>
               </div>
             </div>
